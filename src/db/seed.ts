@@ -39,8 +39,12 @@ export async function seedDatabase(options: { force?: boolean } = {}) {
   console.log("Seeding JIS Beauty & Fashion demo data…");
 
   /* ---------------------------- Users (admin + demo) --------------------------- */
-  const adminEmail = process.env.SEED_ADMIN_EMAIL ?? "admin@jisbeauty.ng";
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "Admin@2024";
+  const adminEmail = process.env.SEED_ADMIN_EMAIL;
+const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+
+if (!adminEmail || !adminPassword) {
+  throw new Error("SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD must be set before seeding.");
+}
 
   await db
     .insert(users)
@@ -54,7 +58,13 @@ export async function seedDatabase(options: { force?: boolean } = {}) {
     })
     .onConflictDoNothing();
 
-  const customerPasswordHash = await hashPassword("Customer@2024");
+  const customerPassword = process.env.SEED_CUSTOMER_PASSWORD;
+
+if (!customerPassword) {
+  throw new Error("SEED_CUSTOMER_PASSWORD must be set before seeding.");
+}
+
+const customerPasswordHash = await hashPassword(customerPassword);
   const customerIds: number[] = [];
   for (const c of seedCustomers) {
     const [row] = await db

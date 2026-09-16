@@ -16,7 +16,7 @@
 ## Quick start
 
 ```bash
-cp .env.example .env         # fill in DATABASE_URL etc.
+cp .env.example .env         # fill in DATABASE_URL, auth, seed credentials, etc.
 npm install
 npm run db:push              # create tables (drizzle-kit push)
 npm run db:seed              # demo catalogue, coupons, admin + demo customers
@@ -25,12 +25,13 @@ npm run dev
 
 Demo data is also seeded automatically on first request if the products table is empty (`src/db/ensure-seed.ts`).
 
-**Seeded accounts**
+Seeded accounts
 
-| Role     | Email                 | Password       |
-| -------- | --------------------- | -------------- |
-| Admin    | admin@jisbeauty.ng    | Admin@2024     |
-| Customer | adaeze@example.com    | Customer@2024  |
+The seed script requires `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD`, and
+`SEED_CUSTOMER_PASSWORD` to be configured in the environment before seeding.
+No default passwords are stored in the repository.
+
+Change these via environment variables before running `npm run db:seed`.
 
 Change these via `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` before seeding, or from the admin after login.
 
