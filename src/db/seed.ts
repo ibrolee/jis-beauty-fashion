@@ -35,7 +35,11 @@ export async function seedDatabase(options: { force?: boolean } = {}) {
     .select({ value: count() })
     .from(products);
 
-  if (existing > 0 && !options.force) {
+  if (
+  existing > 0 &&
+  !options.force &&
+  !(process.env.SEED_ADMIN_EMAIL && process.env.SEED_ADMIN_PASSWORD)
+) {
     console.log(`Seed skipped — ${existing} products already exist.`);
     return;
   }
