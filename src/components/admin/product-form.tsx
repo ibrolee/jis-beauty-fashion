@@ -15,7 +15,10 @@ import {
 } from "@/components/ui/form-fields";
 import type { Category } from "@/db/schema";
 import { saveProductAction } from "@/lib/actions/admin";
-import { initialActionState, type ProductDetail } from "@/types";
+import {
+  initialActionState,
+  type ProductDetail,
+} from "@/types";
 
 export function ProductForm({
   product,
@@ -36,7 +39,11 @@ export function ProductForm({
   const fe = state.fieldErrors ?? {};
 
   return (
-    <form action={action} className="space-y-8" noValidate>
+    <form
+      action={action}
+      className="space-y-8"
+      noValidate
+    >
       {product && (
         <input
           type="hidden"
@@ -51,21 +58,24 @@ export function ProductForm({
         </FormMessage>
       )}
 
-      <div className="grid gap-8 xl:grid-cols-3">
-        <div className="space-y-8 xl:col-span-2">
+      <div className="grid min-w-0 gap-8 xl:grid-cols-3">
+        <div className="min-w-0 space-y-8 xl:col-span-2">
+          {/* ---------------------------------------------------------------- */}
+          {/* Basics                                                           */}
+          {/* ---------------------------------------------------------------- */}
 
-          <section className="space-y-5 border border-line bg-white p-5">
+          <section className="space-y-5 border border-line bg-white p-4 sm:p-5">
             <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-stone">
               Basics
             </h2>
 
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="grid min-w-0 gap-5 sm:grid-cols-2">
               <Field
                 label="Product name"
                 htmlFor="name"
                 error={fe.name}
                 required
-                className="sm:col-span-2"
+                className="min-w-0 sm:col-span-2"
               >
                 <Input
                   id="name"
@@ -79,7 +89,8 @@ export function ProductForm({
                 label="Slug"
                 htmlFor="slug"
                 error={fe.slug}
-                hint="Leave blank to generate from the name. URL: /product/slug"
+                hint="Leave blank to generate from the name."
+                className="min-w-0"
               >
                 <Input
                   id="slug"
@@ -89,32 +100,24 @@ export function ProductForm({
               </Field>
 
               <Field
-                label="SKU"
-                htmlFor="sku"
-                error={fe.sku}
-                required
-              >
-                <Input
-                  id="sku"
-                  name="sku"
-                  defaultValue={product?.sku ?? ""}
-                  required
-                />
-              </Field>
-
-              <Field
                 label="Category"
                 htmlFor="categoryId"
                 error={fe.categoryId}
                 required
+                className="min-w-0"
               >
                 <Select
                   id="categoryId"
                   name="categoryId"
-                  defaultValue={product?.categoryId ?? ""}
+                  defaultValue={
+                    product?.categoryId ?? ""
+                  }
                   required
                 >
-                  <option value="" disabled>
+                  <option
+                    value=""
+                    disabled
+                  >
                     Select category
                   </option>
 
@@ -134,11 +137,14 @@ export function ProductForm({
                 htmlFor="brandName"
                 error={fe.brandName}
                 hint="Created automatically if new."
+                className="min-w-0"
               >
                 <Input
                   id="brandName"
                   name="brandName"
-                  defaultValue={product?.brandName ?? ""}
+                  defaultValue={
+                    product?.brandName ?? ""
+                  }
                 />
               </Field>
 
@@ -147,16 +153,27 @@ export function ProductForm({
                 htmlFor="gender"
                 error={fe.gender}
                 required
+                className="min-w-0"
               >
                 <Select
                   id="gender"
                   name="gender"
-                  defaultValue={product?.gender ?? "unisex"}
+                  defaultValue={
+                    product?.gender ?? "unisex"
+                  }
                 >
-                  <option value="women">Women</option>
-                  <option value="men">Men</option>
-                  <option value="unisex">Unisex</option>
-                  <option value="kids">Kids</option>
+                  <option value="women">
+                    Women
+                  </option>
+                  <option value="men">
+                    Men
+                  </option>
+                  <option value="unisex">
+                    Unisex
+                  </option>
+                  <option value="kids">
+                    Kids
+                  </option>
                 </Select>
               </Field>
 
@@ -165,7 +182,7 @@ export function ProductForm({
                 htmlFor="shortDescription"
                 error={fe.shortDescription}
                 hint="Shown on cards & quick view (max 300 chars)."
-                className="sm:col-span-2"
+                className="min-w-0 sm:col-span-2"
               >
                 <Input
                   id="shortDescription"
@@ -182,7 +199,7 @@ export function ProductForm({
                 htmlFor="description"
                 error={fe.description}
                 required
-                className="sm:col-span-2"
+                className="min-w-0 sm:col-span-2"
               >
                 <Textarea
                   id="description"
@@ -190,23 +207,28 @@ export function ProductForm({
                   defaultValue={
                     product?.description ?? ""
                   }
-                  className="min-h-[160px]"
+                  className="min-h-[160px] w-full max-w-full"
                   required
                 />
               </Field>
             </div>
           </section>
 
-          <section className="space-y-5 border border-line bg-white p-5">
+          {/* ---------------------------------------------------------------- */}
+          {/* Fragrance details                                                */}
+          {/* ---------------------------------------------------------------- */}
+
+          <section className="space-y-5 border border-line bg-white p-4 sm:p-5">
             <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-stone">
               Fragrance details
             </h2>
 
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="grid min-w-0 gap-5 sm:grid-cols-2">
               <Field
                 label="Fragrance type"
                 htmlFor="fragranceType"
                 hint="Eau de Parfum, Perfume Oil…"
+                className="min-w-0"
               >
                 <Input
                   id="fragranceType"
@@ -221,49 +243,13 @@ export function ProductForm({
                 label="Volume"
                 htmlFor="volume"
                 hint="e.g. 100ml"
+                className="min-w-0"
               >
                 <Input
                   id="volume"
                   name="volume"
-                  defaultValue={product?.volume ?? ""}
-                />
-              </Field>
-
-              <Field
-                label="Top notes"
-                htmlFor="topNotes"
-              >
-                <Input
-                  id="topNotes"
-                  name="topNotes"
                   defaultValue={
-                    product?.topNotes ?? ""
-                  }
-                />
-              </Field>
-
-              <Field
-                label="Heart notes"
-                htmlFor="heartNotes"
-              >
-                <Input
-                  id="heartNotes"
-                  name="heartNotes"
-                  defaultValue={
-                    product?.heartNotes ?? ""
-                  }
-                />
-              </Field>
-
-              <Field
-                label="Base notes"
-                htmlFor="baseNotes"
-              >
-                <Input
-                  id="baseNotes"
-                  name="baseNotes"
-                  defaultValue={
-                    product?.baseNotes ?? ""
+                    product?.volume ?? ""
                   }
                 />
               </Field>
@@ -272,6 +258,7 @@ export function ProductForm({
                 label="Longevity"
                 htmlFor="longevity"
                 hint="e.g. 8 – 10 hours"
+                className="min-w-0"
               >
                 <Input
                   id="longevity"
@@ -285,7 +272,7 @@ export function ProductForm({
               <Field
                 label="Occasion"
                 htmlFor="occasion"
-                className="sm:col-span-2"
+                className="min-w-0 sm:col-span-2"
               >
                 <Input
                   id="occasion"
@@ -298,7 +285,11 @@ export function ProductForm({
             </div>
           </section>
 
-          <section className="space-y-5 border border-line bg-white p-5">
+          {/* ---------------------------------------------------------------- */}
+          {/* Images & variants                                                */}
+          {/* ---------------------------------------------------------------- */}
+
+          <section className="min-w-0 space-y-5 overflow-hidden border border-line bg-white p-4 sm:p-5">
             <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-stone">
               Images & variants
             </h2>
@@ -308,23 +299,29 @@ export function ProductForm({
               htmlFor="images"
               error={fe.images}
               hint="Upload photos directly from your phone. The first image becomes the main product image."
+              className="min-w-0"
             >
-              <ImageUploader
-                value={images}
-                onChange={setImages}
-              />
+              <div className="min-w-0 max-w-full">
+                <ImageUploader
+                  value={images}
+                  onChange={setImages}
+                />
+              </div>
             </Field>
 
             <Field
               label="Size variants"
               htmlFor="variants"
               error={fe.variants}
-              hint="Optional. One per line: name | price | sale price | stock → e.g. 50ml | 26500 | | 20"
+              hint="Optional. One per line: name | price | sale price | stock"
+              className="min-w-0"
             >
               <Textarea
                 id="variants"
                 name="variants"
-                defaultValue={(product?.variants ?? [])
+                defaultValue={(
+                  product?.variants ?? []
+                )
                   .map(
                     (variant) =>
                       `${variant.name} | ${variant.price} | ${
@@ -332,13 +329,17 @@ export function ProductForm({
                       } | ${variant.stock}`,
                   )
                   .join("\n")}
-                className="min-h-[80px] font-mono text-xs"
+                className="min-h-[80px] w-full max-w-full font-mono text-xs"
                 placeholder="50ml | 26500 | | 20"
               />
             </Field>
           </section>
 
-          <section className="space-y-5 border border-line bg-white p-5">
+          {/* ---------------------------------------------------------------- */}
+          {/* SEO                                                              */}
+          {/* ---------------------------------------------------------------- */}
+
+          <section className="space-y-5 border border-line bg-white p-4 sm:p-5">
             <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-stone">
               SEO
             </h2>
@@ -347,6 +348,7 @@ export function ProductForm({
               label="Meta title"
               htmlFor="metaTitle"
               error={fe.metaTitle}
+              className="min-w-0"
             >
               <Input
                 id="metaTitle"
@@ -362,6 +364,7 @@ export function ProductForm({
               label="Meta description"
               htmlFor="metaDescription"
               error={fe.metaDescription}
+              className="min-w-0"
             >
               <Textarea
                 id="metaDescription"
@@ -370,15 +373,18 @@ export function ProductForm({
                 defaultValue={
                   product?.metaDescription ?? ""
                 }
-                className="min-h-[72px]"
+                className="min-h-[72px] w-full max-w-full"
               />
             </Field>
           </section>
         </div>
 
-        <div className="space-y-8">
+        {/* ------------------------------------------------------------------ */}
+        {/* Right column                                                       */}
+        {/* ------------------------------------------------------------------ */}
 
-          <section className="space-y-5 border border-line bg-white p-5">
+        <div className="min-w-0 space-y-8">
+          <section className="space-y-5 border border-line bg-white p-4 sm:p-5">
             <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-stone">
               Pricing & inventory (₦)
             </h2>
@@ -388,6 +394,7 @@ export function ProductForm({
               htmlFor="price"
               error={fe.price}
               required
+              className="min-w-0"
             >
               <Input
                 id="price"
@@ -407,6 +414,7 @@ export function ProductForm({
               htmlFor="salePrice"
               error={fe.salePrice}
               hint="Leave empty or 0 for no discount."
+              className="min-w-0"
             >
               <Input
                 id="salePrice"
@@ -425,6 +433,7 @@ export function ProductForm({
               htmlFor="stock"
               error={fe.stock}
               required
+              className="min-w-0"
             >
               <Input
                 id="stock"
@@ -440,7 +449,7 @@ export function ProductForm({
             </Field>
           </section>
 
-          <section className="space-y-4 border border-line bg-white p-5">
+          <section className="space-y-4 border border-line bg-white p-4 sm:p-5">
             <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-stone">
               Visibility
             </h2>
@@ -478,7 +487,7 @@ export function ProductForm({
             />
           </section>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex min-w-0 flex-col gap-2">
             <Button
               type="submit"
               loading={pending}
