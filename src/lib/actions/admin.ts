@@ -103,9 +103,7 @@ const sku =
     gender: d.gender,
     fragranceType: d.fragranceType || null,
     volume: d.volume || null,
-    topNotes: d.topNotes || null,
-    heartNotes: d.heartNotes || null,
-    baseNotes: d.baseNotes || null,
+    
     longevity: d.longevity || null,
     occasion: d.occasion || null,
     isFeatured: Boolean(d.isFeatured),
