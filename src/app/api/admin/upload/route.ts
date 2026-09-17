@@ -8,10 +8,10 @@ import { getCurrentUser } from "@/lib/auth/session";
 export async function POST(
   request: Request,
 ): Promise<NextResponse> {
-  const body =
-    (await request.json()) as HandleUploadBody;
-
   try {
+    const body =
+      (await request.json()) as HandleUploadBody;
+
     const jsonResponse = await handleUpload({
       body,
       request,
@@ -47,6 +47,8 @@ export async function POST(
 
     return NextResponse.json(jsonResponse);
   } catch (error) {
+    console.error("JIS product image upload error:", error);
+
     return NextResponse.json(
       {
         error:
