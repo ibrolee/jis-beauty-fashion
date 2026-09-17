@@ -91,7 +91,7 @@ const sku =
   const values = {
     name: d.name,
     slug,
-    sku: d.sku,
+    sku,
     categoryId: d.categoryId,
     brandId,
     shortDescription: d.shortDescription || null,
