@@ -21,6 +21,8 @@ jobs:
 
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
