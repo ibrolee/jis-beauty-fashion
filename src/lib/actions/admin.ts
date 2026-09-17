@@ -76,8 +76,15 @@ export async function saveProductAction(_prev: ActionState, formData: FormData):
   if (!parsed.success) return { error: "Please fix the highlighted fields.", fieldErrors: fieldErrorsFrom(parsed.error) };
 
   const d = parsed.data;
-  const slug = slugify(d.slug || d.name);
-  const brandId = await resolveBrandId(d.brandName);
+const slug = slugify(d.slug || d.name);
+const brandId = await resolveBrandId(d.brandName);
+
+const sku =
+  d.sku?.trim() ||
+  `JIS-${Date.now().toString(36).toUpperCase()}-${crypto
+    .randomUUID()
+    .slice(0, 6)
+    .toUpperCase()}`;
   const images = parseImages(d.images);
   const variants = parseVariants(d.variants);
 
