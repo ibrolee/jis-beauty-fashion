@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { upload } from "@vercel/blob/client";
 import { useRef, useState } from "react";
 
 type ImageUploaderProps = {
@@ -27,6 +26,130 @@ export function ImageUploader({
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
 
+  async function uploadFile(file: File) {
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      throw new Error(
+        `${file.name}: please use JPG, PNG or WebP.`,
+      );
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error(
+        `${file.name}: maximum image size is 10MB.`,
+      );
+    }
+
+    const safeName = file.name.replace(
+      /[^a-zA-Z0-9._-]/g,
+      "-",
+    );
+
+    const pathname = `products/${Date.now()}-${safeName}`;
+
+    const tokenResponse = await fetch(
+      "/api/admin/upload",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          pathname,
+          contentType: file.type,
+          size: file.size,
+        }),
+      },
+    );
+
+    const tokenData = await tokenResponse.json();
+
+    if (!tokenResponse.ok) {
+      throw new Error(
+        tokenData?.error ||
+          "Could not create upload URL.",
+      );
+    }
+
+    const uploadUrl = tokenData.uploadUrl;
+
+    const blobUrl = await new Promise<string>(
+      (resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        xhr.open("PUT", uploadUrl);
+
+        xhr.setRequestHeader(
+          "Content-Type",
+          file.type,
+        );
+
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            setProgress(
+              Math.round(
+                (event.loaded / event.total) * 100,
+              ),
+            );
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const response = JSON.parse(
+                xhr.responseText,
+              );
+
+              if (response?.url) {
+                resolve(response.url);
+                return;
+              }
+
+              reject(
+                new Error(
+                  "Upload completed but no image URL was returned.",
+                ),
+              );
+            } catch {
+              reject(
+                new Error(
+                  "Upload completed but the server returned an invalid response.",
+                ),
+              );
+            }
+
+            return;
+          }
+
+          reject(
+            new Error(
+              `Image upload failed (${xhr.status}).`,
+            ),
+          );
+        };
+
+        xhr.onerror = () => {
+          reject(
+            new Error(
+              "Network error while uploading the image.",
+            ),
+          );
+        };
+
+        xhr.onabort = () => {
+          reject(
+            new Error("Image upload was cancelled."),
+          );
+        };
+
+        xhr.send(file);
+      },
+    );
+
+    return blobUrl;
+  }
+
   async function handleFiles(files: FileList | null) {
     if (!files?.length || uploading) return;
 
@@ -38,38 +161,14 @@ export function ImageUploader({
       let nextUrls = [...value];
 
       for (const file of Array.from(files)) {
-        if (!ALLOWED_TYPES.includes(file.type)) {
-          throw new Error(
-            `${file.name}: please use JPG, PNG or WebP.`,
-          );
-        }
+        const blobUrl = await uploadFile(file);
 
-        if (file.size > MAX_FILE_SIZE) {
-          throw new Error(
-            `${file.name}: maximum image size is 10MB.`,
-          );
-        }
+        nextUrls = [...nextUrls, blobUrl];
 
-        const safeName = file.name.replace(
-          /[^a-zA-Z0-9._-]/g,
-          "-",
-        );
-
-        const blob = await upload(
-          `products/${Date.now()}-${safeName}`,
-          file,
-          {
-            access: "public",
-            handleUploadUrl: "/api/admin/upload",
-            onUploadProgress: ({ percentage }) => {
-              setProgress(Math.round(percentage));
-            },
-          },
-        );
-
-        nextUrls = [...nextUrls, blob.url];
         onChange(nextUrls);
       }
+
+      setProgress(100);
     } catch (err) {
       setError(
         err instanceof Error
@@ -78,16 +177,21 @@ export function ImageUploader({
       );
     } finally {
       setUploading(false);
-      setProgress(0);
 
       if (inputRef.current) {
         inputRef.current.value = "";
       }
+
+      setTimeout(() => {
+        setProgress(0);
+      }, 500);
     }
   }
 
   function removeImage(url: string) {
-    onChange(value.filter((item) => item !== url));
+    onChange(
+      value.filter((item) => item !== url),
+    );
   }
 
   return (
@@ -150,12 +254,16 @@ export function ImageUploader({
 
       <p className="text-xs leading-5 text-stone">
         JPG, PNG or WebP. Maximum 10MB per image.
-        You can select multiple photos at once. The first
-        image will be used as the main product image.
+        You can select multiple photos at once. The
+        first image will be used as the main product
+        image.
       </p>
 
       {error && (
-        <p className="text-sm text-sale" role="alert">
+        <p
+          className="text-sm text-sale"
+          role="alert"
+        >
           {error}
         </p>
       )}
