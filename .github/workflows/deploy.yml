@@ -16,6 +16,8 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+      - name: Install latest Wrangler
+        run: npm install --save-dev wrangler@latest
 
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3
