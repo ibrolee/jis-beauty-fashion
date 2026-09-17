@@ -1,62 +1,115 @@
 import {
-  handleUpload,
-  type HandleUploadBody,
-} from "@vercel/blob/client";
+  issueSignedToken,
+  presignUrl,
+} from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 
-export async function POST(
-  request: Request,
-): Promise<NextResponse> {
+const ALLOWED_CONTENT_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+];
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+export async function POST(request: Request) {
   try {
-    const body =
-      (await request.json()) as HandleUploadBody;
+    const user = await getCurrentUser();
 
-    const jsonResponse = await handleUpload({
-      body,
-      request,
+    if (!user || user.role !== "admin") {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
 
-      onBeforeGenerateToken: async (pathname) => {
-        const user = await getCurrentUser();
+    const body = await request.json();
 
-        if (!user || user.role !== "admin") {
-          throw new Error("Unauthorized");
-        }
+    const pathname = body?.pathname;
+    const contentType = body?.contentType;
+    const size = body?.size;
 
-        if (!pathname.startsWith("products/")) {
-          throw new Error("Invalid upload path");
-        }
+    if (
+      typeof pathname !== "string" ||
+      !pathname.startsWith("products/")
+    ) {
+      return NextResponse.json(
+        { error: "Invalid upload path." },
+        { status: 400 },
+      );
+    }
 
-        return {
-          allowedContentTypes: [
-            "image/jpeg",
-            "image/png",
-            "image/webp",
-          ],
-          addRandomSuffix: true,
-        };
-      },
+    if (
+      typeof contentType !== "string" ||
+      !ALLOWED_CONTENT_TYPES.includes(contentType)
+    ) {
+      return NextResponse.json(
+        { error: "Only JPG, PNG and WebP images are allowed." },
+        { status: 400 },
+      );
+    }
 
-      onUploadCompleted: async ({ blob }) => {
-        console.log(
-          "JIS product image uploaded:",
-          blob.url,
-        );
-      },
+    if (
+      typeof size !== "number" ||
+      size <= 0 ||
+      size > MAX_FILE_SIZE
+    ) {
+      return NextResponse.json(
+        { error: "Image must be between 1 byte and 10MB." },
+        { status: 400 },
+      );
+    }
+
+    const storeId = process.env.Images_STORE_ID;
+
+    if (!storeId) {
+      throw new Error("Images_STORE_ID is not configured.");
+    }
+
+    const validUntil = Date.now() + 15 * 60 * 1000;
+
+    const signedToken = await issueSignedToken({
+      storeId,
+      pathname,
+      operations: ["put"],
+      validUntil,
+      allowedContentTypes: ALLOWED_CONTENT_TYPES,
+      maximumSizeInBytes: MAX_FILE_SIZE,
     });
 
-    return NextResponse.json(jsonResponse);
+    const { presignedUrl } = await presignUrl(
+      signedToken,
+      {
+        pathname,
+        operation: "put",
+        validUntil,
+        allowedContentTypes: [contentType],
+        maximumSizeInBytes: MAX_FILE_SIZE,
+        access: "public",
+      },
+    );
+
+    return NextResponse.json({
+      uploadUrl: presignedUrl,
+      pathname,
+      storeId,
+      expiresAt: validUntil,
+    });
   } catch (error) {
-    console.error("JIS product image upload error:", error);
+    console.error(
+      "JIS product image upload URL error:",
+      error,
+    );
 
     return NextResponse.json(
       {
         error:
           error instanceof Error
             ? error.message
-            : "Upload failed.",
+            : "Could not create upload URL.",
       },
-      { status: 400 },
+      { status: 500 },
     );
   }
 }
