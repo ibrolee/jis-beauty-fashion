@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 
 import { ImageUploader } from "@/components/admin/image-uploader";
+import { Button } from "@/components/ui/button";
 import {
-  Button,
   Checkbox,
   Field,
   FormMessage,
@@ -54,7 +54,6 @@ export function ProductForm({
       <div className="grid gap-8 xl:grid-cols-3">
         <div className="space-y-8 xl:col-span-2">
 
-          {/* BASICS */}
           <section className="space-y-5 border border-line bg-white p-5">
             <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-stone">
               Basics
@@ -198,7 +197,6 @@ export function ProductForm({
             </div>
           </section>
 
-          {/* FRAGRANCE DETAILS */}
           <section className="space-y-5 border border-line bg-white p-5">
             <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-stone">
               Fragrance details
@@ -300,7 +298,6 @@ export function ProductForm({
             </div>
           </section>
 
-          {/* IMAGES & VARIANTS */}
           <section className="space-y-5 border border-line bg-white p-5">
             <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-stone">
               Images & variants
@@ -308,6 +305,7 @@ export function ProductForm({
 
             <Field
               label="Product photos"
+              htmlFor="images"
               error={fe.images}
               hint="Upload photos directly from your phone. The first image becomes the main product image."
             >
@@ -340,7 +338,6 @@ export function ProductForm({
             </Field>
           </section>
 
-          {/* SEO */}
           <section className="space-y-5 border border-line bg-white p-5">
             <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-stone">
               SEO
@@ -379,10 +376,8 @@ export function ProductForm({
           </section>
         </div>
 
-        {/* RIGHT COLUMN */}
         <div className="space-y-8">
 
-          {/* PRICING & INVENTORY */}
           <section className="space-y-5 border border-line bg-white p-5">
             <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-stone">
               Pricing & inventory (₦)
@@ -445,7 +440,6 @@ export function ProductForm({
             </Field>
           </section>
 
-          {/* VISIBILITY */}
           <section className="space-y-4 border border-line bg-white p-5">
             <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-stone">
               Visibility
@@ -484,7 +478,6 @@ export function ProductForm({
             />
           </section>
 
-          {/* ACTIONS */}
           <div className="flex flex-col gap-2">
             <Button
               type="submit"
