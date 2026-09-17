@@ -15,7 +15,7 @@ export function Logo({
       aria-label="JIS Beauty & Fashion -- home"
     >
       <Image
-        src="/images/jis-logo.png"
+        src="/images/jis-logo.PNG"
         alt="JIS Beauty & Fashion"
         width={150}
         height={100}
