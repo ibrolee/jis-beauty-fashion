@@ -1,0 +1,40 @@
+name: Add Dove catalog photos
+on:
+  push:
+    paths:
+      - .github/workflows/dove-product-images.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  add-dove-images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download edited product pictures and save permanently in the site
+        env:
+          APPLE: 'https://media.canva.com/v2/image-resize/format:JPG/height:200/quality:75/uri:ifs%3A%2F%2FM%2Ff4b0216b-7133-443b-bed4-a0c2d0eacfe3/watermark:F/width:160?csig=AAAAAAAAAAAAAAAAAAAAAI2bqtcdq5peVZADZdS31ipzzeA9nrm7q7AQRd9JO2tu&exp=1789762546&osig=AAAAAAAAAAAAAAAAAAAAAMWKTxE0bvFA5epGOogmOyskBtMYk-ElTwno_0j8G9-e&signer=media-rpc&x-canva-quality=thumbnail'
+          CUCUMBER: 'https://media.canva.com/v2/image-resize/format:JPG/height:200/quality:75/uri:ifs%3A%2F%2FM%2F40325148-8827-4ac3-adbb-62f00b603343/watermark:F/width:160?csig=AAAAAAAAAAAAAAAAAAAAAOZDMyxEstfOOJeD1KIa1tzjrCjObjQOHpEK8Dft16wf&exp=1789764541&osig=AAAAAAAAAAAAAAAAAAAAACoh6pBw-NOyVb8REDE2O6a-u-AbKcfJbJwZRcCymc6z&signer=media-rpc&x-canva-quality=thumbnail'
+          GRAPEFRUIT: 'https://media.canva.com/v2/image-resize/format:JPG/height:200/quality:75/uri:ifs%3A%2F%2FM%2F75c209cc-16b6-4c5f-9934-c91a576eb23e/watermark:F/width:160?csig=AAAAAAAAAAAAAAAAAAAAAHF2SYXReCEIsyBDH03dG3NvTXZwR5mlNXPP7gn7olRN&exp=1789763910&osig=AAAAAAAAAAAAAAAAAAAAABaZ0PDSobzh6vYojh5lDC-FSKRWad2l8kAvxcnZVKUc&signer=media-rpc&x-canva-quality=thumbnail'
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, urllib.request
+          pictures={'apple-white-tea':'APPLE','cucumber-green-tea':'CUCUMBER','grapefruit-lemongrass':'GRAPEFRUIT'}
+          folder=pathlib.Path('public/catalog');folder.mkdir(parents=True,exist_ok=True)
+          for label,env in pictures.items():
+              req=urllib.request.Request(os.environ[env],headers={'User-Agent':'Mozilla/5.0'})
+              data=urllib.request.urlopen(req,timeout=40).read()
+              if not data.startswith(b'\xff\xd8\xff') or len(data)<1000:
+                  raise RuntimeError(f'Invalid or empty JPEG for {label}: {len(data)} bytes')
+              (folder/f'dove-{label}.jpg').write_bytes(data)
+              print(f'Verified Dove {label}: {len(data)} bytes')
+          PY
+      - name: Commit images to existing main branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/catalog/dove-*.jpg
+          if ! git diff --cached --quiet; then
+            git commit -m 'Add redesigned Dove variant product photos [skip ci]'
+            git push
+          fi
