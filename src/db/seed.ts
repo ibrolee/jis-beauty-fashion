@@ -31,15 +31,17 @@ import {
 } from "./seed-data/catalog";
 
 export async function seedDatabase(options: { force?: boolean } = {}) {
+  // Deployed shops must never recreate fake inventory or customers.
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL || process.env.VERCEL_ENV) {
+    console.log("Demo seed skipped — disabled on deployed shops.");
+    return;
+  }
+
   const [{ value: existing }] = await db
     .select({ value: count() })
     .from(products);
 
-  if (
-  existing > 0 &&
-  !options.force &&
-  !(process.env.SEED_ADMIN_EMAIL && process.env.SEED_ADMIN_PASSWORD)
-) {
+  if (existing > 0 && !options.force) {
     console.log(`Seed skipped — ${existing} products already exist.`);
     return;
   }

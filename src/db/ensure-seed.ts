@@ -7,6 +7,8 @@ let seedPromise: Promise<void> | null = null;
 
 /** Explicit opt-in for demo preview databases only. Never silently create fake inventory. */
 export function ensureSeeded(): Promise<void> {
+  // No automatic demo data insertion in a deployed shop.
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL || process.env.VERCEL_ENV) return Promise.resolve();
   if (process.env.ENABLE_DEMO_SEED !== "true") return Promise.resolve();
   if (!seedPromise) {
     seedPromise = (async () => {
