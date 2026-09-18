@@ -1,0 +1,63 @@
+name: Finish catalog imagery
+on:
+  push:
+    paths: [.github/workflows/finish-catalog-imagery.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install --quiet Pillow requests
+      - name: Download and verify source photography
+        run: |
+          python3 - <<'PY'
+          import io,pathlib,requests
+          from PIL import Image,ImageOps
+          p=pathlib.Path('public/catalog');p.mkdir(parents=True,exist_ok=True)
+          s=requests.Session();s.headers.update({'User-Agent':'Mozilla/5.0'})
+          product={
+            'dove-apple-white-tea-v2.jpg':'https://www.asselti.ro/storage/photos/000/001/1463/ezgif-1-ade521e683.jpg',
+            'dove-cucumber-green-tea-v2.jpg':'https://bizweb.dktcdn.net/100/511/037/products/xit-khu-mui-dove-go-fresh-dua-leo-150ml-1716367336205.jpg?v=1724917143433',
+            'dove-grapefruit-lemongrass-v2.jpg':'https://luxplus.imgix.net/content/product/image/20055-9963-1669792431.jpg?auto=format%2Ccompress&fill=solid&fill-color=FFFFFF&fit=fillmax&h=1200&w=1200',
+          }
+          # Distinct Pexels free-to-use photographs; illustrative covers, not for individual product listings.
+          categories={
+            'category-women-v2.jpg':15097508, # fragrance with pink roses
+            'category-men-v2.jpg':31847824, # black cologne
+            'category-unisex-v2.jpg':30970926, # neutral minimal fragrance
+            'category-kids-v2.jpg':36569356, # bright colorful perfume bottles
+            'category-oils-v2.jpg':6693902, # amber roll-on oils
+            'category-deodorants-v2.jpg':8167167, # spray bottles
+          }
+          for name,url in product.items():
+            res=s.get(url,timeout=50);res.raise_for_status();im=Image.open(io.BytesIO(res.content)).convert('RGB')
+            print('Product source:',name,im.size,len(res.content),flush=True)
+            if min(im.size)<480:raise RuntimeError('Product source too small: '+name)
+            canvas=Image.new('RGB',(1000,1200),'white');im.thumbnail((940,1120),Image.Resampling.LANCZOS)
+            canvas.paste(im,((1000-im.width)//2,(1200-im.height)//2))
+            canvas.save(p/name,'JPEG',quality=94,optimize=True,subsampling=0)
+            assert (p/name).stat().st_size>20000
+            print('PASS',name,(p/name).stat().st_size,flush=True)
+          for name,photo_id in categories.items():
+            url=f'https://images.pexels.com/photos/{photo_id}/pexels-photo-{photo_id}.jpeg?auto=compress&cs=tinysrgb&w=1600'
+            res=s.get(url,timeout=55);print('Cover HTTP:',name,res.status_code,len(res.content),flush=True);res.raise_for_status()
+            im=Image.open(io.BytesIO(res.content)).convert('RGB')
+            if min(im.size)<650:raise RuntimeError('Category image too small: '+name+str(im.size))
+            cover=ImageOps.fit(im,(1000,1200),method=Image.Resampling.LANCZOS,centering=(.5,.45))
+            cover.save(p/name,'JPEG',quality=89,optimize=True)
+            if (p/name).stat().st_size<40000:raise RuntimeError('Category suspiciously tiny '+name)
+            print('PASS',name,im.size,(p/name).stat().st_size,flush=True)
+          assert len(list(p.glob('*-v2.jpg')))==9
+          PY
+      - name: Save all verified images in GitHub main
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/catalog/*-v2.jpg
+          if ! git diff --cached --quiet; then
+            git commit -m 'Add Dove packshots and individually selected category photography [skip ci]'
+            git push
+          fi
