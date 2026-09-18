@@ -1,0 +1,79 @@
+name: Refresh Dove and category images
+on:
+  push:
+    paths:
+      - .github/workflows/refresh-dove-and-category-photos.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install image tools
+        run: python3 -m pip install --quiet Pillow requests beautifulsoup4
+      - name: Download and validate distinct photographs
+        run: |
+          python3 - <<'PY'
+          import io, pathlib, requests, re, html
+          from PIL import Image,ImageOps,ImageDraw
+          from bs4 import BeautifulSoup
+          root=pathlib.Path('public/catalog');root.mkdir(parents=True,exist_ok=True)
+          session=requests.Session();session.headers.update({'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131.0 Safari/537.36'})
+          # Verified online product pages: 150 ml, 48-hour Go Fresh aerosols, not the different 72-hour/250 ml packaging.
+          dove={
+            'dove-apple-white-tea-v2.jpg':'https://www.asselti.ro/storage/photos/000/001/1463/ezgif-1-ade521e683.jpg',
+            'dove-cucumber-green-tea-v2.jpg':'https://bizweb.dktcdn.net/100/511/037/products/xit-khu-mui-dove-go-fresh-dua-leo-150ml-1716367336205.jpg?v=1724917143433',
+            'dove-grapefruit-lemongrass-v2.jpg':'https://luxplus.imgix.net/content/product/image/20055-9963-1669792431.jpg?auto=format%2Ccompress&fill=solid&fill-color=FFFFFF&fit=fillmax&h=1200&w=1200',
+          }
+          products={}
+          for filename,url in dove.items():
+            resp=session.get(url,timeout=50);resp.raise_for_status();im=Image.open(io.BytesIO(resp.content)).convert('RGB');print('Source',filename,im.size,len(resp.content))
+            if min(im.size)<480:raise RuntimeError('Refusing blurry product image '+filename)
+            # Preserve actual packaging without AI alterations, use generous whitespace around product.
+            canvas=Image.new('RGB',(1000,1200),'white');fit=im.copy();fit.thumbnail((940,1120),Image.Resampling.LANCZOS);canvas.paste(fit,((1000-fit.width)//2,(1200-fit.height)//2))
+            canvas.save(root/filename,'JPEG',quality=94,optimize=True,subsampling=0)
+            if (root/filename).stat().st_size<18000:raise RuntimeError('Image suspiciously tiny '+filename)
+            products[filename]=canvas
+            print('PASS',filename,canvas.size,(root/filename).stat().st_size)
+          # Unsplash License images, chosen by subject; download original photograph from each photo's canonical og:image.
+          unsplash={
+            'category-women-v2.jpg':'https://unsplash.com/photos/perfume-bottle-with-pink-petals-jmACQEf7T2A',
+            'category-men-v2.jpg':'https://unsplash.com/photos/black-and-gold-perfume-bottle-on-black-textile-_3cLB_mvVTw',
+            'category-unisex-v2.jpg':'https://unsplash.com/photos/clear-glass-perfume-bottle-on-white-textile-dOixlfJKmYc',
+            'category-kids-v2.jpg':'https://unsplash.com/photos/four-colorful-perfume-bottles-arranged-on-a-white-surface-uSB2w4xuX7s',
+            'category-oils-v2.jpg':'https://unsplash.com/photos/a-small-bottle-of-perfume-sitting-on-a-table-THSTJuBLnPo',
+          }
+          for filename,page in unsplash.items():
+            r=session.get(page,timeout=45);r.raise_for_status()
+            soup=BeautifulSoup(r.text,'html.parser');meta=soup.find('meta',attrs={'property':'og:image'})
+            if not meta or not meta.get('content'):raise RuntimeError('No Unsplash source image '+page)
+            url=html.unescape(meta['content']);print('Category source',filename,url[:135])
+            if 'images.unsplash.com/' not in url:raise RuntimeError('Unexpected photo host '+url[:150])
+            url=url.split('?')[0]+'?auto=format&fit=crop&w=1400&q=86'
+            img=session.get(url,timeout=55);img.raise_for_status();original=Image.open(io.BytesIO(img.content)).convert('RGB')
+            if min(original.size)<700:raise RuntimeError('Small category source '+filename+str(original.size))
+            cover=ImageOps.fit(original,(1000,1200),method=Image.Resampling.LANCZOS,centering=(.5,.48))
+            cover.save(root/filename,'JPEG',quality=90,optimize=True)
+            print('PASS',filename,cover.size,(root/filename).stat().st_size)
+          # Deodorant category: a distinct editorial composition from the real 150 ml Dove product photos.
+          bg=Image.new('RGB',(1000,1200),(237,246,243))
+          for i,fn in enumerate(dove):
+            im=products[fn]; im.thumbnail((480,820),Image.Resampling.LANCZOS)
+            x=[-85,260,565][i]; y=[220,130,235][i]
+            bg.paste(im,(x,y))
+          bg.save(root/'category-deodorants-v2.jpg','JPEG',quality=92,optimize=True)
+          print('PASS category-deodorants-v2.jpg',bg.size,(root/'category-deodorants-v2.jpg').stat().st_size)
+          expected=list(dove)+list(unsplash)+['category-deodorants-v2.jpg']
+          assert len(expected)==9 and all((root/x).exists() for x in expected)
+          PY
+      - name: Commit quality-checked photos to main
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/catalog/*-v2.jpg
+          if ! git diff --cached --quiet; then
+            git commit -m 'Add genuine Dove packshots and six distinct category covers [skip ci]'
+            git push
+          fi
