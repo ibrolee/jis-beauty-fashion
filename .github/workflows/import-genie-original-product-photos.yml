@@ -1,0 +1,73 @@
+name: Import Genie original product photographs
+on:
+  push:
+    paths:
+      - .github/workflows/import-genie-original-product-photos.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install image inspection dependencies
+        run: python3 -m pip install --quiet requests beautifulsoup4 pillow
+      - name: Retrieve exact product packshots from Genie supplier
+        run: |
+          python3 - <<'PY'
+          import io,pathlib,requests
+          from bs4 import BeautifulSoup
+          from PIL import Image
+          from urllib.parse import urljoin
+          s=requests.Session();s.headers.update({'User-Agent':'Mozilla/5.0 (compatible; product-catalog-image-import/1.0)'})
+          tag='https://giddyandclaire.com/product-tag/parfums-by-genie/'
+          r=s.get(tag,timeout=35); print('SUPPLIER CATALOG',r.status_code,len(r.content),flush=True);r.raise_for_status()
+          soup=BeautifulSoup(r.text,'html.parser')
+          links={}
+          for a in soup.select('a[href]'):
+            text=a.get_text(' ',strip=True).lower()
+            for variant in ('merlot','midnight exclusive'):
+              if ('genie parfums '+variant) in text and variant not in links: links[variant]=urljoin(tag,a['href'])
+          links.setdefault('merlot','https://giddyandclaire.com/product/genie-parfums-merlot-2/')
+          print('MATCHED LINKS',links,flush=True)
+          root=pathlib.Path('public/catalog');root.mkdir(parents=True,exist_ok=True)
+          for variant,filename in (('merlot','genie-merlot.webp'),('midnight exclusive','genie-midnight-exclusive.webp')):
+            if variant not in links: raise RuntimeError('Cannot find verified supplier page for '+variant)
+            page=s.get(links[variant],timeout=35);print('PAGE',variant,page.status_code,len(page.content),page.url,flush=True);page.raise_for_status()
+            html=BeautifulSoup(page.text,'html.parser');title=html.title.get_text(' ',strip=True) if html.title else ''
+            print('PAGE TITLE',title,flush=True)
+            if variant not in title.lower(): raise RuntimeError('Supplier page does not match '+variant)
+            candidates=[]
+            for a in html.select('.woocommerce-product-gallery__image a[href],a.woocommerce-main-image[href]'):
+              candidates.append(urljoin(page.url,a['href']))
+            for im in html.select('.woocommerce-product-gallery img, img.wp-post-image'):
+              if im.get('data-large_image'):candidates.append(urljoin(page.url,im['data-large_image']))
+              if im.get('data-src'):candidates.append(urljoin(page.url,im['data-src']))
+              if im.get('src'):candidates.append(urljoin(page.url,im['src']))
+            for tag in html.select('meta[property="og:image"],meta[name="twitter:image"]'):
+              if tag.get('content'):candidates.append(urljoin(page.url,tag['content']))
+            print('CANDIDATE IMAGES',variant,candidates[:10],flush=True)
+            image=None
+            for url in dict.fromkeys(candidates):
+              try:
+                response=s.get(url,timeout=35);response.raise_for_status()
+                img=Image.open(io.BytesIO(response.content));print('IMAGE',variant,img.size,len(response.content),url,flush=True)
+                if min(img.size)>=550:
+                  image=img.convert('RGB');break
+              except Exception as exc: print('IMAGE FAILED',str(exc)[:100],flush=True)
+            if image is None:raise RuntimeError('No usable verified supplier product image for '+variant)
+            image.save(root/filename,'WEBP',quality=89,method=6)
+            print('SAVED',filename,(root/filename).stat().st_size,flush=True)
+          assert all((root/x).is_file() for x in ('genie-merlot.webp','genie-midnight-exclusive.webp'))
+          PY
+      - name: Commit original photos to GitHub
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/catalog/genie-merlot.webp public/catalog/genie-midnight-exclusive.webp
+          git diff --cached --check
+          if ! git diff --cached --quiet; then
+            git commit -m 'Add genuine Genie Merlot and Midnight Exclusive supplier photos'
+            git push
+          fi
