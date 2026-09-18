@@ -1,0 +1,29 @@
+name: Apply prepared variant upgrade
+on:
+  push:
+    branches: [variants-image-upgrade]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Apply uploaded patch when available
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -f .github/variant-upgrade.patch.b64 ]]; then
+            echo "Waiting for upgrade payload"
+            exit 0
+          fi
+          base64 -d .github/variant-upgrade.patch.b64 | bzip2 -dc > /tmp/variant-upgrade.patch
+          patch --batch --fuzz=0 -p1 < /tmp/variant-upgrade.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm .github/variant-upgrade.patch.b64 .github/workflows/apply-variant-upgrade.yml
+          git add -A
+          git commit -m "Apply complete variant image upgrade [skip ci]"
+          git push origin HEAD:variants-image-upgrade
