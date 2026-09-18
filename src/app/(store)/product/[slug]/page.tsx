@@ -59,7 +59,6 @@ export default async function ProductPage({ params }: Props) {
     ["Longevity", product.longevity],
     ["Occasion", product.occasion],
     ["Category", product.categoryName],
-    ["SKU", product.sku],
   ];
 
   const jsonLd = {
