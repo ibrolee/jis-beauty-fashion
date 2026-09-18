@@ -1,0 +1,163 @@
+name: Fix variant layout and product editor
+on:
+  push:
+    paths:
+      - .github/workflows/fix-variant-layout-and-editor.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply targeted fixes and regression checks
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          def replace(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              n = text.count(old)
+              if n != 1: raise RuntimeError(f'{path}: expected exactly one match, found {n}: {old[:100]!r}')
+              p.write_text(text.replace(old, new, 1))
+
+          selection = Path('src/components/product/variant-selection.tsx')
+          text = selection.read_text()
+          assert 'export function VariantChoices' not in text
+          text = text.replace('import type { ProductDetail } from "@/types";', 'import type { ProductDetail } from "@/types";\nimport { cn, formatNaira } from "@/lib/utils";')
+          text += '''
+
+/** Shared option picker: above the gallery on phones, beside it on desktops. */
+export function VariantChoices({ product, onSelect }: { product: ProductDetail; onSelect?: () => void }) {
+  const { variant, selectVariant } = useVariantSelection();
+  if (!product.variants.length) return null;
+  return (
+    <fieldset className="min-w-0">
+      <legend className="mb-2 text-xs font-medium uppercase tracking-[0.14em] text-ink-soft">
+        Choose scent {variant && <span className="ml-1 normal-case tracking-normal text-stone">— {variant.name}</span>}
+      </legend>
+      <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar lg:flex-wrap lg:overflow-visible" aria-label="Available product options">
+        {product.variants.map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            onClick={() => {
+              selectVariant(option);
+              onSelect?.();
+            }}
+            aria-pressed={variant?.id === option.id}
+            disabled={option.stock <= 0}
+            className={cn(
+              "min-h-11 shrink-0 border px-3 py-2 text-left text-xs leading-snug transition-colors sm:text-sm disabled:cursor-not-allowed disabled:opacity-40 disabled:line-through",
+              variant?.id === option.id ? "border-ink bg-ink text-white" : "border-line bg-white hover:border-ink",
+            )}
+          >
+            <span className="block">{option.name}</span>
+            <span className="block pt-0.5 text-[11px] opacity-70">{formatNaira(option.salePrice !== null && option.salePrice < option.price ? option.salePrice : option.price)}</span>
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+'''
+          selection.write_text(text)
+
+          path = 'src/components/product/purchase-panel.tsx'
+          replace(path, 'import { useVariantSelection } from "./variant-selection";', 'import { VariantChoices, useVariantSelection } from "./variant-selection";')
+          replace(path, 'import { cn, formatNaira } from "@/lib/utils";', 'import { cn } from "@/lib/utils";')
+          p = Path(path)
+          text = p.read_text()
+          start = text.index('    <div className="space-y-6">')
+          end = text.index('      {/* Stock status */}', start)
+          old = text[start:end]
+          assert old.count('<fieldset>') == 1 and old.count('</fieldset>') == 1
+          new = '''    <div className="space-y-4 lg:space-y-5">
+      {variants.length > 0 && (
+        <div className="hidden lg:block">
+          <VariantChoices product={product} onSelect={() => setQuantity(1)} />
+        </div>
+      )}
+      <Price price={priceSource.price} salePrice={priceSource.salePrice} size="lg" />
+
+'''
+          text = text[:start] + new + text[end:]
+          assert text.count('quantity={quantity}') == 2
+          text = text.replace('  const priceSource = variant ?? product;', '  const priceSource = variant ?? product;\n  // Clamp the cart quantity if an option with lower stock is picked above the gallery.\n  const safeQuantity = Math.min(quantity, Math.max(1, stock));')
+          text = text.replace('value={quantity}', 'value={safeQuantity}')
+          text = text.replace('quantity={quantity}', 'quantity={safeQuantity}')
+          text = text.replace('disabled={soldOut || quantity >= stock}', 'disabled={soldOut || safeQuantity >= stock}')
+          p.write_text(text)
+
+          page = 'src/app/(store)/product/[slug]/page.tsx'
+          replace(page, 'import { VariantProductGallery, VariantSelectionProvider } from "@/components/product/variant-selection";', 'import { VariantChoices, VariantProductGallery, VariantSelectionProvider } from "@/components/product/variant-selection";')
+          replace(page, '<div className="container-x py-6 lg:py-10">', '<div className="container-x py-4 lg:py-8">')
+          replace(page, 'className="mb-6 flex items-center gap-1.5 text-xs text-stone"', 'className="mb-4 flex items-center gap-1.5 text-xs text-stone"')
+          replace(page, '''      <VariantSelectionProvider product={product}>
+      <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">''', '''      <VariantSelectionProvider product={product}>
+        {product.variants.length > 0 && (
+          <div className="mb-3 lg:hidden">
+            <VariantChoices product={product} />
+          </div>
+        )}
+      <div className="grid gap-5 lg:grid-cols-12 lg:gap-8">''')
+          replace(page, 'className="lg:sticky lg:top-28"', 'className="lg:sticky lg:top-24"')
+          replace(page, 'className="mt-2 font-serif text-4xl leading-[1.05] sm:text-5xl"', 'className="mt-1 font-serif text-3xl leading-[1.08] sm:text-4xl"')
+          replace(page, '''            <p className="mt-2 text-sm text-stone">
+              {product.volume} · {product.fragranceType}
+            </p>''', '''            {(product.volume || product.fragranceType) && (
+              <p className="mt-1 text-sm text-stone">
+                {[product.volume, product.fragranceType].filter(Boolean).join(" · ")}
+              </p>
+            )}
+            <div className="mt-4">
+              <PurchasePanel product={product} />
+            </div>''')
+          replace(page, '''
+            <div className="mt-7">
+              <PurchasePanel product={product} />
+            </div>''', '')
+          replace(page, 'className="mt-5 text-[15px] leading-relaxed text-ink-soft"', 'className="mt-4 text-[15px] leading-relaxed text-ink-soft"')
+
+          gallery = 'src/components/product/product-gallery.tsx'
+          replace(gallery, 'className="relative aspect-[4/5] w-full overflow-hidden bg-ivory"', 'className="relative h-[min(52svh,420px)] w-full overflow-hidden bg-ivory lg:aspect-[4/5] lg:h-auto"')
+          replace(gallery, 'className="object-cover animate-fade-in"', 'className="object-contain p-3 sm:p-5 animate-fade-in"')
+
+          admin = 'src/lib/actions/admin.ts'
+          replace(admin, '(/\\^https:\\/\\//.test(u) || u.startsWith("/images/"))', '(/\\^https:\\/\\//.test(u) || u.startsWith("/images/") || u.startsWith("/catalog/"))') if False else None
+          p = Path(admin)
+          text = p.read_text()
+          old = 'u.startsWith("/images/")'
+          assert text.count(old) == 1, 'Could not locate variant photo validation'
+          text = text.replace(old, '(u.startsWith("/images/") || u.startsWith("/catalog/"))')
+          p.write_text(text)
+
+          # Regression checks for existing Dove assets and shopper layout.
+          text = Path(admin).read_text()
+          assert 'u.startsWith("/catalog/")' in text
+          for filename in ['dove-apple-white-tea-v2.jpg','dove-cucumber-green-tea-v2.jpg','dove-grapefruit-lemongrass-v2.jpg']:
+              assert (Path('public/catalog') / filename).is_file(), filename
+          assert Path(page).read_text().count('<VariantChoices product={product} />') == 1
+          assert Path(path).read_text().count('<VariantChoices product={product} onSelect={() => setQuantity(1)} />') == 1
+          assert Path(path).read_text().count('quantity={safeQuantity}') == 2
+          assert 'lg:aspect-[4/5]' in Path(gallery).read_text()
+          print('PASS: mobile and desktop variant pickers, responsive gallery, quantity clamp and catalog photo validator')
+          PY
+          git diff --check
+      - name: Typecheck changes
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+          npm run typecheck
+      - name: Commit validated improvements on main
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/components/product/variant-selection.tsx src/components/product/purchase-panel.tsx src/components/product/product-gallery.tsx 'src/app/(store)/product/[slug]/page.tsx' src/lib/actions/admin.ts
+          if ! git diff --cached --quiet; then
+            git commit -m 'Bring scent picker beside product gallery and fix catalog image validation'
+            git push
+          fi
