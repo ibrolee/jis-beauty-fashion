@@ -75,7 +75,7 @@ export function QuickViewButton({ product }: { product: ProductListItem }) {
               <div className="mt-auto flex gap-2 pt-6">
                 {product.hasVariants ? (
                   <ButtonLink href={`/product/${product.slug}`} className="flex-1">
-                    Choose size
+                    Choose option
                   </ButtonLink>
                 ) : (
                   <AddToCartButton product={product} className="flex-1" />

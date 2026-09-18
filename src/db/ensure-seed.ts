@@ -5,19 +5,16 @@ import { seedDatabase } from "./seed";
 
 let seedPromise: Promise<void> | null = null;
 
-/**
- * Seeds demo data once per server process when the catalogue is empty.
- * Safe to call from any data-access function — it memoises the check.
- * Remove this call-site once you manage products through the admin panel.
- */
+/** Explicit opt-in for demo preview databases only. Never silently create fake inventory. */
 export function ensureSeeded(): Promise<void> {
+  if (process.env.ENABLE_DEMO_SEED !== "true") return Promise.resolve();
   if (!seedPromise) {
     seedPromise = (async () => {
       const [{ value }] = await db.select({ value: count() }).from(products);
       if (value === 0) await seedDatabase();
     })().catch((error) => {
       seedPromise = null;
-      console.error("Auto-seed failed:", error);
+      console.error("Demo seed failed:", error);
     });
   }
   return seedPromise;

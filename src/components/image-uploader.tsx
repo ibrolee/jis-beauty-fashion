@@ -6,6 +6,9 @@ import { useRef, useState } from "react";
 type ImageUploaderProps = {
   value: string[];
   onChange: (urls: string[]) => void;
+  /** Omit on option-specific uploaders: their URLs are included in variantsJson. */
+  name?: string | null;
+  maxImages?: number;
 };
 
 const ALLOWED_TYPES = [
@@ -19,6 +22,8 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 export function ImageUploader({
   value,
   onChange,
+  name = "images",
+  maxImages,
 }: ImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -69,6 +74,18 @@ export function ImageUploader({
         tokenData?.error ||
           "Could not create upload URL.",
       );
+    }
+
+    if (tokenData.uploadMode === "supabase") {
+      const form = new FormData();
+      form.append("file", file);
+      const uploadResponse = await fetch("/api/admin/upload", { method: "POST", credentials: "include", body: form });
+      const result = await uploadResponse.json();
+      if (!uploadResponse.ok || typeof result?.url !== "string") {
+        throw new Error(result?.error ?? "Image upload failed.");
+      }
+      setProgress(100);
+      return result.url as string;
     }
 
     const uploadUrl = tokenData.uploadUrl;
@@ -158,6 +175,9 @@ export function ImageUploader({
     setProgress(0);
 
     try {
+      if (maxImages !== undefined && value.length + files.length > maxImages) {
+        throw new Error(`Choose up to ${maxImages} photos. Remove an existing photo first if needed.`);
+      }
       let nextUrls = [...value];
 
       for (const file of Array.from(files)) {
@@ -244,12 +264,14 @@ export function ImageUploader({
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        disabled={uploading}
+        disabled={uploading || (maxImages !== undefined && value.length >= maxImages)}
         className="inline-flex min-h-12 w-full items-center justify-center border border-line px-4 text-xs font-medium uppercase tracking-[0.14em] transition-colors hover:border-ink disabled:cursor-not-allowed disabled:opacity-50"
       >
         {uploading
           ? `Uploading ${progress}%…`
-          : "Upload product photos"}
+          : maxImages !== undefined && value.length >= maxImages
+            ? `Photo limit reached (${maxImages})`
+            : "Upload product photos"}
       </button>
 
       <p className="text-xs leading-5 text-stone">
@@ -268,11 +290,7 @@ export function ImageUploader({
         </p>
       )}
 
-      <input
-        type="hidden"
-        name="images"
-        value={value.join("\n")}
-      />
+      {name !== null && <input type="hidden" name={name} value={value.join("\n")} />}
     </div>
   );
 }

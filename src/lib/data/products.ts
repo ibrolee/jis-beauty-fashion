@@ -31,7 +31,7 @@ const listColumns = {
   categoryName: categories.name,
   categorySlug: categories.slug,
   brandName: brands.name,
-  hasVariants: sql<boolean>`exists(select 1 from ${productVariants} where ${productVariants.productId} = ${products.id})`,
+  hasVariants: sql<boolean>`exists(select 1 from ${productVariants} where ${productVariants.productId} = ${products.id} and ${productVariants.isActive} = true)`,
 };
 
 function baseQuery() {
@@ -137,7 +137,7 @@ export async function getVariantsForProduct(productId: number): Promise<ProductV
   return db
     .select()
     .from(productVariants)
-    .where(eq(productVariants.productId, productId))
+    .where(and(eq(productVariants.productId, productId), eq(productVariants.isActive, true)))
     .orderBy(asc(productVariants.sortOrder), asc(productVariants.id));
 }
 
