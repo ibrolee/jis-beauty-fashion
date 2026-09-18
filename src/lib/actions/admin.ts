@@ -66,7 +66,7 @@ function parseVariants(raw: string | undefined): VariantInput[] {
     if (!name || name.length > 80 || !Number.isInteger(price) || price <= 0 || !Number.isInteger(stock) || stock < 0 ||
       (salePrice !== null && (!Number.isInteger(salePrice) || salePrice < 0 || salePrice >= price)) ||
       (id !== null && (!Number.isSafeInteger(id) || id <= 0)) || sku.length > 60 ||
-      !Array.isArray(images) || images.length > 12 || !images.every((u) => typeof u === "string" && u.length <= 2048 && (/^https:\/\//.test(u) || u.startsWith("/images/")))) {
+      !Array.isArray(images) || images.length > 12 || !images.every((u) => typeof u === "string" && u.length <= 2048 && (/^https:\/\//.test(u) || (u.startsWith("/images/") || u.startsWith("/catalog/"))))) {
       throw new Error(`Check name, price, sale price, stock and photos for variant ${index + 1}.`);
     }
     return { id, name, sku: sku || null, price, salePrice, stock, images: images as string[], sortOrder: index };
