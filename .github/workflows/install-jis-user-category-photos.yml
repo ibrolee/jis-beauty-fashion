@@ -1,0 +1,56 @@
+name: Install customer-selected category covers
+on:
+  push:
+    paths:
+      - .github/workflows/install-jis-user-category-photos.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install imaging dependency
+        run: python3 -m pip install --quiet pillow requests
+      - name: Import user-selected images and tailored missing-category photographs
+        run: |
+          python3 - <<'PY'
+          import io, pathlib, requests
+          from PIL import Image,ImageOps,ImageFilter
+          base='https://31093101-b0b2-4d58-ac87-2745ee5d9dd3.sandbox.floot.app'
+          assets={
+            'category-women-selected-20260918.jpg':'dfce016b-85ff-402e-9cad-676f4e0dbb93-jis-category-perfume-women.jpeg',
+            'category-oils-selected-20260918.jpg':'35c0d0a6-dabc-4995-8450-fc5ceb2d3569-jis-category-perfume-oils.jpeg',
+            'category-deodorants-selected-20260918.jpg':'dc9a579a-da78-4bab-9454-d4037b1e3226-jis-category-body-care.jpeg',
+            'category-gifts-selected-20260918.jpg':'ff6bddd0-49b4-42a4-96c2-50af404f3c5e-jis-category-gift-sets.jpeg',
+            'category-men-selected-20260918.jpg':'bc47767a-def7-49d6-9a57-7ca626d1b970.png',
+            'category-unisex-selected-20260918.jpg':'70b6b000-2cd2-4f42-ac89-5290352534de.png',
+            'category-kids-selected-20260918.jpg':'ba9d7b6c-f319-4641-9d52-74e772636529.png',
+          }
+          directory=pathlib.Path('public/catalog');directory.mkdir(parents=True,exist_ok=True)
+          for filename,remote in assets.items():
+            r=requests.get(base+'/_cdn/static/'+remote,timeout=70,headers={'User-Agent':'Mozilla/5.0'});print('DOWNLOAD',filename,r.status_code,len(r.content),flush=True);r.raise_for_status()
+            im=Image.open(io.BytesIO(r.content)).convert('RGB')
+            if min(im.size)<700:raise RuntimeError('Source too small: '+filename+' '+str(im.size))
+            if filename in {'category-women-selected-20260918.jpg','category-oils-selected-20260918.jpg','category-deodorants-selected-20260918.jpg','category-gifts-selected-20260918.jpg'}:
+              bg=ImageOps.fit(im,(1000,1250),method=Image.Resampling.LANCZOS).filter(ImageFilter.GaussianBlur(32))
+              foreground=im.copy();foreground.thumbnail((1000,1200),Image.Resampling.LANCZOS)
+              bg.paste(foreground,((1000-foreground.width)//2,(1250-foreground.height)//2))
+              cover=bg
+            else:
+              cover=ImageOps.fit(im,(1000,1250),method=Image.Resampling.LANCZOS)
+            target=directory/filename;cover.save(target,'JPEG',quality=90,optimize=True)
+            assert target.stat().st_size>40000,filename
+            print('PASS',filename,im.size,target.stat().st_size,flush=True)
+          assert len(assets)==7 and all((directory/k).exists() for k in assets)
+          PY
+      - name: Commit all seven photographs into website repository
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/catalog/*-selected-20260918.jpg
+          if ! git diff --cached --quiet; then
+            git commit -m 'Add selected JIS category photos and custom missing-category covers'
+            git push
+          fi
