@@ -2,7 +2,7 @@ import { ChevronRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { VariantProductGallery, VariantSelectionProvider } from "@/components/product/variant-selection";
+import { VariantChoices, VariantProductGallery, VariantSelectionProvider } from "@/components/product/variant-selection";
 import { ProductRail } from "@/components/product/product-grid";
 import { PurchasePanel } from "@/components/product/purchase-panel";
 import { ReviewForm, ReviewList } from "@/components/product/reviews";
@@ -83,10 +83,10 @@ export default async function ProductPage({ params }: Props) {
   };
 
   return (
-    <div className="container-x py-6 lg:py-10">
+    <div className="container-x py-4 lg:py-8">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-1.5 text-xs text-stone">
+      <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-1.5 text-xs text-stone">
         <Link href="/" className="hover:text-ink">Home</Link>
         <ChevronRight className="h-3 w-3" aria-hidden />
         <Link href="/shop" className="hover:text-ink">Shop</Link>
@@ -97,18 +97,28 @@ export default async function ProductPage({ params }: Props) {
       </nav>
 
       <VariantSelectionProvider product={product}>
-      <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+        {product.variants.length > 0 && (
+          <div className="mb-3 lg:hidden">
+            <VariantChoices product={product} />
+          </div>
+        )}
+      <div className="grid gap-5 lg:grid-cols-12 lg:gap-8">
         <div className="lg:col-span-7">
           <VariantProductGallery product={product} badges={badges} />
         </div>
 
         <div className="lg:col-span-5">
-          <div className="lg:sticky lg:top-28">
+          <div className="lg:sticky lg:top-24">
             {product.brandName && <p className="eyebrow">{product.brandName}</p>}
-            <h1 className="mt-2 font-serif text-4xl leading-[1.05] sm:text-5xl">{product.name}</h1>
-            <p className="mt-2 text-sm text-stone">
-              {product.volume} · {product.fragranceType}
-            </p>
+            <h1 className="mt-1 font-serif text-3xl leading-[1.08] sm:text-4xl">{product.name}</h1>
+            {(product.volume || product.fragranceType) && (
+              <p className="mt-1 text-sm text-stone">
+                {[product.volume, product.fragranceType].filter(Boolean).join(" · ")}
+              </p>
+            )}
+            <div className="mt-4">
+              <PurchasePanel product={product} />
+            </div>
             <div className="mt-3 flex items-center gap-3">
               {product.reviewCount > 0 ? (
                 <a href="#reviews" className="inline-flex items-center gap-2 text-sm hover:underline">
@@ -119,11 +129,8 @@ export default async function ProductPage({ params }: Props) {
                 <a href="#reviews" className="text-sm text-stone hover:underline">No reviews yet</a>
               )}
             </div>
-            {product.shortDescription && <p className="mt-5 text-[15px] leading-relaxed text-ink-soft">{product.shortDescription}</p>}
+            {product.shortDescription && <p className="mt-4 text-[15px] leading-relaxed text-ink-soft">{product.shortDescription}</p>}
 
-            <div className="mt-7">
-              <PurchasePanel product={product} />
-            </div>
           </div>
         </div>
       </div>

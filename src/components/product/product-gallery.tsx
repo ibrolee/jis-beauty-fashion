@@ -11,9 +11,9 @@ export function ProductGallery({ images, name, badges }: { images: string[]; nam
 
   return (
     <div className="flex flex-col gap-3 lg:flex-row-reverse lg:gap-4">
-      <div className="relative aspect-[4/5] w-full overflow-hidden bg-ivory">
+      <div className="relative h-[min(52svh,420px)] w-full overflow-hidden bg-ivory lg:aspect-[4/5] lg:h-auto">
         {list[active] ? (
-          <Image key={list[active]} src={list[active]} alt={`${name} — image ${active + 1}`} fill priority sizes="(min-width: 1024px) 55vw, 100vw" className="object-cover animate-fade-in" />
+          <Image key={list[active]} src={list[active]} alt={`${name} — image ${active + 1}`} fill priority sizes="(min-width: 1024px) 55vw, 100vw" className="object-contain p-3 sm:p-5 animate-fade-in" />
         ) : (
           <div className="flex h-full items-center justify-center text-xs uppercase tracking-widest text-mist">No image</div>
         )}
