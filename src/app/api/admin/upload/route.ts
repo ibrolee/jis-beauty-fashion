@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   issueSignedToken,
   presignUrl,
@@ -22,6 +23,44 @@ export async function POST(request: Request) {
         { error: "Unauthorized" },
         { status: 401 },
       );
+    }
+
+    // Supabase Storage is an alternative to Vercel Blob. The service role key
+    // never leaves this protected server route; the browser only receives public URLs.
+    if (request.headers.get("content-type")?.includes("multipart/form-data")) {
+      const url = process.env.SUPABASE_URL;
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "product-images";
+      if (!url || !serviceKey || !/^[a-z0-9][a-z0-9_-]{1,62}$/i.test(bucket)) {
+        return NextResponse.json({ error: "Supabase Storage is not configured correctly." }, { status: 503 });
+      }
+      const data = await request.formData();
+      const file = data.get("file");
+      if (!(file instanceof File) || !ALLOWED_CONTENT_TYPES.includes(file.type) || file.size <= 0 || file.size > MAX_FILE_SIZE) {
+        return NextResponse.json({ error: "Choose a JPG, PNG or WebP image under 10MB." }, { status: 400 });
+      }
+      const buffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      const jpeg = bytes.length > 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+      const png = bytes.length > 8 && [137,80,78,71,13,10,26,10].every((v,i) => bytes[i] === v);
+      const webp = bytes.length > 12 && String.fromCharCode(...bytes.slice(0,4)) === "RIFF" && String.fromCharCode(...bytes.slice(8,12)) === "WEBP";
+      if (!((file.type === "image/jpeg" && jpeg) || (file.type === "image/png" && png) || (file.type === "image/webp" && webp))) {
+        return NextResponse.json({ error: "The file does not match its image type." }, { status: 400 });
+      }
+      const extension = file.type === "image/jpeg" ? "jpg" : file.type === "image/png" ? "png" : "webp";
+      const pathname = `products/${randomUUID()}.${extension}`;
+      const origin = new URL(url).origin;
+      const path = `${encodeURIComponent(bucket)}/${pathname}`;
+      const uploaded = await fetch(`${origin}/storage/v1/object/${path}`, {
+        method: "POST",
+        headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, "Content-Type": file.type, "x-upsert": "false" },
+        body: buffer,
+      });
+      if (!uploaded.ok) {
+        console.error("Supabase Storage upload failed", uploaded.status, await uploaded.text());
+        return NextResponse.json({ error: "Image upload failed. Check that the public product-images bucket exists." }, { status: 502 });
+      }
+      return NextResponse.json({ url: `${origin}/storage/v1/object/public/${path}` });
     }
 
     const body = await request.json();
@@ -64,7 +103,10 @@ export async function POST(request: Request) {
     const storeId = process.env.Images_STORE_ID;
 
     if (!storeId) {
-      throw new Error("Images_STORE_ID is not configured.");
+      if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        return NextResponse.json({ uploadMode: "supabase" });
+      }
+      return NextResponse.json({ error: "Configure Supabase Storage or Vercel Blob before uploading photos." }, { status: 503 });
     }
 
     const validUntil = Date.now() + 15 * 60 * 1000;

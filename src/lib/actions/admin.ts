@@ -31,30 +31,51 @@ import type { ActionState } from "@/types";
 /* -------------------------------------------------------------------------- */
 
 function parseImages(raw: string | undefined): string[] {
-  // INTEGRATION POINT: swap this for uploaded file URLs once storage
-  // (Cloudinary / S3 / UploadThing) is connected — see src/lib/storage.ts.
+  // Product and option photos are uploaded via /api/admin/upload and saved as URLs.
   return (raw ?? "")
     .split(/[\n,]+/)
     .map((s) => s.trim())
     .filter(Boolean);
 }
 
-function parseVariants(raw: string | undefined) {
-  return (raw ?? "")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line, index) => {
-      const [name, price, salePrice, stock] = line.split("|").map((s) => s.trim());
-      return {
-        name,
-        price: Number(price) || 0,
-        salePrice: salePrice ? Number(salePrice) || null : null,
-        stock: Number(stock) || 0,
-        sortOrder: index,
-      };
-    })
-    .filter((v) => v.name && v.price > 0);
+type VariantInput = {
+  id: number | null;
+  name: string;
+  sku: string | null;
+  price: number;
+  salePrice: number | null;
+  stock: number;
+  images: string[];
+  sortOrder: number;
+};
+
+function parseVariants(raw: string | undefined): VariantInput[] {
+  if (!raw?.trim()) return [];
+  const data: unknown = JSON.parse(raw);
+  if (!Array.isArray(data) || data.length > 40) throw new Error("Add at most 40 variants.");
+  const result: VariantInput[] = data.map((entry: unknown, index) => {
+    if (!entry || typeof entry !== "object") throw new Error(`Variant ${index + 1} is invalid.`);
+    const v = entry as Record<string, unknown>;
+    const name = typeof v.name === "string" ? v.name.trim() : "";
+    const sku = typeof v.sku === "string" ? v.sku.trim() : "";
+    const id = v.id === null || v.id === undefined ? null : Number(v.id);
+    const price = Number(v.price);
+    const salePrice = v.salePrice === "" || v.salePrice === null || v.salePrice === undefined ? null : Number(v.salePrice);
+    const stock = Number(v.stock);
+    const images = v.images;
+    if (!name || name.length > 80 || !Number.isInteger(price) || price <= 0 || !Number.isInteger(stock) || stock < 0 ||
+      (salePrice !== null && (!Number.isInteger(salePrice) || salePrice < 0 || salePrice >= price)) ||
+      (id !== null && (!Number.isSafeInteger(id) || id <= 0)) || sku.length > 60 ||
+      !Array.isArray(images) || images.length > 12 || !images.every((u) => typeof u === "string" && u.length <= 2048 && (/^https:\/\//.test(u) || u.startsWith("/images/")))) {
+      throw new Error(`Check name, price, sale price, stock and photos for variant ${index + 1}.`);
+    }
+    return { id, name, sku: sku || null, price, salePrice, stock, images: images as string[], sortOrder: index };
+  });
+  const ids = result.map((v) => v.id).filter((id): id is number => id !== null);
+  if (new Set(ids).size !== ids.length) throw new Error("A variant was submitted twice.");
+  const names = result.map((v) => v.name.toLocaleLowerCase());
+  if (new Set(names).size !== names.length) throw new Error("Give each option a different name (for example, Merlot · 100ml).");
+  return result;
 }
 
 async function resolveBrandId(name: string | undefined): Promise<number | null> {
@@ -76,17 +97,18 @@ export async function saveProductAction(_prev: ActionState, formData: FormData):
   if (!parsed.success) return { error: "Please fix the highlighted fields.", fieldErrors: fieldErrorsFrom(parsed.error) };
 
   const d = parsed.data;
-const slug = slugify(d.slug || d.name);
-const brandId = await resolveBrandId(d.brandName);
-
-const sku =
-  d.sku?.trim() ||
-  `JIS-${Date.now().toString(36).toUpperCase()}-${crypto
-    .randomUUID()
-    .slice(0, 6)
-    .toUpperCase()}`;
+  const slug = slugify(d.slug || d.name);
+  const brandId = await resolveBrandId(d.brandName);
+  const existingSku = id ? await db.select({ sku: products.sku }).from(products).where(eq(products.id, id)).limit(1) : [];
+  const sku = d.sku?.trim() || existingSku[0]?.sku ||
+    `JIS-${Date.now().toString(36).toUpperCase()}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
   const images = parseImages(d.images);
-  const variants = parseVariants(d.variants);
+  let variants: VariantInput[];
+  try {
+    variants = parseVariants(d.variantsJson);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Invalid variants.", fieldErrors: { variantsJson: "Please check your variants." } };
+  }
 
   const values = {
     name: d.name,
@@ -98,8 +120,8 @@ const sku =
     description: d.description,
     price: d.price,
     salePrice: d.salePrice && d.salePrice > 0 ? d.salePrice : null,
-    stock: d.stock,
-    images,
+    stock: variants.length ? variants.reduce((sum, v) => sum + v.stock, 0) : d.stock,
+    images: images.length ? images : variants.find((v) => v.images.length > 0)?.images ?? [],
     gender: d.gender,
     fragranceType: d.fragranceType || null,
     volume: d.volume || null,
@@ -119,14 +141,30 @@ const sku =
     await db.transaction(async (tx) => {
       let productId = id;
       if (productId) {
+        const [found] = await tx.select({ id: products.id }).from(products).where(eq(products.id, productId)).limit(1);
+        if (!found) throw new Error("Product no longer exists.");
         await tx.update(products).set(values).where(eq(products.id, productId));
       } else {
         const [row] = await tx.insert(products).values(values).returning({ id: products.id });
         productId = row.id;
       }
-      await tx.delete(productVariants).where(eq(productVariants.productId, productId));
-      if (variants.length) {
-        await tx.insert(productVariants).values(variants.map((v) => ({ ...v, productId: productId as number })));
+      // Keep old variant rows (and IDs referenced by historic orders) rather than deleting them.
+      const existing = await tx.select().from(productVariants).where(eq(productVariants.productId, productId));
+      const existingById = new Map(existing.map((v) => [v.id, v]));
+      for (const variant of variants) {
+        const { id: variantId, ...details } = variant;
+        if (variantId !== null) {
+          if (!existingById.has(variantId)) throw new Error("A variant does not belong to this product.");
+          await tx.update(productVariants).set({ ...details, isActive: true }).where(eq(productVariants.id, variantId));
+        } else {
+          await tx.insert(productVariants).values({ ...details, productId: productId as number });
+        }
+      }
+      const submittedIds = new Set(variants.map((v) => v.id));
+      for (const old of existing) {
+        if (!submittedIds.has(old.id)) {
+          await tx.update(productVariants).set({ isActive: false, stock: 0 }).where(eq(productVariants.id, old.id));
+        }
       }
     });
   } catch (error) {
@@ -176,11 +214,14 @@ export async function updateOrderAction(_prev: ActionState, formData: FormData):
     // Restore reserved stock when an order is cancelled.
     if (status === "cancelled" && order.status !== "cancelled") {
       for (const item of order.items) {
-        if (item.productId) {
-          await tx.update(products).set({ stock: sql`${products.stock} + ${item.quantity}` }).where(eq(products.id, item.productId));
-        }
         if (item.variantId) {
+          const [variant] = await tx.select({ isActive: productVariants.isActive }).from(productVariants).where(eq(productVariants.id, item.variantId));
           await tx.update(productVariants).set({ stock: sql`${productVariants.stock} + ${item.quantity}` }).where(eq(productVariants.id, item.variantId));
+          if (variant?.isActive && item.productId) {
+            await tx.update(products).set({ stock: sql`${products.stock} + ${item.quantity}` }).where(eq(products.id, item.productId));
+          }
+        } else if (item.productId) {
+          await tx.update(products).set({ stock: sql`${products.stock} + ${item.quantity}` }).where(eq(products.id, item.productId));
         }
       }
     }

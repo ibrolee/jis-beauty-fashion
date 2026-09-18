@@ -1,6 +1,6 @@
 "use server";
 
-import { eq, inArray, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { addresses, coupons, orderItems, orders, payments, productVariants, products } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -54,8 +54,13 @@ export async function placeOrder(rawInput: CheckoutInput): Promise<PlaceOrderRes
     if (!product || !product.isActive) return { ok: false, error: "One of the items in your cart is no longer available. Please review your cart." };
 
     const variant = item.variantId ? variantMap.get(item.variantId) : undefined;
-    if (item.variantId && (!variant || variant.productId !== product.id)) {
-      return { ok: false, error: `The selected size for ${product.name} is no longer available.` };
+    if (item.variantId && (!variant || variant.productId !== product.id || !variant.isActive)) {
+      return { ok: false, error: `The selected option for ${product.name} is no longer available.` };
+    }
+    if (!item.variantId) {
+      const [option] = await db.select({ id: productVariants.id }).from(productVariants)
+        .where(sql`${productVariants.productId} = ${product.id} AND ${productVariants.isActive} = true`).limit(1);
+      if (option) return { ok: false, error: `Please select an option for ${product.name}.` };
     }
     const available = variant ? variant.stock : product.stock;
     if (available < item.quantity) {
@@ -71,7 +76,7 @@ export async function placeOrder(rawInput: CheckoutInput): Promise<PlaceOrderRes
       name: product.name,
       variantName: variant?.name ?? null,
       sku: variant?.sku ?? product.sku,
-      image: product.images[0] ?? null,
+      image: variant?.images[0] ?? product.images[0] ?? null,
       unitPrice,
       quantity: item.quantity,
       lineTotal: unitPrice * item.quantity,
@@ -99,7 +104,9 @@ export async function placeOrder(rawInput: CheckoutInput): Promise<PlaceOrderRes
   const providerId = input.paymentMethod === "paystack" ? "paystack" : "manual";
 
   /* ------------------------------ Persist order ------------------------------ */
-  const orderId = await db.transaction(async (tx) => {
+  let orderId: number;
+  try {
+    orderId = await db.transaction(async (tx) => {
     const [order] = await tx
       .insert(orders)
       .values({
@@ -127,15 +134,20 @@ export async function placeOrder(rawInput: CheckoutInput): Promise<PlaceOrderRes
 
     await tx.insert(orderItems).values(lines.map((l) => ({ ...l, orderId: order.id })));
 
-    // Reserve stock immediately to avoid overselling. Restored if the order is cancelled (admin action).
+    // Atomic conditional deductions prevent concurrent purchases from overselling.
     for (const l of lines) {
       if (l.variantId) {
-        await tx.update(productVariants).set({ stock: sql`${productVariants.stock} - ${l.quantity}` }).where(eq(productVariants.id, l.variantId));
+        const [reservedVariant] = await tx.update(productVariants)
+          .set({ stock: sql`${productVariants.stock} - ${l.quantity}` })
+          .where(and(eq(productVariants.id, l.variantId), eq(productVariants.isActive, true), gte(productVariants.stock, l.quantity)))
+          .returning({ id: productVariants.id });
+        if (!reservedVariant) throw new Error("OUT_OF_STOCK");
       }
-      await tx
-        .update(products)
-        .set({ stock: sql`GREATEST(${products.stock} - ${l.quantity}, 0)`, salesCount: sql`${products.salesCount} + ${l.quantity}` })
-        .where(eq(products.id, l.productId));
+      const [reservedProduct] = await tx.update(products)
+        .set({ stock: sql`${products.stock} - ${l.quantity}`, salesCount: sql`${products.salesCount} + ${l.quantity}` })
+        .where(and(eq(products.id, l.productId), eq(products.isActive, true), gte(products.stock, l.quantity)))
+        .returning({ id: products.id });
+      if (!reservedProduct) throw new Error("OUT_OF_STOCK");
     }
 
     if (couponId) {
@@ -159,7 +171,14 @@ export async function placeOrder(rawInput: CheckoutInput): Promise<PlaceOrderRes
     }
 
     return order.id;
-  });
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "OUT_OF_STOCK") {
+      return { ok: false, error: "An item just sold out or its available stock changed. Please review your bag and try again." };
+    }
+    console.error("Order creation failed:", error);
+    return { ok: false, error: "We couldn't place your order. Please try again." };
+  }
 
   /* ------------------------- Confirmation email (best effort) ------------------------- */
   void sendEmail({

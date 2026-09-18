@@ -27,8 +27,8 @@ export function AddToCartButton({ product, variant = null, quantity = 1, size = 
   const router = useRouter();
 
   const stock = variant ? variant.stock : product.stock;
-  const soldOut = stock <= 0;
   const needsSelection = Boolean(product.hasVariants) && !variant;
+  const soldOut = stock <= 0 && !needsSelection;
 
   function handleClick() {
     if (needsSelection) {
@@ -44,7 +44,7 @@ export function AddToCartButton({ product, variant = null, quantity = 1, size = 
         name: product.name,
         variantName: variant?.name ?? null,
         brandName: product.brandName ?? null,
-        image: product.images[0] ?? "",
+        image: variant?.images[0] ?? product.images[0] ?? "",
         price: effectivePrice(priceSource),
         compareAtPrice: isOnSale(priceSource) ? priceSource.price : null,
         maxStock: stock,
@@ -61,7 +61,7 @@ export function AddToCartButton({ product, variant = null, quantity = 1, size = 
   return (
     <Button type="button" onClick={handleClick} disabled={soldOut} size={size} variant={appearance} className={className} aria-label={soldOut ? `${product.name} is sold out` : undefined}>
       {!buyNow && <ShoppingBag className="h-4 w-4" aria-hidden />}
-      {soldOut ? "Sold out" : (label ?? (needsSelection ? "Select size" : buyNow ? "Buy now" : "Add to bag"))}
+      {soldOut ? "Sold out" : (label ?? (needsSelection ? "Choose option" : buyNow ? "Buy now" : "Add to bag"))}
     </Button>
   );
 }

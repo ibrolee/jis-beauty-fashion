@@ -171,7 +171,7 @@ export function CartView() {
                       <h3 className="font-serif text-xl leading-tight">
                         <Link href={`/product/${item.slug}`} className="hover:text-rosewood">{item.name}</Link>
                       </h3>
-                      {item.variantName && <p className="mt-0.5 text-xs text-stone">Size: {item.variantName}</p>}
+                      {item.variantName && <p className="mt-0.5 text-xs text-stone">Option: {item.variantName}</p>}
                     </div>
                     <button type="button" onClick={() => removeItem(item.key)} className="-mr-2 flex h-9 w-9 shrink-0 items-center justify-center text-stone hover:text-ink" aria-label={`Remove ${item.name}`}>
                       <X className="h-4 w-4" />

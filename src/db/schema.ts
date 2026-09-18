@@ -227,6 +227,8 @@ export const productVariants = pgTable("product_variants", {
   price: integer("price").notNull(),
   salePrice: integer("sale_price"),
   stock: integer("stock").notNull().default(0),
+  images: jsonb("images").$type<string[]>().notNull().default([]),
+  isActive: boolean("is_active").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
 });
 

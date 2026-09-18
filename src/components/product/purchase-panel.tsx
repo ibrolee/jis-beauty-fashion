@@ -5,14 +5,14 @@ import { useState } from "react";
 import { Price } from "@/components/ui/price";
 import { SITE } from "@/lib/constants";
 import { cn, formatNaira } from "@/lib/utils";
-import type { ProductVariant } from "@/db/schema";
 import type { ProductDetail } from "@/types";
 import { AddToCartButton } from "./add-to-cart-button";
 import { WishlistButton } from "./wishlist-button";
+import { useVariantSelection } from "./variant-selection";
 
 export function PurchasePanel({ product }: { product: ProductDetail }) {
   const variants = product.variants;
-  const [variant, setVariant] = useState<ProductVariant | null>(() => variants.find((v) => v.stock > 0) ?? variants[0] ?? null);
+  const { variant, selectVariant } = useVariantSelection();
   const [quantity, setQuantity] = useState(1);
 
   const stock = variant ? variant.stock : product.stock;
@@ -27,7 +27,7 @@ export function PurchasePanel({ product }: { product: ProductDetail }) {
       {variants.length > 0 && (
         <fieldset>
           <legend className="mb-2 text-xs font-medium uppercase tracking-[0.14em] text-ink-soft">
-            Size {variant && <span className="ml-1 text-stone">— {variant.name}</span>}
+            Choose option {variant && <span className="ml-1 text-stone">— {variant.name}</span>}
           </legend>
           <div className="flex flex-wrap gap-2">
             {variants.map((v) => (
@@ -35,7 +35,7 @@ export function PurchasePanel({ product }: { product: ProductDetail }) {
                 key={v.id}
                 type="button"
                 onClick={() => {
-                  setVariant(v);
+                  selectVariant(v);
                   setQuantity(1);
                 }}
                 aria-pressed={variant?.id === v.id}

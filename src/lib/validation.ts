@@ -338,11 +338,7 @@ export const productSchema = z.object({
    * "50ml | 26500 | 24000 | 20"
    * name | price | salePrice? | stock
    */
-  variants: z
-    .string()
-    .trim()
-    .optional()
-    .or(z.literal("")),
+  variantsJson: z.string().max(120000).optional().or(z.literal("")),
 });
 
 export const couponSchema = z.object({

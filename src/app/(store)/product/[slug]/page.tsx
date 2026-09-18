@@ -2,7 +2,7 @@ import { ChevronRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ProductGallery } from "@/components/product/product-gallery";
+import { VariantProductGallery, VariantSelectionProvider } from "@/components/product/variant-selection";
 import { ProductRail } from "@/components/product/product-grid";
 import { PurchasePanel } from "@/components/product/purchase-panel";
 import { ReviewForm, ReviewList } from "@/components/product/reviews";
@@ -68,7 +68,7 @@ export default async function ProductPage({ params }: Props) {
     name: product.name,
     description: product.shortDescription ?? product.description,
     sku: product.sku,
-    image: product.images.map((i) => absoluteUrl(i)),
+    image: [...product.images, ...product.variants.flatMap((v) => v.images)].map((i) => absoluteUrl(i)),
     brand: product.brandName ? { "@type": "Brand", name: product.brandName } : undefined,
     category: product.categoryName,
     offers: {
@@ -97,9 +97,10 @@ export default async function ProductPage({ params }: Props) {
         <span className="truncate text-ink" aria-current="page">{product.name}</span>
       </nav>
 
+      <VariantSelectionProvider product={product}>
       <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
         <div className="lg:col-span-7">
-          <ProductGallery images={product.images} name={product.name} badges={badges} />
+          <VariantProductGallery product={product} badges={badges} />
         </div>
 
         <div className="lg:col-span-5">
@@ -127,6 +128,8 @@ export default async function ProductPage({ params }: Props) {
           </div>
         </div>
       </div>
+
+      </VariantSelectionProvider>
 
       {/* Details */}
       <div className="mt-16 grid gap-12 border-t border-line pt-12 lg:mt-24 lg:grid-cols-12 lg:pt-16">

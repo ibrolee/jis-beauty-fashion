@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 
 import { ImageUploader } from "@/components/image-uploader";
+import { VariantEditor } from "@/components/admin/variant-editor";
 import { Button } from "@/components/ui/button";
 import {
   Checkbox,
@@ -298,7 +299,7 @@ export function ProductForm({
               label="Product photos"
               htmlFor="images"
               error={fe.images}
-              hint="Upload photos directly from your phone. The first image becomes the main product image."
+              hint="Main product photos. Below, each variant can have its own photos uploaded separately."
               className="min-w-0"
             >
               <div className="min-w-0 max-w-full">
@@ -310,28 +311,12 @@ export function ProductForm({
             </Field>
 
             <Field
-              label="Size variants"
-              htmlFor="variants"
-              error={fe.variants}
-              hint="Optional. One per line: name | price | sale price | stock"
+              label="Product options & individual photos"
+              htmlFor="variantsJson"
+              error={fe.variantsJson}
               className="min-w-0"
             >
-              <Textarea
-                id="variants"
-                name="variants"
-                defaultValue={(
-                  product?.variants ?? []
-                )
-                  .map(
-                    (variant) =>
-                      `${variant.name} | ${variant.price} | ${
-                        variant.salePrice ?? ""
-                      } | ${variant.stock}`,
-                  )
-                  .join("\n")}
-                className="min-h-[80px] w-full max-w-full font-mono text-xs"
-                placeholder="50ml | 26500 | | 20"
-              />
+              <VariantEditor variants={product?.variants ?? []} />
             </Field>
           </section>
 
@@ -429,7 +414,7 @@ export function ProductForm({
             </Field>
 
             <Field
-              label="Stock"
+              label="Stock (for products without options)"
               htmlFor="stock"
               error={fe.stock}
               required
