@@ -1,0 +1,72 @@
+name: Add Incidence catalog photography
+on:
+  push:
+    paths:
+      - .github/workflows/add-incidence-product-images.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  incidence-images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare image editor
+        run: python3 -m pip install --quiet Pillow
+      - name: Download full-resolution manufacturer photo and make two storefront compositions
+        env:
+          SOURCE_URL: 'https://sistelleetcyrus.com/cdn/shop/files/Incidence_-Sistelle_packshot-Photoroom.jpg?v=1721810573&width=2000'
+        run: |
+          python3 - <<'PY'
+          import os, io, pathlib, urllib.request
+          from PIL import Image, ImageDraw, ImageFont, ImageFilter
+          u=os.environ['SOURCE_URL'];req=urllib.request.Request(u,headers={'User-Agent':'Mozilla/5.0 (compatible; JISProductCatalog/1.0)'})
+          data=urllib.request.urlopen(req,timeout=70).read();source=Image.open(io.BytesIO(data)).convert('RGB')
+          print('Manufacturer original:',source.size,'bytes:',len(data))
+          if min(source.size)<700 or len(data)<30000: raise RuntimeError('Source image is too low resolution for product page; refusing to publish blurry images')
+          root=pathlib.Path('public/catalog');root.mkdir(parents=True,exist_ok=True)
+          regular='/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
+          bold='/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
+          def font(size,heavy=False):return ImageFont.truetype(bold if heavy else regular,size)
+          def gradient(a,b,w=1500,h=1800):
+              im=Image.new('RGB',(w,h));d=ImageDraw.Draw(im)
+              for y in range(h):
+                  t=y/(h-1);c=tuple(round(a[i]*(1-t)+b[i]*t) for i in range(3));d.line((0,y,w,y),fill=c)
+              return im
+          def fit(image,size):
+              im=image.copy();im.thumbnail(size,Image.Resampling.LANCZOS);return im
+          def save(im,name):
+              target=root/name;im.save(target,'JPEG',quality=94,subsampling=0,optimize=True)
+              chk=Image.open(target)
+              if chk.size!=(1500,1800) or target.stat().st_size<80000:raise RuntimeError('Export quality check failed: '+str(target)+' '+str(target.stat().st_size))
+              print('PASS',target,chk.size,target.stat().st_size,'bytes')
+          # Image 1: entire genuine bottle and box, premium editorial frame.
+          a=gradient((252,247,247),(240,211,224));d=ImageDraw.Draw(a)
+          d.rounded_rectangle((88,105,1412,1455),radius=36,fill=(255,255,255))
+          p=fit(source,(1200,1210));a.paste(p,((1500-p.width)//2,165+(1190-p.height)//2))
+          d=ImageDraw.Draw(a)
+          d.text((135,1505),'SISTELLE PARIS',font=font(32),fill=(115,80,98))
+          d.text((130,1560),'INCIDENCE',font=font(80,True),fill=(75,48,63))
+          d.text((135,1680),'EAU DE PARFUM  /  100 ML',font=font(32),fill=(115,80,98))
+          save(a,'incidence-paris-100ml-hero.jpg')
+          # Image 2: a clean close-up on the real bottle; preserve its branding and shape.
+          w,h=source.size
+          bottle=source.crop((round(w*.51),0,w,h))
+          b=gradient((255,251,252),(246,232,238));d=ImageDraw.Draw(b)
+          d.rounded_rectangle((88,105,1412,1460),radius=38,fill=(255,255,255))
+          close=fit(bottle,(1200,1260));b.paste(close,((1500-close.width)//2,130+(1280-close.height)//2))
+          d=ImageDraw.Draw(b)
+          d.text((130,1530),'THE BOTTLE',font=font(30),fill=(141,92,115))
+          d.text((128,1585),'INCIDENCE',font=font(74,True),fill=(75,48,63))
+          d.text((135,1690),'SISTELLE PARIS  ·  100 ML',font=font(29),fill=(115,80,98))
+          save(b,'incidence-paris-100ml-bottle.jpg')
+          PY
+      - name: Commit verified high-resolution product images
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/catalog/incidence-paris-100ml-*.jpg
+          if ! git diff --cached --quiet; then
+            git commit -m 'Add two high-resolution Incidence catalog images [skip ci]'
+            git push
+          fi
