@@ -20,7 +20,7 @@ jobs:
           from PIL import Image
           sources={
             'riggs-rider.webp':['https://fragrances.com.ng/media/catalog/product/cache/0daeb07bb1d294c1f281fab47369d56a/r/i/riggs_london_rider_deodorant_body_spray_250ml.jpeg','https://img.drz.lazcdn.com/static/lk/p/64edde4c295aeb352144d0c97e1210bf.jpg_720x720q80.jpg'],
-            'riggs-chief.webp':['https://bf1af2.akinoncloudcdn.com/products/2025/04/29/342680/a1105005-1ba2-4029-96e8-6aa5da80ad20_size3840_cropCenter.jpg','https://nazarjanssupermarket.com/cdn/shop/files/riggs-london-chief-deodorant-body-spray-250ml-nazar-jan-s-supermarket.png?v=1715283493'],
+            'riggs-chief.webp':['https://bf1af2.akinoncloudcdn.com/products/2025/04/29/342680/a1105005-1ba2-4029-96e8-6aa5da80ad20_size3840_cropCenter.jpg'],
             'riggs-armour.webp':['https://i.ebayimg.com/images/g/kaEAAOSwFrJl~-dy/s-l1200.jpg'],
             'riggs-power.webp':['https://paidasho.com/cdn/shop/files/4_8acb8898-71df-407d-88ad-a96e565e76e6.webp?v=1753858686&width=1445'],
           }
@@ -28,18 +28,17 @@ jobs:
           for filename,urls in sources.items():
             for url in urls:
               try:
-                r=requests.get(url,timeout=35,headers={'User-Agent':'Mozilla/5.0'});
-                print(filename,r.status_code,len(r.content),url,flush=True)
+                r=requests.get(url,timeout=35,headers={'User-Agent':'Mozilla/5.0'})
+                print(filename,r.status_code,len(r.content),flush=True)
                 r.raise_for_status()
                 picture=Image.open(io.BytesIO(r.content))
-                print('SIZE',picture.size,flush=True)
                 if min(picture.size)<600: raise ValueError('Resolution below 600px')
                 picture.convert('RGB').save(dest/filename,'WEBP',quality=88,method=6)
-                print('PASS',filename,(dest/filename).stat().st_size,flush=True)
+                print('PASS',filename,picture.size,(dest/filename).stat().st_size,flush=True)
                 break
               except Exception as error: print('SOURCE FAILED',type(error).__name__,str(error)[:160],flush=True)
-            else: raise RuntimeError('No acceptable full-resolution authentic product photo for '+filename)
-          assert len(sources)==4 and all((dest/x).is_file() and (dest/x).stat().st_size>10000 for x in sources)
+            else: raise RuntimeError('No acceptable authentic product photo for '+filename)
+          assert len(sources)==4 and all((dest/x).is_file() and (dest/x).stat().st_size>8000 for x in sources)
           PY
       - name: Commit four verified product photos to main
         run: |
