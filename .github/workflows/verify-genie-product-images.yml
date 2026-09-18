@@ -10,42 +10,38 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - name: Verify committed image URLs and live storefront paths
+      - name: Check source, product HTML and optimized variant images
         shell: bash
         run: |
           python3 - <<'PY'
-          import time, urllib.request, urllib.error
-          base='https://jis-beauty-fashion.vercel.app'
+          import html, urllib.request, urllib.error, urllib.parse
+          host='https://jis-beauty-fashion.vercel.app'
           sha='7368e43e3c0edd84013e6b514bc5e77e97a0952b'
-          pairs={
-            'Merlot': 'genie-merlot.webp',
-            'Midnight Exclusive': 'genie-midnight-exclusive.webp',
-          }
-          def probe(url):
+          files=['genie-merlot.webp','genie-midnight-exclusive.webp']
+          def request(url):
+            req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0','Accept':'image/avif,image/webp,image/*,*/*'})
             try:
-              req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 JIS-image-verification'})
-              with urllib.request.urlopen(req,timeout=18) as resp:
-                body=resp.read(1024)
-                return resp.status,resp.headers.get('Content-Type',''),len(body)
-            except urllib.error.HTTPError as err:
-              return err.code,err.headers.get('Content-Type',''),0
-            except Exception as err:
-              return type(err).__name__,str(err)[:100],0
-          for name,filename in pairs.items():
+              with urllib.request.urlopen(req,timeout=35) as r:
+                return r.status,r.headers.get('Content-Type',''),r.read()
+            except urllib.error.HTTPError as e:
+              return e.code,e.headers.get('Content-Type',''),e.read()[:1000]
+          page_status,page_type,page=request(host+'/product/genies-collection-parfums')
+          print('PAGE',page_status,page_type,len(page),flush=True)
+          if page_status!=200:raise RuntimeError('Product page failed')
+          content=html.unescape(page.decode('utf-8','replace'))
+          good=True
+          for filename in files:
             url=f'https://raw.githubusercontent.com/ibrolee/jis-beauty-fashion/{sha}/public/catalog/{filename}'
-            print('SOURCE',name,url,probe(url),flush=True)
-          for attempt in range(1,9):
-            codes=[]
-            for name,filename in pairs.items():
-              url=f'{base}/catalog/{filename}'
-              result=probe(url)
-              print('LIVE',attempt,name,url,result,flush=True)
-              codes.append(result[0])
-            if codes==[200,200]:
-              print('PASS: both images served from live site',flush=True)
-              break
-            if attempt<8: time.sleep(15)
-          else:
-            print('NOTE: Live static files are not accessible yet. Product images use verified public GitHub URLs instead.',flush=True)
-          print('PRODUCT PAGE',probe(f'{base}/product/genies-collection-parfums'),flush=True)
+            source_status,source_type,source=request(url)
+            print('SOURCE',filename,source_status,source_type,len(source),flush=True)
+            embedded=url in content or filename in content
+            print('PAGE EMBEDS IMAGE',filename,embedded,flush=True)
+            local_status,local_type,_=request(host+'/catalog/'+filename)
+            print('LOCAL STATIC',filename,local_status,local_type,flush=True)
+            optimizer=host+'/_next/image?url='+urllib.parse.quote(url,safe='')+'&w=640&q=75'
+            img_status,img_type,img_data=request(optimizer)
+            print('NEXT IMAGE',filename,img_status,img_type,len(img_data),img_data[:70] if img_status!=200 else '',flush=True)
+            good=good and source_status==200 and embedded and img_status==200 and img_type.startswith('image/')
+          if not good:raise RuntimeError('Genie image path still broken; see diagnostics')
+          print('PASS: both variant images are embedded on live product page and served successfully',flush=True)
           PY
