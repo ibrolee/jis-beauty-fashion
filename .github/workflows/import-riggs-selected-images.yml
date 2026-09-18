@@ -1,0 +1,56 @@
+name: Import approved Riggs photos
+on:
+  push:
+    paths:
+      - .github/workflows/import-riggs-selected-images.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install image tools
+        run: python3 -m pip install --quiet pillow requests
+      - name: Download original resolution of uploaded Riggs photos
+        run: |
+          python3 - <<'PY'
+          import io, pathlib, requests
+          from PIL import Image
+          urls={
+            'riggs-rider.webp':'https://media.canva.com/v2/image-resize/format:PNG/height:200/quality:100/uri:ifs%3A%2F%2FM%2F5677364c-25c2-46ce-9818-00953d7b7ebd/watermark:F/width:160?csig=AAAAAAAAAAAAAAAAAAAAAHe5JCG5fzOfLJlCPwc7KBnDdLLEPVxlVwg5QitQGiGV&exp=1789774173&osig=AAAAAAAAAAAAAAAAAAAAAOKE8FAG3jRmF2e4PqWtFCEvtp1e4Z-ilUwOog_8MERu&signer=media-rpc&x-canva-quality=thumbnail',
+            'riggs-chief.webp':'https://media.canva.com/v2/image-resize/format:PNG/height:200/quality:100/uri:ifs%3A%2F%2FM%2F539a180c-1934-4f27-abed-b97a4d83a589/watermark:F/width:160?csig=AAAAAAAAAAAAAAAAAAAAAF0WHvscVu1k_1D9yvLqKv3T5_uCWpdfeDp2nXTTNyxR&exp=1789775467&osig=AAAAAAAAAAAAAAAAAAAAAMBb1QHxwu_1EKhNGPBj5Ztd1xScyDnErOE1OEf106ao&signer=media-rpc&x-canva-quality=thumbnail',
+            'riggs-armour.webp':'https://media.canva.com/v2/image-resize/format:PNG/height:200/quality:100/uri:ifs%3A%2F%2FM%2F73f535f2-9ff5-4723-88a2-15fdb8c213f7/watermark:F/width:160?csig=AAAAAAAAAAAAAAAAAAAAAJeqB17tpy6pROd_XUtJrRUP3chsLe5YOI9RAHwrWHpT&exp=1789775658&osig=AAAAAAAAAAAAAAAAAAAAAJxL5Owt3tjU484Ulw5L7twVx0zoPcicOwrme_dSmEGz&signer=media-rpc&x-canva-quality=thumbnail',
+            'riggs-power.webp':'https://media.canva.com/v2/image-resize/format:PNG/height:200/quality:100/uri:ifs%3A%2F%2FM%2F38fdb426-4863-49f6-8cef-55d6cbb1b8e0/watermark:F/width:160?csig=AAAAAAAAAAAAAAAAAAAAAC-EVUrw_rF6dGaysHS11BJ27TX4HcPs3PcLuNGP8I5o&exp=1789776532&osig=AAAAAAAAAAAAAAAAAAAAAMMJJ-mgKo5qjCinuY9whCvwnkahmvLyYYrzf5h1JlQY&signer=media-rpc&x-canva-quality=thumbnail',
+          }
+          directory=pathlib.Path('public/catalog'); directory.mkdir(parents=True,exist_ok=True)
+          for name,thumb in urls.items():
+            full=thumb.replace('/height:200/','/height:1250/').replace('/width:160?','/width:1000?').replace('x-canva-quality=thumbnail','x-canva-quality=high')
+            full_alt=full.replace('x-canva-quality=high','x-canva-quality=thumbnail')
+            for label,url in [('high',full),('original-transform',full_alt),('thumbnail',thumb)]:
+              try:
+                resp=requests.get(url,timeout=35,headers={'User-Agent':'Mozilla/5.0'})
+                print(name,label,'HTTP',resp.status_code,'bytes',len(resp.content),flush=True)
+                if resp.ok:
+                  im=Image.open(io.BytesIO(resp.content))
+                  print('image dimensions',im.size,flush=True)
+                  if min(im.size)>=700:
+                    im.convert('RGB').save(directory/name,'WEBP',quality=85,method=6)
+                    break
+              except Exception as exc:
+                print(name,label,'error',type(exc).__name__,str(exc)[:180],flush=True)
+            else:
+              raise RuntimeError('Original-resolution Riggs asset unavailable: '+name+'; refusing blurry thumbnail')
+          assert len(list(directory.glob('riggs-*.webp')))==4
+          PY
+      - name: Commit approved variant images
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/catalog/riggs-*.webp
+          git diff --cached --check
+          if ! git diff --cached --quiet; then
+            git commit -m 'Add approved full-resolution Riggs variant images'
+            git push
+          fi
