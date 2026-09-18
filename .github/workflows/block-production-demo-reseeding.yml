@@ -11,67 +11,38 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Block all demo seeding on Vercel and skip existing data unless forced locally
+      - name: Block deployed demo seeds and prevent credentials bypassing the data guard
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p = Path('src/db/seed.ts')
           text = p.read_text()
-          old = '''export async function seedDatabase(options: { force?: boolean } = {}) {
-  const [{ value: existing }] = await db
-    .select({ value: count() })
-    .from(products);
-
-  if (
-  existing > 0 &&
-  !options.force &&
-  !(process.env.SEED_ADMIN_EMAIL && process.env.SEED_ADMIN_PASSWORD)
-) {
-    console.log(`Seed skipped — ${existing} products already exist.`);
-    return;
-  }
-'''
-          new = '''export async function seedDatabase(options: { force?: boolean } = {}) {
-  // NEVER seed a deployed shop. Build commands and credentials must not recreate
-  // fake inventory, demo customers or overwrite live category photography.
-  if (process.env.NODE_ENV === "production" || process.env.VERCEL || process.env.VERCEL_ENV) {
-    console.log("Demo seed skipped — disabled on production and Vercel deployments.");
-    return;
-  }
-
-  const [{ value: existing }] = await db
-    .select({ value: count() })
-    .from(products);
-
-  // Admin seed credentials must never override the existing-inventory guard.
-  if (existing > 0 && !options.force) {
-    console.log(`Seed skipped — ${existing} products already exist.`);
-    return;
-  }
-'''
-          assert text.count(old) == 1, 'Seed guard has changed; refusing unsafe patch'
-          p.write_text(text.replace(old, new))
+          marker = 'export async function seedDatabase(options: { force?: boolean } = {}) {'
+          assert text.count(marker) == 1
+          guard = '\n  // Deployed shops must never recreate fake inventory or customers.\n  if (process.env.NODE_ENV === "production" || process.env.VERCEL || process.env.VERCEL_ENV) {\n    console.log("Demo seed skipped — disabled on deployed shops.");\n    return;\n  }\n'
+          assert 'Demo seed skipped — disabled on deployed shops.' not in text
+          text = text.replace(marker, marker + guard, 1)
+          old = '  if (\n  existing > 0 &&\n  !options.force &&\n  !(process.env.SEED_ADMIN_EMAIL && process.env.SEED_ADMIN_PASSWORD)\n) {'
+          assert text.count(old) == 1, 'Seed guard changed; aborting safely'
+          text = text.replace(old, '  if (existing > 0 && !options.force) {', 1)
+          p.write_text(text)
           p = Path('src/db/ensure-seed.ts')
           text = p.read_text()
-          old = '''export function ensureSeeded(): Promise<void> {
-  if (process.env.ENABLE_DEMO_SEED !== "true") return Promise.resolve();'''
-          new = '''export function ensureSeeded(): Promise<void> {
-  // Never generate demo users or products from a production request.
-  if (process.env.NODE_ENV === "production" || process.env.VERCEL || process.env.VERCEL_ENV) return Promise.resolve();
-  if (process.env.ENABLE_DEMO_SEED !== "true") return Promise.resolve();'''
-          assert text.count(old) == 1, 'Runtime guard has changed; refusing unsafe patch'
-          p.write_text(text.replace(old, new))
+          marker = 'export function ensureSeeded(): Promise<void> {'
+          assert text.count(marker) == 1
+          guard = '\n  // No automatic demo data insertion in a deployed shop.\n  if (process.env.NODE_ENV === "production" || process.env.VERCEL || process.env.VERCEL_ENV) return Promise.resolve();'
+          assert 'No automatic demo data insertion in a deployed shop.' not in text
+          p.write_text(text.replace(marker, marker + guard, 1))
           assert '!(process.env.SEED_ADMIN_EMAIL && process.env.SEED_ADMIN_PASSWORD)' not in Path('src/db/seed.ts').read_text()
-          assert 'process.env.VERCEL' in Path('src/db/ensure-seed.ts').read_text()
-          print('PASS: deployed environments cannot reseed products/customers; local existing inventory is protected')
+          print('PASS: production demo seeding is disabled and admin credentials cannot bypass existing-data guard')
           PY
-      - name: Commit protective changes to main
+      - name: Commit production protection to main
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add src/db/seed.ts src/db/ensure-seed.ts
           git diff --cached --check
           if ! git diff --cached --quiet; then
-            git commit -m 'Prevent Vercel from restoring deleted demo products and customers'
+            git commit -m 'Prevent deployment from recreating demo inventory and customers'
             git push
           fi
