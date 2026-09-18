@@ -1,0 +1,52 @@
+name: Finish product variant placement
+on:
+  push:
+    paths:
+      - .github/workflows/finish-dove-variant-placement.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  layout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Move mobile scent choices beside visible image and tighten desktop layout
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          def change(filename, old, new):
+              path = Path(filename)
+              content = path.read_text()
+              if content.count(old) != 1:
+                  raise RuntimeError(f'Unsafe patch: expected one match for {old[:65]!r} in {filename}, got {content.count(old)}')
+              path.write_text(content.replace(old, new, 1))
+          page = 'src/app/(store)/product/[slug]/page.tsx'
+          change(page, 'import { VariantProductGallery, VariantSelectionProvider } from "@/components/product/variant-selection";', 'import { VariantChoices, VariantProductGallery, VariantSelectionProvider } from "@/components/product/variant-selection";')
+          change(page, '<div className="container-x py-6 lg:py-10">', '<div className="container-x py-4 lg:py-8">')
+          change(page, 'className="mb-6 flex items-center gap-1.5 text-xs text-stone"', 'className="mb-4 flex items-center gap-1.5 text-xs text-stone"')
+          change(page, '      <VariantSelectionProvider product={product}>\n      <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">', '      <VariantSelectionProvider product={product}>\n        {product.variants.length > 0 && (\n          <div className="mb-3 lg:hidden">\n            <VariantChoices product={product} />\n          </div>\n        )}\n      <div className="grid gap-5 lg:grid-cols-12 lg:gap-8">')
+          change(page, 'className="lg:sticky lg:top-28"', 'className="lg:sticky lg:top-24"')
+          change(page, 'className="mt-2 font-serif text-4xl leading-[1.05] sm:text-5xl"', 'className="mt-1 font-serif text-3xl leading-[1.08] sm:text-4xl"')
+          change(page, '            <p className="mt-2 text-sm text-stone">\n              {product.volume} · {product.fragranceType}\n            </p>', '            {(product.volume || product.fragranceType) && (\n              <p className="mt-1 text-sm text-stone">\n                {[product.volume, product.fragranceType].filter(Boolean).join(" · ")}\n              </p>\n            )}\n            <div className="mt-4">\n              <PurchasePanel product={product} />\n            </div>')
+          change(page, '\n            <div className="mt-7">\n              <PurchasePanel product={product} />\n            </div>', '')
+          change(page, 'className="mt-5 text-[15px] leading-relaxed text-ink-soft"', 'className="mt-4 text-[15px] leading-relaxed text-ink-soft"')
+          gallery = 'src/components/product/product-gallery.tsx'
+          change(gallery, 'className="relative aspect-[4/5] w-full overflow-hidden bg-ivory"', 'className="relative h-[min(52svh,420px)] w-full overflow-hidden bg-ivory lg:aspect-[4/5] lg:h-auto"')
+          change(gallery, 'className="object-cover animate-fade-in"', 'className="object-contain p-3 sm:p-5 animate-fade-in"')
+          assert Path(page).read_text().count('<VariantChoices product={product} />') == 1
+          assert Path(page).read_text().count('<PurchasePanel product={product} />') == 1
+          assert 'h-[min(52svh,420px)]' in Path(gallery).read_text()
+          assert 'u.startsWith("/catalog/")' in Path('src/lib/actions/admin.ts').read_text()
+          print('PASS: responsive option selection, gallery and admin image validation')
+          PY
+          git diff --check
+      - name: Commit responsive storefront changes to main
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 'src/app/(store)/product/[slug]/page.tsx' src/components/product/product-gallery.tsx
+          if ! git diff --cached --quiet; then
+            git commit -m 'Show scent variants alongside Dove photos on mobile and desktop'
+            git push
+          fi
