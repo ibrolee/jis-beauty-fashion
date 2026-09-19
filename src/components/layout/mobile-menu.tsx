@@ -9,7 +9,6 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -31,13 +30,6 @@ export function MobileMenu({
   user: SessionUser | null;
 }) {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const pathname = usePathname();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   useEffect(() => {
     if (!open) {
       document.body.style.overflow = "";
@@ -50,10 +42,6 @@ export function MobileMenu({
       document.body.style.overflow = "";
     };
   }, [open]);
-
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
 
   const secondary = [
     { label: "About JIS", href: "/about" },
@@ -264,7 +252,7 @@ export function MobileMenu({
       </button>
 
       {/* RENDER DRAWER DIRECTLY INTO BODY */}
-      {mounted && open
+      {open && typeof document !== "undefined"
         ? createPortal(drawer, document.body)
         : null}
     </>

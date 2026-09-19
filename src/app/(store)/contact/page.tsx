@@ -16,7 +16,7 @@ export default function ContactPage() {
       <header className="max-w-2xl">
         <p className="eyebrow mb-3">We’re here</p>
         <h1 className="font-serif text-4xl leading-[1.05] sm:text-5xl">Contact us</h1>
-        <p className="mt-4 text-[15px] leading-relaxed text-stone">Questions about an order or a fragrance? Send us a message and we'll get back to you as soon as possible.</p>
+        <p className="mt-4 text-[15px] leading-relaxed text-stone">Questions about an order or a fragrance? Send us a message and we’ll get back to you as soon as possible.</p>
       </header>
 
       <div className="mt-10 grid gap-12 lg:grid-cols-12">
