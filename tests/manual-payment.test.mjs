@@ -13,15 +13,15 @@ function loadModule(relativePath, dependencies = {}) {
   const code = ts.transpileModule(source, {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
   }).outputText;
-  const module = { exports: {} };
+  const sandboxModule = { exports: {} };
   vm.runInNewContext(code, {
-    module, exports: module.exports, Date,
+    module: sandboxModule, exports: sandboxModule.exports, Date,
     require: (name) => {
       if (Object.hasOwn(dependencies, name)) return dependencies[name];
       throw new Error(`Unexpected dependency in isolated test: ${name}`);
     },
   }, { filename: relativePath, timeout: 2000 });
-  return module.exports;
+  return sandboxModule.exports;
 }
 
 const review = loadModule("../src/lib/orders/payment-review.ts");
