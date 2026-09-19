@@ -20,5 +20,5 @@ jobs:
           node-version: '22'
       - name: Install dependencies without database migrations or seed scripts
         run: npm install --ignore-scripts --no-audit --no-fund
-      - name: Test payment logic without contacting the database or production website
-        run: node --test tests/manual-payment.test.mjs
+      - name: Test payment and coupon logic without contacting the database or production website
+        run: node --test tests/*.test.mjs
