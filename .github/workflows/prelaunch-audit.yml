@@ -1,0 +1,76 @@
+name: JIS prelaunch audit
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'next.config.ts'
+      - 'package.json'
+      - '.github/workflows/prelaunch-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies without lifecycle scripts
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: TypeScript
+        run: npm run typecheck
+      - name: ESLint
+        run: npm run lint
+  public-site:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check public pages, images, and metadata (read only)
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import urllib.request,urllib.error,urllib.parse,re,html,sys
+          base='https://jis-beauty-fashion.vercel.app'
+          routes=['/','/shop','/categories','/about','/contact','/faq','/shipping','/returns','/privacy','/terms','/cart','/checkout','/robots.txt','/sitemap.xml',
+                  '/product/dove-go-fresh-antiperspirant-spray','/product/incidence-paris-100ml','/product/riggs-body-spray','/product/genies-collection-parfums']
+          fail=[]
+          def get(url):
+            try:
+              request=urllib.request.Request(url,headers={'User-Agent':'JIS-prelaunch-readonly-check/1.0'})
+              with urllib.request.urlopen(request,timeout=25) as r:
+                return r.status,r.headers.get('Content-Type',''),r.read()
+            except urllib.error.HTTPError as error:
+              return error.code,error.headers.get('Content-Type',''),error.read()[:300]
+            except Exception as error:
+              return 0,str(error),b''
+          for route in routes:
+            code,ctype,body=get(base+route)
+            print('ROUTE',code,route,'bytes',len(body),flush=True)
+            if code!=200:fail.append(f'{route} returned {code}')
+            if route=='/' and code==200:
+              page=html.unescape(body.decode('utf-8','replace'))
+              if 'localhost:3000' in page:fail.append('Homepage metadata still refers to localhost')
+          image_files=['dove-apple-white-tea-v2.jpg','dove-cucumber-green-tea-v2.jpg','dove-grapefruit-lemongrass-v2.jpg',
+                      'incidence-paris-100ml-hero.jpg','riggs-rider.webp','riggs-chief.webp','riggs-armour.webp','riggs-power.webp']
+          for filename in image_files:
+            code,ctype,body=get(base+'/catalog/'+filename)
+            print('IMAGE',code,ctype,filename,'bytes',len(body),flush=True)
+            if code!=200 or not ctype.startswith('image/'):fail.append(f'Image /catalog/{filename} returned {code} {ctype}')
+          # These two legacy static paths are broken on production, so the current DB uses pinned public GitHub URLs.
+          sha='7368e43e3c0edd84013e6b514bc5e77e97a0952b'
+          for filename in ['genie-merlot.webp','genie-midnight-exclusive.webp']:
+            url=f'https://raw.githubusercontent.com/ibrolee/jis-beauty-fashion/{sha}/public/catalog/{filename}'
+            code,ctype,body=get(url)
+            print('GENIE SOURCE',code,ctype,filename,'bytes',len(body),flush=True)
+            if code!=200 or not ctype.startswith('image/'):fail.append(f'Genie source {filename} returned {code} {ctype}')
+            optimized=base+'/_next/image?url='+urllib.parse.quote(url,safe='')+'&w=640&q=75'
+            code,ctype,body=get(optimized)
+            print('GENIE OPTIMIZED',code,ctype,filename,'bytes',len(body),flush=True)
+            if code!=200 or not ctype.startswith('image/'):fail.append(f'Genie optimized image {filename} returned {code} {ctype}')
+          print('RESULT', 'PASS' if not fail else 'FAIL',len(routes),'pages',len(image_files)+2,'image sources',flush=True)
+          for issue in fail:print('ISSUE',issue,flush=True)
+          sys.exit(1 if fail else 0)
+          PY
