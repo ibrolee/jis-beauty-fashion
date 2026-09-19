@@ -6,7 +6,6 @@ export * from "./types";
 
 const providers: Record<string, PaymentProvider> = {
   paystack: paystackProvider,
-  // flutterwave: flutterwaveProvider, // <- add more providers here
 };
 
 export function getPaymentProvider(id: string): PaymentProvider {
@@ -15,21 +14,19 @@ export function getPaymentProvider(id: string): PaymentProvider {
   return provider;
 }
 
-/** Whether the "pay online" option should be offered at checkout. */
 export function isOnlinePaymentEnabled(): boolean {
   return paystackProvider.isConfigured();
 }
 
-/** Maps a checkout payment method to the provider that handles it (null = manual/offline). */
 export function providerForMethod(method: PaymentMethod): PaymentProvider | null {
   return method === "paystack" ? paystackProvider : null;
 }
 
+// Account details supplied by the shop owner. Do not replace these with
+// deployment environment defaults or unverified demo account information.
 export const BANK_TRANSFER_DETAILS = {
-  bankName: process.env.NEXT_PUBLIC_BANK_NAME ?? "",
-  accountName: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME ?? "JIS Beauty & Fashion",
-  accountNumber: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NUMBER ?? "",
-  get configured() {
-    return Boolean(this.bankName && this.accountNumber);
-  },
-};
+  bankName: "GTBank",
+  accountName: "Alli Ibrahim Olanrewaju",
+  accountNumber: "0172349956",
+  configured: true,
+} as const;
