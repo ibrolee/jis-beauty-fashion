@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { SITE } from "@/lib/constants";
 
 export type InfoSection = { title: string; body: string[] | ReactNode };
 
@@ -29,20 +30,15 @@ export function InfoPage({ eyebrow, title, intro, updated, sections, aside }: { 
 }
 
 export function ContactAside() {
+  const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim();
   return (
     <div className="sticky top-28 border border-line bg-cream p-6">
       <h2 className="font-serif text-2xl">Need a hand?</h2>
-      <p className="mt-2 text-sm text-stone">Our team replies fastest on WhatsApp, Monday to Saturday, 9am – 7pm.</p>
+      <p className="mt-2 text-sm text-stone">You can reach us on WhatsApp or via our contact form.</p>
       <ul className="mt-4 space-y-2 text-sm">
-        <li>
-          <a href="https://wa.me/2349042336294" className="underline underline-offset-4">WhatsApp 0904 233 6294</a>
-        </li>
-        <li>
-          <a href="mailto:hello@jisbeauty.ng" className="underline underline-offset-4">hello@jisbeauty.ng</a>
-        </li>
-        <li>
-          <a href="/contact" className="underline underline-offset-4">Contact form</a>
-        </li>
+        <li><a href={SITE.whatsappUrl} className="underline underline-offset-4">WhatsApp {SITE.whatsapp}</a></li>
+        {contactEmail && <li><a href={`mailto:${contactEmail}`} className="underline underline-offset-4">{contactEmail}</a></li>}
+        <li><a href="/contact" className="underline underline-offset-4">Contact form</a></li>
       </ul>
     </div>
   );
