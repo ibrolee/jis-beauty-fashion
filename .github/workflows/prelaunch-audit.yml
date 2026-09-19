@@ -4,6 +4,7 @@ on:
     branches: [main, launch-prep-no-deploy]
     paths:
       - 'src/**'
+      - 'tests/**'
       - 'public/**'
       - 'next.config.ts'
       - 'vercel.json'
