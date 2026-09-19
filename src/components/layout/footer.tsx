@@ -2,6 +2,7 @@ import Link from "next/link";
 import { NewsletterForm } from "@/components/marketing/newsletter-form";
 import { InstagramIcon, TikTokIcon, WhatsAppIcon } from "@/components/ui/social-icons";
 import { SITE } from "@/lib/constants";
+import { isOnlinePaymentEnabled } from "@/lib/payments";
 import type { CategoryWithCount } from "@/types";
 import { Logo } from "./logo";
 
@@ -21,6 +22,7 @@ const COMPANY_LINKS = [
 ];
 
 export function Footer({ categories }: { categories: CategoryWithCount[] }) {
+  const onlinePaymentsEnabled = isOnlinePaymentEnabled();
   return (
     <footer className="border-t border-line bg-cream">
       <div className="container-x py-14 lg:py-20">
@@ -28,7 +30,7 @@ export function Footer({ categories }: { categories: CategoryWithCount[] }) {
           <div className="lg:col-span-4">
             <Logo className="items-start" />
             <p className="mt-5 max-w-sm text-[15px] leading-relaxed text-stone">
-              {SITE.tagline}. Authentic fragrances and beauty essentials, thoughtfully curated in Lagos and delivered across Nigeria.
+              {SITE.tagline}. Fragrances and beauty essentials, thoughtfully curated in Lagos and delivered across Nigeria.
             </p>
             <div className="mt-6 flex items-center gap-4">
               <a href={SITE.instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram @jisbeautyfashion" className="flex h-10 w-10 items-center justify-center border border-line text-ink transition-colors hover:border-ink">
@@ -88,7 +90,7 @@ export function Footer({ categories }: { categories: CategoryWithCount[] }) {
           <p>© {new Date().getFullYear()} {SITE.name}. All rights reserved.</p>
           <p className="flex items-center gap-2">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-success" aria-hidden />
-            Secure payments · Card, transfer & USSD via Paystack
+            {onlinePaymentsEnabled ? "Pay online via Paystack or choose direct bank transfer at checkout" : "See available payment options at checkout"}
           </p>
         </div>
       </div>
