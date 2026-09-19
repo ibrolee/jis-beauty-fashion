@@ -1,0 +1,24 @@
+name: JIS manual payment tests
+on:
+  push:
+    branches: [main, launch-prep-no-deploy]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'vercel.json'
+      - '.github/workflows/manual-payment-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  payment-safety:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies without database migrations or seed scripts
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Test payment logic without contacting the database or production website
+        run: node --test tests/manual-payment.test.mjs
