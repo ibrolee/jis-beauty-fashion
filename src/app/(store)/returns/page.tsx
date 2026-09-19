@@ -9,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function ReturnsPage() {
-  return <InfoPage eyebrow="Help centre" title="Returns & refunds" intro="We want you to love what you ordered. Here's how we make things right if you don't." updated="January 2025" sections={RETURNS_SECTIONS} aside={<ContactAside />} />;
+  return <InfoPage eyebrow="Help centre" title="Returns & refunds" intro="We want you to love what you ordered. Here's how we make things right if you don't." sections={RETURNS_SECTIONS} aside={<ContactAside />} />;
 }

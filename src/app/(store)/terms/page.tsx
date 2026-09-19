@@ -9,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function TermsPage() {
-  return <InfoPage eyebrow="Legal" title="Terms & conditions" updated="January 2025" sections={TERMS_SECTIONS} />;
+  return <InfoPage eyebrow="Legal" title="Terms & conditions" sections={TERMS_SECTIONS} />;
 }

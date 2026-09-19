@@ -50,5 +50,5 @@ export async function submitContactAction(_prev: ActionState, formData: FormData
     phone: parsed.data.phone || null,
     subject: parsed.data.subject || null,
   });
-  return { ok: true, message: "Message received — we'll reply within one business day." };
+  return { ok: true, message: "Message received. Please contact us on WhatsApp if your request is urgent." };
 }

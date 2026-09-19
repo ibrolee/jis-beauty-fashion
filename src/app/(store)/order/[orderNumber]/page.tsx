@@ -47,7 +47,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
             {cancelled
               ? "If you have any questions about this order, reach us on WhatsApp and we'll help right away."
               : paid
-                ? `Your payment was confirmed and we're preparing your order. A confirmation has been sent to ${order.email}.`
+                ? `Your payment was confirmed and we're preparing your order. You can check the order details and status below.`
                 : failed
                   ? "Your order has been saved but we couldn't confirm the payment. You can try again or switch to bank transfer — your items stay reserved."
                   : order.paymentMethod === "bank_transfer"
@@ -75,7 +75,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
                   </dl>
                 ) : (
                   <p className="text-sm text-ink-soft">
-                    Our account details will be sent to you on WhatsApp and by email within a few minutes. You can also message us directly to receive them instantly.
+                    Our bank details are not available on this page yet. Please request and verify them with us on WhatsApp before making a transfer.
                   </p>
                 )}
                 <p className="text-sm text-ink-soft">

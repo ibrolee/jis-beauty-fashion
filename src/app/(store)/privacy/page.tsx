@@ -9,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPage() {
-  return <InfoPage eyebrow="Legal" title="Privacy policy" intro="Your privacy matters to us. This policy explains what we collect and why." updated="January 2025" sections={PRIVACY_SECTIONS} />;
+  return <InfoPage eyebrow="Legal" title="Privacy policy" intro="Your privacy matters to us. This policy explains what we collect and why." sections={PRIVACY_SECTIONS} />;
 }
