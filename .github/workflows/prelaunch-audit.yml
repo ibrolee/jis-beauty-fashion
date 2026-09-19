@@ -6,6 +6,7 @@ on:
       - 'src/**'
       - 'public/**'
       - 'next.config.ts'
+      - 'vercel.json'
       - 'package.json'
       - '.github/workflows/prelaunch-audit.yml'
   workflow_dispatch:
@@ -28,7 +29,7 @@ jobs:
   public-site:
     runs-on: ubuntu-latest
     steps:
-      - name: Public pages and images (read-only smoke test)
+      - name: Public pages, assets, six-hour terms, and cron authorization (read-only)
         shell: bash
         run: |
           python3 - <<'PY'
@@ -66,9 +67,18 @@ jobs:
             if source!=200 or optimized!=200 or not otype.startswith('image/'):failures.append('Genie image '+filename+' unavailable')
           status,ctype,body=get(base+'/contact')
           text=html.unescape(body.decode('utf-8','replace'))
-          # Report stale deployment separately; GitHub changes may not be deployed until Vercel access is restored.
           print('DEPLOYMENT_CONTACT_NEW_COPY', 'Questions about an order or a fragrance?' in text,flush=True)
           print('DEPLOYMENT_CONTACT_OLD_EMAIL', 'hello@jisbeauty.ng' in text,flush=True)
+          # Separate live deployment checks from source lint: the site should not
+          # be announced while the previous 24-hour policy is still deployed.
+          for path,needle in [('/terms','six hours'),('/faq','Six hours')]:
+            code,_,body=get(base+path)
+            found=needle.lower() in html.unescape(body.decode('utf-8','replace')).lower()
+            print('LIVE_SIX_HOUR_POLICY',path,code,found,flush=True)
+            if code!=200 or not found: failures.append('Six-hour policy not deployed on '+path)
+          code,_,_=get(base+'/api/cron/expire-bank-transfers')
+          print('CRON_UNAUTHENTICATED',code,flush=True)
+          if code!=401: failures.append('Cron auth check expected 401, got '+str(code))
           print('SMOKE_TEST', 'PASS' if not failures else 'FAIL',len(pages),'pages',len(files)+2,'product images',flush=True)
           for failure in failures:print('ISSUE',failure,flush=True)
           sys.exit(bool(failures))
