@@ -80,9 +80,28 @@ export function toWhatsAppNumber(phone: string): string {
   return digits;
 }
 
+const PUBLIC_STOREFRONT = "https://jis-beauty-fashion.vercel.app";
+
+/**
+ * NEXT_PUBLIC_SITE_URL was once configured to a git-main deployment alias.
+ * Normalize only that internal Vercel alias; preserve an explicitly configured
+ * future custom domain. This origin powers canonical tags, sitemap and order URLs.
+ */
+export function publicSiteOrigin(): string {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, "");
+  if (!configured) return PUBLIC_STOREFRONT;
+  try {
+    const parsed = new URL(configured);
+    if (parsed.protocol !== "https:" && parsed.hostname !== "localhost" && parsed.hostname !== "127.0.0.1") return PUBLIC_STOREFRONT;
+    if (parsed.hostname.startsWith("jis-beauty-fashion-git-") && parsed.hostname.endsWith(".vercel.app")) return PUBLIC_STOREFRONT;
+    return parsed.origin;
+  } catch {
+    return PUBLIC_STOREFRONT;
+  }
+}
+
 /** Keep externally hosted product images absolute in SEO/structured-data output. */
 export function absoluteUrl(path = "/"): string {
   if (/^https?:\/\//i.test(path)) return path;
-  const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://jis-beauty-fashion.vercel.app").replace(/\/$/, "");
-  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+  return `${publicSiteOrigin()}${path.startsWith("/") ? path : `/${path}`}`;
 }

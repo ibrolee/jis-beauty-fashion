@@ -3,12 +3,11 @@ import type { ReactNode } from "react";
 import { Providers } from "@/components/providers";
 import { getCurrentUser } from "@/lib/auth/session";
 import { SITE } from "@/lib/constants";
+import { publicSiteOrigin } from "@/lib/utils";
 import "./globals.css";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(publicSiteOrigin()),
   title: {
     default: `${SITE.name} — ${SITE.tagline}`,
     template: `%s | ${SITE.name}`,
