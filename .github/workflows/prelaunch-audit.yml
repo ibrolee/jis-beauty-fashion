@@ -1,7 +1,7 @@
 name: JIS prelaunch audit
 on:
   push:
-    branches: [main]
+    branches: [main, launch-prep-no-deploy]
     paths:
       - 'src/**'
       - 'public/**'
@@ -27,6 +27,7 @@ jobs:
       - name: Lint
         run: npm run lint
   public-site:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Public pages, assets, six-hour terms, and cron authorization (read-only)
@@ -69,8 +70,6 @@ jobs:
           text=html.unescape(body.decode('utf-8','replace'))
           print('DEPLOYMENT_CONTACT_NEW_COPY', 'Questions about an order or a fragrance?' in text,flush=True)
           print('DEPLOYMENT_CONTACT_OLD_EMAIL', 'hello@jisbeauty.ng' in text,flush=True)
-          # Separate live deployment checks from source lint: the site should not
-          # be announced while the previous 24-hour policy is still deployed.
           for path,needle in [('/terms','six hours'),('/faq','Six hours')]:
             code,_,body=get(base+path)
             found=needle.lower() in html.unescape(body.decode('utf-8','replace')).lower()
