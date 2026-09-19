@@ -8,6 +8,7 @@ import { getDeliveryFee } from "@/lib/constants";
 import { validateCouponCode } from "@/lib/data/coupons";
 import { orderConfirmationEmail, sendEmail } from "@/lib/email";
 import { getPaymentProvider, isOnlinePaymentEnabled, PaymentConfigurationError } from "@/lib/payments";
+import { expireUnpaidBankTransfers } from "@/lib/orders/reservations";
 import { absoluteUrl, effectivePrice, formatNaira, generateOrderNumber, generateReference } from "@/lib/utils";
 import { checkoutSchema, fieldErrorsFrom, type CheckoutInput } from "@/lib/validation";
 
@@ -25,6 +26,8 @@ export async function placeOrder(rawInput: CheckoutInput): Promise<PlaceOrderRes
     return { ok: false, error: "Please check the highlighted fields.", fieldErrors: fieldErrorsFrom(parsed.error) };
   }
   const input = parsed.data;
+  // Release old unpaid bank-transfer reservations before checking live stock.
+  await expireUnpaidBankTransfers();
   const user = await getCurrentUser();
 
   if (input.paymentMethod === "paystack" && !isOnlinePaymentEnabled()) {

@@ -13,6 +13,8 @@ export function OrderStatusForm({ order }: { order: Order }) {
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="orderId" value={order.id} />
+      <input type="hidden" name="originalStatus" value={order.status} />
+      <input type="hidden" name="originalPaymentStatus" value={order.paymentStatus} />
       {state.error && <FormMessage type="error">{state.error}</FormMessage>}
       {state.ok && <FormMessage type="success">{state.message}</FormMessage>}
       <Field label="Order status" htmlFor="status">

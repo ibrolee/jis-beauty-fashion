@@ -21,6 +21,7 @@ import { db } from "@/db";
 import { ensureSeeded } from "@/db/ensure-seed";
 import { brands, categories, productVariants, products, type ProductVariant } from "@/db/schema";
 import { PRODUCTS_PER_PAGE } from "@/lib/constants";
+import { expireUnpaidBankTransfers } from "@/lib/orders/reservations";
 import type { BrandWithCount, PaginatedProducts, ProductDetail, ProductFilters, ProductListItem } from "@/types";
 
 /** SQL for the price actually charged (sale price when it is a real discount). */
@@ -97,6 +98,7 @@ function orderFor(sort: string | undefined): SQL[] {
 
 export async function getProducts(filters: ProductFilters = {}): Promise<PaginatedProducts> {
   await ensureSeeded();
+  await expireUnpaidBankTransfers();
   const perPage = filters.perPage ?? PRODUCTS_PER_PAGE;
   const page = Math.max(1, filters.page ?? 1);
   const conds = buildConditions(filters);
@@ -120,6 +122,7 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
 
 export async function getProductBySlug(slug: string): Promise<ProductDetail | null> {
   await ensureSeeded();
+  await expireUnpaidBankTransfers();
   const [product] = await baseQuery().where(eq(products.slug, slug)).limit(1);
   if (!product) return null;
   const variants = await getVariantsForProduct(product.id);

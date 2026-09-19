@@ -111,7 +111,7 @@ export function CheckoutForm({ user, savedAddress, paystackEnabled }: Props) {
     {
       value: "bank_transfer",
       title: "Direct bank transfer",
-      body: "We'll show you our account details after you place the order. Your items are reserved for 24 hours.",
+      body: "We'll show you our account details after you place the order. Your items are reserved for 6 hours from order placement. Send proof promptly so we can verify your transfer.",
     },
     {
       value: "pay_on_delivery",

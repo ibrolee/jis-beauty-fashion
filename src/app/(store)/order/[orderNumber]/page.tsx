@@ -9,6 +9,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { SITE } from "@/lib/constants";
 import { getOrderByNumber } from "@/lib/data/orders";
 import { BANK_TRANSFER_DETAILS, isOnlinePaymentEnabled } from "@/lib/payments";
+import { bankTransferDeadline } from "@/lib/orders/reservations";
 import { formatNaira } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Order confirmation", robots: { index: false } };
@@ -51,7 +52,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
                 : failed
                   ? "Your order has been saved but we couldn't confirm the payment. You can try again or switch to bank transfer — your items stay reserved."
                   : order.paymentMethod === "bank_transfer"
-                    ? "Complete your bank transfer to confirm the order. Your items are reserved for 24 hours."
+                    ? "Complete your bank transfer to confirm the order. Your items are reserved for six hours from order placement. Please transfer and send proof before the deadline."
                     : order.paymentMethod === "pay_on_delivery"
                       ? "We'll confirm your order shortly and you can pay when it arrives."
                       : "We're confirming your payment. This page will update once it's confirmed."}
@@ -64,6 +65,10 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
             <h2 id="pay-heading" className="font-serif text-2xl">
               {failed ? "Complete your payment" : order.paymentMethod === "bank_transfer" ? "Bank transfer details" : "Next steps"}
             </h2>
+
+            {order.paymentMethod === "bank_transfer" && (
+              <p className="mt-3 text-sm font-medium text-ink">Payment deadline: {bankTransferDeadline(order.createdAt).toLocaleString("en-NG", { timeZone: "Africa/Lagos", dateStyle: "medium", timeStyle: "short" })} (Lagos time). If you have already transferred but we have not confirmed it, contact us on WhatsApp promptly.</p>
+            )}
 
             {(order.paymentMethod === "bank_transfer" || failed) && (
               <div className="mt-4 space-y-4">

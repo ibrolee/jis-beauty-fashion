@@ -6,6 +6,7 @@ export const FAQ_ITEMS: { q: string; a: string }[] = [
   { q: "How long does delivery take?", a: "Lagos orders are estimated at 1–2 business days. Abuja, Ogun and Oyo at 2–3 business days, and the rest of Nigeria at 3–5 business days. Contact us on WhatsApp if you need an update." },
   { q: "How much is delivery?", a: "₦2,500 within Lagos, ₦4,000 to Abuja/Ogun/Oyo and ₦4,500 to other states. Delivery is free on orders above ₦150,000." },
   { q: "What payment methods do you accept?", a: "The checkout page shows the payment options currently available for your order and delivery state, including direct bank transfer." },
+  { q: "How long is my bank-transfer order reserved?", a: "Six hours from the time you place your order. Transfer and send proof promptly. If you already paid and your order was cancelled while we were verifying the transfer, contact us on WhatsApp; do not make a second transfer without speaking to us." },
   { q: "Can I return a perfume?", a: "Unopened, sealed items can be returned within 7 days of delivery. For hygiene reasons we cannot accept opened or used fragrances unless they arrived damaged or incorrect." },
   { q: "How do I use a coupon code?", a: "Enter the code in the discount box in your bag or at checkout and tap Apply. Only one coupon can be used per order." },
   { q: "Do you offer gift wrapping?", a: "Every order is packaged with care. Add a gift note in the delivery instructions box at checkout, or contact us on WhatsApp to discuss gift wrapping." },
@@ -40,7 +41,7 @@ export const PRIVACY_SECTIONS: InfoSection[] = [
 export const TERMS_SECTIONS: InfoSection[] = [
   { title: "About these terms", body: ["These terms govern purchases from JIS Beauty & Fashion (\"JIS\", \"we\", \"us\"). By placing an order you agree to them."] },
   { title: "Products & pricing", body: ["All prices are in Nigerian Naira (₦) and include applicable taxes. We take care to describe products accurately, but colours and packaging may vary slightly from images. We reserve the right to correct pricing errors and to limit quantities."] },
-  { title: "Orders & payment", body: ["An order is confirmed only once payment is received (or, for pay-on-delivery, once we confirm availability). Unpaid bank-transfer orders are held for 24 hours before stock is released."] },
+  { title: "Orders & payment", body: ["An order is confirmed only once payment is received (or, for pay-on-delivery, once we confirm availability). Unpaid direct bank-transfer orders are reserved for six hours from order placement. Once the deadline passes, an unconfirmed order may be automatically cancelled and its items returned to stock. Send proof of payment promptly; if you transferred before the deadline but your order was cancelled before confirmation, contact us on WhatsApp for review. Never pay an already-cancelled order."] },
   { title: "Coupons", body: ["Coupon codes are subject to their stated conditions (minimum spend, expiry, usage limits), cannot be combined and have no cash value."] },
   { title: "Delivery & risk", body: ["Delivery timelines are estimates. Risk in the goods passes to you on delivery to the address provided."] },
   { title: "Returns", body: ["Returns are governed by our Returns & Refund Policy."] },

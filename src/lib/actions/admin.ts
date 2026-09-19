@@ -22,6 +22,7 @@ import {
 import { requireAdmin } from "@/lib/auth/session";
 import { ORDER_STATUSES } from "@/lib/constants";
 import { refreshProductRating } from "@/lib/data/reviews";
+import { cancelOrderAndRelease } from "@/lib/orders/reservations";
 import { slugify } from "@/lib/utils";
 import { categorySchema, couponSchema, fieldErrorsFrom, formToObject, productSchema } from "@/lib/validation";
 import type { ActionState } from "@/types";
@@ -205,38 +206,40 @@ export async function updateOrderAction(_prev: ActionState, formData: FormData):
   if (!ORDER_STATUSES.includes(status)) return { error: "Invalid order status." };
   if (!["pending", "paid", "failed", "refunded"].includes(paymentStatus)) return { error: "Invalid payment status." };
 
-  const order = await db.query.orders.findFirst({ where: eq(orders.id, orderId), with: { items: true } });
-  if (!order) return { error: "Order not found." };
+  const order = await db.query.orders.findFirst({ where: eq(orders.id, orderId) });
+if (!order) return { error: "Order not found." };
+const originalStatus = String(formData.get("originalStatus") ?? "");
+const originalPaymentStatus = String(formData.get("originalPaymentStatus") ?? "");
+if (order.status !== originalStatus || order.paymentStatus !== originalPaymentStatus) {
+  return { error: "This order changed since you opened it. Refresh the page before saving." };
+}
 
-  await db.transaction(async (tx) => {
-    await tx.update(orders).set({ status, paymentStatus, adminNotes, updatedAt: new Date() }).where(eq(orders.id, orderId));
-
-    // Restore reserved stock when an order is cancelled.
-    if (status === "cancelled" && order.status !== "cancelled") {
-      for (const item of order.items) {
-        if (item.variantId) {
-          const [variant] = await tx.select({ isActive: productVariants.isActive }).from(productVariants).where(eq(productVariants.id, item.variantId));
-          await tx.update(productVariants).set({ stock: sql`${productVariants.stock} + ${item.quantity}` }).where(eq(productVariants.id, item.variantId));
-          if (variant?.isActive && item.productId) {
-            await tx.update(products).set({ stock: sql`${products.stock} + ${item.quantity}` }).where(eq(products.id, item.productId));
-          }
-        } else if (item.productId) {
-          await tx.update(products).set({ stock: sql`${products.stock} + ${item.quantity}` }).where(eq(products.id, item.productId));
-        }
-      }
-    }
-
-    // Keep the latest payment record in sync with a manual confirmation.
+if (status === "cancelled" && order.status !== "cancelled") {
+  const cancelled = await cancelOrderAndRelease(orderId, { paymentStatus, adminNotes });
+  if (!cancelled) return { error: "Order already cancelled or updated. Refresh before saving." };
+} else {
+  if (order.status === "cancelled" && status !== "cancelled") {
+    return { error: "A cancelled order cannot be reopened because its stock has been released. Create a new order after checking inventory." };
+  }
+  const nextStatus = status === "pending" && paymentStatus === "paid" ? "payment_confirmed" : status;
+  const updated = await db.transaction(async (tx) => {
+    const [changed] = await tx.update(orders)
+      .set({ status: nextStatus, paymentStatus, adminNotes, updatedAt: new Date() })
+      .where(and(eq(orders.id, orderId), eq(orders.status, order.status), eq(orders.paymentStatus, order.paymentStatus)))
+      .returning({ id: orders.id });
+    if (!changed) return false;
     if (paymentStatus !== order.paymentStatus) {
       const latest = await tx.query.payments.findFirst({ where: eq(payments.orderId, orderId), orderBy: [desc(payments.createdAt)] });
-      if (latest) {
-        await tx
-          .update(payments)
-          .set({ status: paymentStatus, paidAt: paymentStatus === "paid" ? new Date() : latest.paidAt, updatedAt: new Date() })
-          .where(eq(payments.id, latest.id));
-      }
+      if (latest) await tx.update(payments).set({
+        status: paymentStatus,
+        paidAt: paymentStatus === "paid" ? new Date() : latest.paidAt,
+        updatedAt: new Date(),
+      }).where(eq(payments.id, latest.id));
     }
+    return true;
   });
+  if (!updated) return { error: "This order changed while saving. Refresh and review its payment status." };
+}
 
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);

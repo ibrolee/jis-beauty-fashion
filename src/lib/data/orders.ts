@@ -1,8 +1,10 @@
 import { and, count, desc, eq, gte, sql, sum } from "drizzle-orm";
 import { db } from "@/db";
 import { orderItems, orders, products, users, type OrderStatus } from "@/db/schema";
+import { expireUnpaidBankTransfers } from "@/lib/orders/reservations";
 
 export async function getOrderByNumber(orderNumber: string) {
+  await expireUnpaidBankTransfers();
   return db.query.orders.findFirst({
     where: eq(orders.orderNumber, orderNumber),
     with: { items: true, payments: { orderBy: (p, { desc }) => [desc(p.createdAt)] } },
@@ -27,6 +29,7 @@ export async function getOrderForUser(orderNumber: string, userId: number) {
 /* --------------------------------- Admin --------------------------------- */
 
 export async function getAllOrdersAdmin(status?: OrderStatus, limit = 100) {
+  await expireUnpaidBankTransfers();
   return db.query.orders.findMany({
     where: status ? eq(orders.status, status) : undefined,
     with: { items: true },
@@ -36,6 +39,7 @@ export async function getAllOrdersAdmin(status?: OrderStatus, limit = 100) {
 }
 
 export async function getOrderByIdAdmin(id: number) {
+  await expireUnpaidBankTransfers();
   return db.query.orders.findFirst({
     where: eq(orders.id, id),
     with: { items: true, payments: true, user: true },
