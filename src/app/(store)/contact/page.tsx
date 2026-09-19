@@ -5,17 +5,18 @@ import { SITE } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Contact Us",
-  description: "Reach JIS Beauty & Fashion on WhatsApp, email or Instagram for order support and fragrance advice.",
+  description: "Reach JIS Beauty & Fashion on WhatsApp, through our contact form or on Instagram for order support and fragrance advice.",
   alternates: { canonical: "/contact" },
 };
 
 export default function ContactPage() {
+  const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim();
   return (
     <div className="container-x py-10 lg:py-16">
       <header className="max-w-2xl">
         <p className="eyebrow mb-3">We’re here</p>
         <h1 className="font-serif text-4xl leading-[1.05] sm:text-5xl">Contact us</h1>
-        <p className="mt-4 text-[15px] leading-relaxed text-stone">Order questions, scent recommendations or wholesale enquiries — send a message and we’ll reply within one business day.</p>
+        <p className="mt-4 text-[15px] leading-relaxed text-stone">Questions about an order or a fragrance? Send us a message and we'll get back to you as soon as possible.</p>
       </header>
 
       <div className="mt-10 grid gap-12 lg:grid-cols-12">
@@ -30,13 +31,15 @@ export default function ContactPage() {
               <span className="block font-medium">{SITE.whatsapp}</span>
             </span>
           </a>
-          <a href={`mailto:${SITE.email}`} className="flex items-center gap-4 border border-line p-5 transition-colors hover:border-ink">
-            <span className="flex h-11 w-11 items-center justify-center bg-ivory text-ink">@</span>
-            <span>
-              <span className="block text-xs uppercase tracking-[0.16em] text-stone">Email</span>
-              <span className="block font-medium">{SITE.email}</span>
-            </span>
-          </a>
+          {contactEmail && (
+            <a href={`mailto:${contactEmail}`} className="flex items-center gap-4 border border-line p-5 transition-colors hover:border-ink">
+              <span className="flex h-11 w-11 items-center justify-center bg-ivory text-ink">@</span>
+              <span>
+                <span className="block text-xs uppercase tracking-[0.16em] text-stone">Email</span>
+                <span className="block font-medium">{contactEmail}</span>
+              </span>
+            </a>
+          )}
           <div className="border border-line p-5">
             <p className="text-xs uppercase tracking-[0.16em] text-stone">Social</p>
             <div className="mt-3 flex flex-col gap-2 text-sm">
