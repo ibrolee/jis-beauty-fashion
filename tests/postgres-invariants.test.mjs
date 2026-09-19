@@ -46,7 +46,7 @@ test("PostgreSQL conditional coupon updates serialize the final redemption", asy
   }
 });
 
-test("reported payment wins the order lock and blocks an overdue cancellation", async () => {
+test("a reported transfer wins the order lock and a fresh expiry read preserves it", async () => {
   await fixture();
   const reporter = await pool.connect();
   const expirer = await pool.connect();
@@ -54,12 +54,19 @@ test("reported payment wins the order lock and blocks an overdue cancellation", 
     await reporter.query("BEGIN"); await expirer.query("BEGIN");
     const lock = await reporter.query("UPDATE ci_orders SET status='pending' WHERE id=1 AND status='pending' AND payment_status='pending' RETURNING id");
     assert.equal(lock.rowCount, 1);
-    const expiry = expirer.query(`UPDATE ci_orders o SET status='cancelled' WHERE o.id=1 AND o.status='pending' AND o.payment_status='pending' AND o.created_at<=now()-interval '6 hours' AND NOT EXISTS(SELECT 1 FROM ci_payments p WHERE p.order_id=o.id AND p.metadata->>'transferReportedAt' IS NOT NULL) RETURNING id`);
+    // Mirrors cancelOrderAndRelease: acquire the order lock BEFORE a distinct
+    // second statement checks the report. A correlated check in the same UPDATE
+    // could instead use its pre-wait READ COMMITTED snapshot.
+    const expiryLock = expirer.query("SELECT id FROM ci_orders WHERE id=1 FOR UPDATE");
     await reporter.query("UPDATE ci_payments SET metadata=jsonb_build_object('transferReportedAt', now()::text) WHERE order_id=1");
     await reporter.query("COMMIT");
-    const result = await expiry;
+    assert.equal((await expiryLock).rowCount, 1);
+    const reports = await expirer.query("SELECT order_id FROM ci_payments WHERE order_id=1 AND metadata->>'transferReportedAt' IS NOT NULL LIMIT 1");
+    if (!reports.rowCount) {
+      await expirer.query("UPDATE ci_orders SET status='cancelled' WHERE id=1 AND status='pending'");
+    }
     await expirer.query("COMMIT");
-    assert.equal(result.rowCount, 0);
+    assert.equal(reports.rowCount, 1);
     assert.equal((await pool.query("SELECT status FROM ci_orders WHERE id=1")).rows[0].status, "pending");
   } finally {
     await reporter.query("ROLLBACK").catch(() => {});
