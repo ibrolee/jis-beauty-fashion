@@ -1,8 +1,9 @@
 import { Check } from "lucide-react";
 import Image from "next/image";
-import type { Order, OrderItem, OrderStatus, PaymentStatus } from "@/db/schema";
+import type { Order, OrderItem, OrderStatus, Payment, PaymentStatus } from "@/db/schema";
 import { Badge } from "@/components/ui/badge";
 import { ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS } from "@/lib/constants";
+import { manualCheckoutChannel } from "@/lib/orders/payment-review";
 import { cn, formatDate, formatNaira } from "@/lib/utils";
 
 const STATUS_TONES: Record<OrderStatus, "neutral" | "info" | "warning" | "success" | "danger"> = {
@@ -33,7 +34,7 @@ const TRACK_STEPS: OrderStatus[] = ["pending", "payment_confirmed", "processing"
 
 export function OrderStatusTracker({ status }: { status: OrderStatus }) {
   if (status === "cancelled") {
-    return <p className="border border-sale/30 bg-red-50 px-4 py-3 text-sm text-sale">This order was cancelled. If you were charged, a refund will be processed within 5–7 business days.</p>;
+    return <p className="border border-sale/30 bg-red-50 px-4 py-3 text-sm text-sale">This order was cancelled. If you transferred money, contact us so we can verify receipt and arrange any refund due. Do not pay a cancelled order again.</p>;
   }
   const current = TRACK_STEPS.indexOf(status);
   return (
@@ -94,7 +95,11 @@ export function OrderTotals({ order }: { order: Order }) {
   );
 }
 
-export function OrderMeta({ order }: { order: Order }) {
+export function OrderMeta({ order }: { order: Order & { payments?: Payment[] } }) {
+  const channel = manualCheckoutChannel(order.paymentMethod, order.payments ?? []);
+  const paymentLabel = channel === "whatsapp" ? "Instant payment on WhatsApp"
+    : channel === "website_transfer" ? "Bank transfer on site"
+      : PAYMENT_METHOD_LABELS[order.paymentMethod];
   return (
     <div className="grid gap-6 sm:grid-cols-2">
       <div>
@@ -113,7 +118,7 @@ export function OrderMeta({ order }: { order: Order }) {
       </div>
       <div>
         <h3 className="eyebrow mb-2 font-sans">Payment</h3>
-        <p className="text-sm text-ink-soft">{PAYMENT_METHOD_LABELS[order.paymentMethod]}</p>
+        <p className="text-sm text-ink-soft">{paymentLabel}</p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <PaymentStatusBadge status={order.paymentStatus} />
           <OrderStatusBadge status={order.status} />

@@ -1,4 +1,4 @@
-import { and, eq, lte, ne, sql } from "drizzle-orm";
+import { and, eq, lte, ne, notExists, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { coupons, orderItems, orders, payments, products, productVariants, type PaymentStatus } from "@/db/schema";
 
@@ -10,9 +10,25 @@ export function bankTransferDeadline(createdAt: Date): Date {
 }
 
 /**
+ * A reported transfer is not a confirmed payment, but may be genuine. Do not
+ * automatically release its stock before the shop has checked the bank account.
+ * Administrators must explicitly mark such orders paid or cancel them after review.
+ * This also recognizes records created before reports moved into JSON metadata.
+ */
+function hasNoReportedTransfer() {
+  return notExists(db.select({ id: payments.id }).from(payments).where(and(
+    eq(payments.orderId, orders.id),
+    or(
+      eq(payments.channel, "transfer_submitted"),
+      sql`${payments.metadata}->>'transferReportedAt' IS NOT NULL`,
+    ),
+  )));
+}
+
+/**
  * A cancelled order releases its inventory exactly once. The conditional UPDATE
- * acquires the order row lock; concurrent cron and admin cancellations cannot
- * both pass it. Do not call this for payments or statuses other than cancellation.
+ * acquires the order row lock; concurrent cron/admin cancellations cannot both
+ * pass it. The payment-report exclusion is rechecked under that lock.
  */
 export async function cancelOrderAndRelease(
   id: number,
@@ -32,6 +48,7 @@ export async function cancelOrderAndRelease(
         eq(orders.paymentMethod, "bank_transfer"),
         eq(orders.paymentStatus, "pending"),
         lte(orders.createdAt, cutoff),
+        hasNoReportedTransfer(),
       );
     }
 
@@ -39,7 +56,7 @@ export async function cancelOrderAndRelease(
       status: "cancelled",
       ...(options.paymentStatus === undefined ? {} : { paymentStatus: options.paymentStatus }),
       ...(options.expiredOnly
-        ? { adminNotes: "Automatically cancelled: bank transfer not confirmed within six hours." }
+        ? { adminNotes: "Automatically cancelled: no payment or transfer report within six hours." }
         : options.adminNotes === undefined ? {} : { adminNotes: options.adminNotes }),
       updatedAt: new Date(),
     }).where(and(...conditions)).returning({
@@ -57,8 +74,6 @@ export async function cancelOrderAndRelease(
           .set({ stock: sql`${productVariants.stock} + ${item.quantity}` })
           .where(eq(productVariants.id, item.variantId));
       }
-      // The parent stock is deducted even for variant purchases. Restore it
-      // independently of whether an option was subsequently deactivated.
       if (item.productId !== null) {
         await tx.update(products).set({
           stock: sql`${products.stock} + ${item.quantity}`,
@@ -91,9 +106,9 @@ export async function cancelOrderAndRelease(
 }
 
 /**
- * Safe to run on page requests and from a scheduled task. Recheck the age and
- * payment status inside each transaction to avoid cancelling confirmed payments.
- * A bound keeps individual requests short even if a large backlog accumulates.
+ * Runs from checkout/order/admin requests and scheduled tasks. Eligibility is
+ * rechecked inside cancelOrderAndRelease to protect concurrent confirmations.
+ * A bound prevents a large backlog from monopolizing a server request.
  */
 export async function expireUnpaidBankTransfers(limit = 40): Promise<number> {
   const cutoff = new Date(Date.now() - RESERVATION_MS);
@@ -103,6 +118,7 @@ export async function expireUnpaidBankTransfers(limit = 40): Promise<number> {
       eq(orders.paymentMethod, "bank_transfer"),
       eq(orders.paymentStatus, "pending"),
       lte(orders.createdAt, cutoff),
+      hasNoReportedTransfer(),
     ))
     .orderBy(orders.createdAt).limit(Math.max(1, Math.min(limit, 100)));
 

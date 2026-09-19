@@ -1,0 +1,32 @@
+name: Expire overdue JIS orders
+
+# GitHub schedules run from the default branch only. This workflow will not run
+# until the development branch is approved and merged. Runs may be delayed.
+on:
+  schedule:
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+concurrency:
+  group: jis-order-expiration
+  cancel-in-progress: false
+
+jobs:
+  expire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Cancel overdue, unreported bank-transfer reservations
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        shell: bash
+        run: |
+          if [[ -z "$CRON_SECRET" ]]; then
+            echo '::error::Configure a GitHub Actions CRON_SECRET that matches the Vercel Production CRON_SECRET.'
+            exit 1
+          fi
+          curl --fail-with-body --silent --show-error --retry 2 --retry-delay 3 --max-time 45 \
+            --header "Authorization: Bearer ${CRON_SECRET}" \
+            'https://jis-beauty-fashion.vercel.app/api/cron/expire-bank-transfers'
+          echo

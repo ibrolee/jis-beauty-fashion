@@ -7,7 +7,10 @@ export async function getOrderByNumber(orderNumber: string) {
   await expireUnpaidBankTransfers();
   return db.query.orders.findFirst({
     where: eq(orders.orderNumber, orderNumber),
-    with: { items: true, payments: { orderBy: (p, { desc }) => [desc(p.createdAt)] } },
+    with: {
+      items: { with: { product: { columns: { slug: true } } } },
+      payments: { orderBy: (p, { desc }) => [desc(p.createdAt)] },
+    },
   });
 }
 
@@ -32,7 +35,7 @@ export async function getAllOrdersAdmin(status?: OrderStatus, limit = 100) {
   await expireUnpaidBankTransfers();
   return db.query.orders.findMany({
     where: status ? eq(orders.status, status) : undefined,
-    with: { items: true },
+    with: { items: true, payments: true },
     orderBy: [desc(orders.createdAt)],
     limit,
   });
