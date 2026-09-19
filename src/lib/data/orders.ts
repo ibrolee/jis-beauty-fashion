@@ -35,7 +35,7 @@ export async function getAllOrdersAdmin(status?: OrderStatus, limit = 100) {
   await expireUnpaidBankTransfers();
   return db.query.orders.findMany({
     where: status ? eq(orders.status, status) : undefined,
-    with: { items: true },
+    with: { items: true, payments: true },
     orderBy: [desc(orders.createdAt)],
     limit,
   });
