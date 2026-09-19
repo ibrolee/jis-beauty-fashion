@@ -11,12 +11,10 @@ const nairaFormatter = new Intl.NumberFormat("en-NG", {
   maximumFractionDigits: 0,
 });
 
-/** Formats an integer naira amount, e.g. 38500 -> "₦38,500". */
 export function formatNaira(amount: number): string {
   return nairaFormatter.format(amount).replace("NGN", "₦");
 }
 
-/** URL-safe slug that also strips Yoruba/Igbo diacritics (Ọ̀run -> orun). */
 export function slugify(input: string): string {
   return input
     .normalize("NFD")
@@ -40,7 +38,6 @@ export function discountPercent(item: { price: number; salePrice: number | null 
   return Math.round(((item.price - (item.salePrice as number)) / item.price) * 100);
 }
 
-/** Lowest effective price across a product and its variants (for "From ₦…"). */
 export function startingPrice(product: Product, variants: ProductVariant[] = []): number {
   const prices = [effectivePrice(product), ...variants.map(effectivePrice)];
   return Math.min(...prices);
@@ -55,11 +52,11 @@ export function formatDate(date: Date | string, opts: Intl.DateTimeFormatOptions
   });
 }
 
-/** Human readable order number, e.g. JIS-LX3K9Q-7F2A */
+/** Order URLs are bearer links for guest customers: use cryptographically random IDs. */
 export function generateOrderNumber(): string {
-  const time = Date.now().toString(36).toUpperCase();
-  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
-  return `JIS-${time}-${rand}`;
+  const bytes = globalThis.crypto.getRandomValues(new Uint8Array(16));
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("").toUpperCase();
+  return `JIS-${hex}`;
 }
 
 export function generateReference(prefix = "JIS"): string {
@@ -77,14 +74,15 @@ export function toInt(value: unknown, fallback = 0): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
-/** Normalises Nigerian phone numbers to a wa.me friendly format (234…). */
 export function toWhatsAppNumber(phone: string): string {
   const digits = phone.replace(/\D/g, "");
   if (digits.startsWith("0")) return `234${digits.slice(1)}`;
   return digits;
 }
 
+/** Keep externally hosted product images absolute in SEO/structured-data output. */
 export function absoluteUrl(path = "/"): string {
-  const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  if (/^https?:\/\//i.test(path)) return path;
+  const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://jis-beauty-fashion.vercel.app").replace(/\/$/, "");
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
