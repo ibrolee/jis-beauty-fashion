@@ -24,7 +24,6 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
   const cancelled = order.status === "cancelled";
   const bankTransfer = order.paymentMethod === "bank_transfer";
   const deadline = bankTransferDeadline(order.createdAt);
-  const expired = deadline.getTime() <= Date.now();
   const submitted = order.payments?.some((entry) => entry.channel === "transfer_submitted") ?? false;
   const whatsappMessage = encodeURIComponent(
     cancelled ? `Hello JIS, I need help with cancelled order ${order.orderNumber} (${formatNaira(order.total)}).` :
@@ -58,7 +57,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
                   </dl>
                 ) : <p className="text-sm text-ink-soft">Request verified account details on WhatsApp before paying.</p>}
                 <p className="text-sm text-ink-soft">Transfer exactly <strong>{formatNaira(order.total)}</strong> and use <strong>{order.orderNumber}</strong> as the narration. Only select the button after making the transfer. We will verify receipt before marking the order paid and starting delivery.</p>
-                {expired ? <p className="text-sm font-medium text-sale">The six-hour payment window has ended. Contact us before transferring.</p> : <TransferSubmissionButton orderNumber={order.orderNumber} submitted={submitted} />}
+                <TransferSubmissionButton orderNumber={order.orderNumber} submitted={submitted} />
               </div>
             ) : <p className="mt-4 text-sm text-ink-soft">Open WhatsApp to request account details. Include your order reference and exact total when paying. We will confirm receipt before preparing delivery.</p>}
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
