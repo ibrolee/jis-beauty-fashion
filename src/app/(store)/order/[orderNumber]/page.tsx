@@ -19,7 +19,7 @@ type Props = { params: Promise<{ orderNumber: string }>; searchParams: Promise<{
 
 export default async function OrderConfirmationPage({ params, searchParams }: Props) {
   const [{ orderNumber }, { payment }, user] = await Promise.all([params, searchParams, getCurrentUser()]);
-  // This query first expires overdue unpaid reservations; the page never offers payment on a cancelled order.
+  // The order query checks overdue, unreported reservations before rendering.
   const order = await getOrderByNumber(orderNumber);
   if (!order) notFound();
 
@@ -27,31 +27,32 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
   const failed = payment === "failed" || order.paymentStatus === "failed";
   const cancelled = order.status === "cancelled";
   const latestManualPayment = order.payments.find((entry) => entry.provider === "manual");
-  // Both channels use the existing bank_transfer DB enum. Keep their original channel in payments.
-  // Older orders with no channel or the legacy transfer_submitted marker are website transfers.
+  // Both channels use the historical bank_transfer DB enum; payment.channel keeps them distinct.
   const whatsappCheckout = order.paymentMethod === "bank_transfer" && latestManualPayment?.channel === "whatsapp";
   const websiteTransfer = order.paymentMethod === "bank_transfer" && !whatsappCheckout;
-  const submitted = websiteTransfer && order.payments.some((entry) =>
+  const submitted = (websiteTransfer || whatsappCheckout) && order.payments.some((entry) =>
     entry.channel === "transfer_submitted" || typeof entry.metadata?.transferReportedAt === "string",
   );
   const deadline = bankTransferDeadline(order.createdAt);
   const whatsappMessage = cancelled
     ? `Hello JIS, I need assistance with cancelled order ${order.orderNumber} (${formatNaira(order.total)}).`
-    : whatsappCheckout
-      ? whatsappCheckoutMessage({
-          orderNumber: order.orderNumber,
-          total: order.total,
-          items: order.items.map((item) => ({
-            name: item.name,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            variantName: item.variantName,
-            productSlug: item.product?.slug ?? null,
-          })),
-        })
-      : websiteTransfer
-        ? `Hello JIS, I need help confirming my transfer for order ${order.orderNumber} (${formatNaira(order.total)}). Order details: ${orderNumber}.`
-        : `Hello JIS, I need payment assistance for order ${order.orderNumber} (${formatNaira(order.total)}).`;
+    : submitted
+      ? `Hello JIS, I have reported payment for order ${order.orderNumber} (${formatNaira(order.total)}). Please verify receipt in your bank account. Order details: ${orderNumber}.`
+      : whatsappCheckout
+        ? whatsappCheckoutMessage({
+            orderNumber: order.orderNumber,
+            total: order.total,
+            items: order.items.map((item) => ({
+              name: item.name,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              variantName: item.variantName,
+              productSlug: item.product?.slug ?? null,
+            })),
+          })
+        : websiteTransfer
+          ? `Hello JIS, I need help confirming my transfer for order ${order.orderNumber} (${formatNaira(order.total)}). Order details: ${orderNumber}.`
+          : `Hello JIS, I need payment assistance for order ${order.orderNumber} (${formatNaira(order.total)}).`;
 
   return (
     <div className="container-x py-10 lg:py-14">
@@ -60,19 +61,19 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
           {cancelled ? <AlertTriangle className="mx-auto h-10 w-10 text-sale" strokeWidth={1.25} /> : paid ? <CheckCircle2 className="mx-auto h-10 w-10 text-success" strokeWidth={1.25} /> : failed ? <AlertTriangle className="mx-auto h-10 w-10 text-sale" strokeWidth={1.25} /> : <Clock className="mx-auto h-10 w-10 text-ink" strokeWidth={1.25} />}
           <p className="eyebrow mt-5">Order {order.orderNumber}</p>
           <h1 className="mt-3 font-serif text-4xl leading-tight sm:text-5xl">
-            {cancelled ? "This order was cancelled" : paid ? `Thank you, ${order.firstName}!` : submitted ? "Transfer submitted" : failed ? "Payment needs attention" : "Order received"}
+            {cancelled ? "This order was cancelled" : paid ? `Thank you, ${order.firstName}!` : submitted ? "Payment reported — awaiting verification" : failed ? "Payment needs attention" : "Order received"}
           </h1>
           <p className="mx-auto mt-4 max-w-lg text-[15px] leading-relaxed text-stone">
             {cancelled
-              ? "Your reservation was cancelled. If you transferred money, please contact us for assistance."
+              ? "Your reservation was cancelled. Do not transfer money to this order. If you already paid, contact us for assistance."
               : paid
                 ? "Your payment was verified and we are preparing your order."
                 : submitted
-                  ? "We recorded your transfer submission. Payment remains pending until we verify the money in our account; delivery begins only after verification."
+                  ? "Your payment report is recorded and the reservation is held for manual review. Payment is still pending until we check our bank account; we will contact you if verification is unsuccessful."
                   : whatsappCheckout
-                    ? "Open WhatsApp with your product links, order details and exact total to request account details and pay now. We verify payment before delivery."
+                    ? "Open WhatsApp to request account details and pay within six hours. After transferring, return here and select ‘I have paid — request verification’ so your reservation is held for manual review. We verify receipt before fulfilment."
                     : websiteTransfer
-                      ? "Transfer the exact total shown below, then select ‘I have transferred the amount’. We verify payment before delivery. Unconfirmed reservations expire after six hours."
+                      ? "Transfer the exact amount below within six hours and select ‘I have transferred the amount’. Unreported, unpaid reservations become eligible for cancellation after six hours; payment is verified manually."
                       : order.paymentMethod === "pay_on_delivery"
                         ? "We will contact you to confirm your order. You can pay when it arrives."
                         : "We are checking your payment. Contact us if you need help."}
@@ -82,15 +83,15 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
         {!paid && !cancelled && (
           <section className="mt-8 border border-line bg-cream p-6" aria-labelledby="pay-heading">
             <h2 id="pay-heading" className="font-serif text-2xl">
-              {whatsappCheckout ? "Pay now on WhatsApp" : websiteTransfer ? "Bank transfer details" : "Payment information"}
+              {submitted ? "Payment report under review" : whatsappCheckout ? "Pay now on WhatsApp" : websiteTransfer ? "Bank transfer details" : "Payment information"}
             </h2>
             {(whatsappCheckout || websiteTransfer) && (
-              <p className="mt-3 text-sm font-medium text-ink">
-                Payment deadline: {deadline.toLocaleString("en-NG", { timeZone: "Africa/Lagos", dateStyle: "medium", timeStyle: "short" })} (Lagos time).
-              </p>
+              submitted
+                ? <p className="mt-3 text-sm font-medium text-ink">Your reservation is held for manual review. Do not pay again unless our team confirms you need to.</p>
+                : <p className="mt-3 text-sm font-medium text-ink">Payment window: until {deadline.toLocaleString("en-NG", { timeZone: "Africa/Lagos", dateStyle: "medium", timeStyle: "short" })} (Lagos time). Unreported orders are eligible for cancellation afterward. Check that your order is still pending before transferring.</p>
             )}
 
-            {websiteTransfer && (
+            {websiteTransfer && !submitted && (
               <div className="mt-4 space-y-5">
                 {BANK_TRANSFER_DETAILS.configured ? (
                   <dl className="grid gap-3 text-sm sm:grid-cols-3">
@@ -102,20 +103,24 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
                 <p className="text-sm text-ink-soft">
                   Transfer exactly <strong>{formatNaira(order.total)}</strong> and use <strong>{order.orderNumber}</strong> as your narration. Only press the button after making your transfer. We will verify receipt before marking the order paid.
                 </p>
-                <TransferSubmissionButton orderNumber={order.orderNumber} submitted={submitted} />
               </div>
             )}
-            {whatsappCheckout && (
+            {whatsappCheckout && !submitted && (
               <p className="mt-4 text-sm text-ink-soft">
-                Your message includes the products, product links, order reference and total of <strong>{formatNaira(order.total)}</strong>. Ask us for account details and transfer within six hours. Your order remains unpaid until we verify receipt.
+                Your WhatsApp message includes the products, product links, order reference and total of <strong>{formatNaira(order.total)}</strong>. Request our bank details and pay within six hours. Return to this page to report your transfer. Merely opening or sending a WhatsApp message does not confirm payment or hold the order for review.
               </p>
+            )}
+            {(websiteTransfer || whatsappCheckout) && (
+              <div className="mt-5">
+                <TransferSubmissionButton orderNumber={order.orderNumber} submitted={submitted} channel={whatsappCheckout ? "whatsapp" : "bank_transfer"} />
+              </div>
             )}
             {order.paymentMethod === "pay_on_delivery" && <p className="mt-4 text-sm text-ink-soft">Our team will contact you about delivery and payment.</p>}
             {order.paymentMethod === "paystack" && <p className="mt-4 text-sm text-ink-soft">Your existing online payment has not been confirmed. Retry securely if the option is available.</p>}
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               {order.paymentMethod === "paystack" && isOnlinePaymentEnabled() && <RetryPaymentButton orderNumber={order.orderNumber} />}
               <ButtonLink href={`${SITE.whatsappUrl}?text=${encodeURIComponent(whatsappMessage)}`} variant="primary" size="lg">
-                {whatsappCheckout ? "Pay now on WhatsApp" : websiteTransfer ? "Get payment help on WhatsApp" : "Contact us on WhatsApp"}
+                {submitted ? "Ask about verification on WhatsApp" : whatsappCheckout ? "Request bank details on WhatsApp" : websiteTransfer ? "Get payment help on WhatsApp" : "Contact us on WhatsApp"}
               </ButtonLink>
             </div>
           </section>

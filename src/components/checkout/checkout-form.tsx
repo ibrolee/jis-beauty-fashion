@@ -79,8 +79,8 @@ export function CheckoutForm({ user, savedAddress }: Props) {
   if (!items.length) return <EmptyState icon={ShoppingBag} title="Nothing to check out yet" description="Your bag is empty. Add a fragrance or two and come back." action={<ButtonLink href="/shop">Browse the collection</ButtonLink>} />;
 
   const paymentOptions: { value: CheckoutPayment; title: string; body: string }[] = [
-    { value: "whatsapp", title: "Instant payment on WhatsApp", body: "Place your order and open WhatsApp with your product links, order details and exact total. Request our account details and pay immediately." },
-    { value: "bank_transfer", title: "Bank transfer on this website", body: "Place your order to see GTBank account 0172349956, Alli Ibrahim Olanrewaju. Transfer the exact total, then press ‘I have transferred the amount’. We verify receipt before confirming payment and delivery. Unpaid orders are cancelled after 6 hours." },
+    { value: "whatsapp", title: "Instant payment on WhatsApp", body: "Place your order to open WhatsApp with product links, reference and exact total. Request our bank details, transfer within six hours, then return to your order page and select 'I have paid — request verification'. We verify the bank receipt manually." },
+    { value: "bank_transfer", title: "Bank transfer on this website", body: "Place your order to see GTBank account 0172349956, Alli Ibrahim Olanrewaju and your exact total. Transfer within six hours, then select 'I have transferred the amount' on your order page. Reported payments are held for manual review; unreported, unpaid orders are eligible for cancellation after six hours." },
   ];
 
   return (
@@ -115,7 +115,7 @@ export function CheckoutForm({ user, savedAddress }: Props) {
           <div className="space-y-3" role="radiogroup" aria-label="Payment method">
             {paymentOptions.map((opt) => <label key={opt.value} className={cn("flex cursor-pointer gap-4 border p-4 transition-colors", paymentMethod === opt.value ? "border-ink bg-cream" : "border-line hover:border-stone")}><input type="radio" name="paymentMethod" value={opt.value} checked={paymentMethod === opt.value} onChange={() => setPaymentMethod(opt.value)} className="mt-1 h-4 w-4 accent-ink" /><span className="flex-1"><span className="block text-sm font-medium">{opt.title}</span><span className="mt-1 block text-xs leading-relaxed text-stone">{opt.body}</span></span></label>)}
           </div>
-          <p className="text-xs text-stone">Payment is confirmed only after we verify that your transfer has reached our account.</p>
+          <p className="text-xs text-stone">Payment is confirmed only after we verify that your transfer has reached our account. Merely opening WhatsApp or reporting payment does not confirm it.</p>
         </section>
       </div>
       <aside className="lg:col-span-5"><div className="border border-line bg-cream p-6 lg:sticky lg:top-28">

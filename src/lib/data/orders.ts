@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, sql, sum } from "drizzle-orm";
+import { and, count, desc, eq, gte, ne, sql, sum } from "drizzle-orm";
 import { db } from "@/db";
 import { orderItems, orders, products, users, type OrderStatus } from "@/db/schema";
 import { expireUnpaidBankTransfers } from "@/lib/orders/reservations";
@@ -51,10 +51,13 @@ export async function getOrderByIdAdmin(id: number) {
 
 export async function getDashboardStats() {
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  // Reservation is not a sale: only paid, non-cancelled orders contribute to revenue
+  // and top-products figures. Historical unverified/cancelled orders remain readable.
+  const completedSale = and(eq(orders.paymentStatus, "paid"), ne(orders.status, "cancelled"));
 
   const [[revenue], [orderCount], [customerCount], [productCount], [pending], lowStock, recentOrders, topProducts] =
     await Promise.all([
-      db.select({ value: sum(orders.total) }).from(orders).where(eq(orders.paymentStatus, "paid")),
+      db.select({ value: sum(orders.total) }).from(orders).where(completedSale),
       db.select({ value: count() }).from(orders),
       db.select({ value: count() }).from(users).where(eq(users.role, "customer")),
       db.select({ value: count() }).from(products).where(eq(products.isActive, true)),
@@ -71,11 +74,12 @@ export async function getDashboardStats() {
           productId: orderItems.productId,
           name: orderItems.name,
           units: sum(orderItems.quantity),
+          // Line totals are gross before order-level coupon/delivery adjustments.
           revenue: sum(orderItems.lineTotal),
         })
         .from(orderItems)
         .innerJoin(orders, eq(orderItems.orderId, orders.id))
-        .where(gte(orders.createdAt, thirtyDaysAgo))
+        .where(and(gte(orders.createdAt, thirtyDaysAgo), completedSale))
         .groupBy(orderItems.productId, orderItems.name)
         .orderBy(desc(sum(orderItems.quantity)))
         .limit(5),

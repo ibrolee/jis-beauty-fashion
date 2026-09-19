@@ -1,0 +1,43 @@
+name: JIS isolated PostgreSQL invariants
+on:
+  push:
+    branches: [main, launch-prep-no-deploy]
+    paths:
+      - 'src/lib/actions/checkout.ts'
+      - 'src/lib/actions/transfer-confirmation.ts'
+      - 'src/lib/orders/**'
+      - 'tests/postgres-invariants.test.mjs'
+      - '.github/workflows/postgres-invariants.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  postgres-invariants:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: ci_only
+          POSTGRES_DB: jis_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d jis_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Intentionally hardcoded loopback CI URL; never inject repository or Neon secrets.
+      DATABASE_URL: postgres://postgres:ci_only@127.0.0.1:5432/jis_ci
+      CI_ISOLATED_POSTGRES: 'yes'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install without migrations or seed scripts
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Verify PostgreSQL concurrency on disposable tables only
+        run: node --test tests/postgres-invariants.test.mjs

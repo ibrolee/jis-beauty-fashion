@@ -9,12 +9,7 @@ export function bankTransferDeadline(createdAt: Date): Date {
   return new Date(createdAt.getTime() + RESERVATION_MS);
 }
 
-/**
- * A reported transfer is not a confirmed payment, but may be genuine. Do not
- * automatically release its stock before the shop has checked the bank account.
- * Administrators must explicitly mark such orders paid or cancel them after review.
- * This also recognizes records created before reports moved into JSON metadata.
- */
+/** Reported payment is a hold for bank review, not proof of payment. */
 function hasNoReportedTransfer() {
   return notExists(db.select({ id: payments.id }).from(payments).where(and(
     eq(payments.orderId, orders.id),
@@ -26,9 +21,10 @@ function hasNoReportedTransfer() {
 }
 
 /**
- * A cancelled order releases its inventory exactly once. The conditional UPDATE
- * acquires the order row lock; concurrent cron/admin cancellations cannot both
- * pass it. The payment-report exclusion is rechecked under that lock.
+ * Release stock/coupons exactly once. Crucially, obtain the order row lock and
+ * THEN re-read payment reports in a separate SQL statement. A single UPDATE
+ * with a correlated NOT EXISTS may use an earlier statement snapshot while
+ * waiting for a concurrent report and can cancel an order whose report just won.
  */
 export async function cancelOrderAndRelease(
   id: number,
@@ -41,6 +37,21 @@ export async function cancelOrderAndRelease(
   const cutoff = new Date(Date.now() - RESERVATION_MS);
 
   return db.transaction(async (tx) => {
+    // All report and admin confirmation paths update this same row first.
+    // Waiting for it before the second SELECT gives us a fresh READ COMMITTED
+    // snapshot of any report that committed while cancellation waited.
+    await tx.execute(sql`SELECT id FROM orders WHERE id = ${id} FOR UPDATE`);
+    if (options.expiredOnly) {
+      const [reported] = await tx.select({ id: payments.id }).from(payments).where(and(
+        eq(payments.orderId, id),
+        or(
+          eq(payments.channel, "transfer_submitted"),
+          sql`${payments.metadata}->>'transferReportedAt' IS NOT NULL`,
+        ),
+      )).limit(1);
+      if (reported) return false;
+    }
+
     const conditions = [eq(orders.id, id), ne(orders.status, "cancelled")];
     if (options.expiredOnly) {
       conditions.push(
@@ -106,9 +117,8 @@ export async function cancelOrderAndRelease(
 }
 
 /**
- * Runs from checkout/order/admin requests and scheduled tasks. Eligibility is
- * rechecked inside cancelOrderAndRelease to protect concurrent confirmations.
- * A bound prevents a large backlog from monopolizing a server request.
+ * Eligibility can be delayed by schedulers. Recheck every candidate under a
+ * transaction lock: concurrent customer reports and admin verification win safely.
  */
 export async function expireUnpaidBankTransfers(limit = 40): Promise<number> {
   const cutoff = new Date(Date.now() - RESERVATION_MS);

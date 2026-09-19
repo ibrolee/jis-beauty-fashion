@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq, gte, inArray, sql } from "drizzle-orm";
+import { and, eq, gt, gte, inArray, isNull, lt, lte, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { addresses, coupons, orderItems, orders, payments, productVariants, products } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -84,12 +84,27 @@ export async function placeOrder(rawInput: CheckoutInput): Promise<PlaceOrderRes
         const [reservedProduct] = await tx.update(products).set({ stock: sql`${products.stock} - ${line.quantity}`, salesCount: sql`${products.salesCount} + ${line.quantity}` }).where(and(eq(products.id, line.productId), eq(products.isActive, true), gte(products.stock, line.quantity))).returning({ id: products.id });
         if (!reservedProduct) throw new Error("OUT_OF_STOCK");
       }
-      if (couponId) await tx.update(coupons).set({ usedCount: sql`${coupons.usedCount} + 1` }).where(eq(coupons.id, couponId));
+      if (couponId) {
+        // Recheck the limits in the same transaction as stock reservation. The conditional
+        // UPDATE locks this coupon row, so two checkouts cannot redeem the final use.
+        const [reservedCoupon] = await tx.update(coupons)
+          .set({ usedCount: sql`${coupons.usedCount} + 1` })
+          .where(and(
+            eq(coupons.id, couponId),
+            eq(coupons.isActive, true),
+            or(isNull(coupons.expiresAt), gt(coupons.expiresAt, new Date())),
+            lte(coupons.minOrderAmount, subtotal),
+            or(isNull(coupons.usageLimit), lt(coupons.usedCount, coupons.usageLimit)),
+          ))
+          .returning({ id: coupons.id });
+        if (!reservedCoupon) throw new Error("COUPON_UNAVAILABLE");
+      }
       await tx.insert(payments).values({ orderId: order.id, provider: "manual", reference, amount: total, status: "pending", channel: input.paymentMethod === "whatsapp" ? "whatsapp" : "bank_transfer" });
       if (user && input.saveAddress) await tx.insert(addresses).values({ userId: user.id, label: "Checkout address", firstName: input.firstName, lastName: input.lastName, phone: input.phone, state: input.state, city: input.city, addressLine: input.address, instructions: input.instructions || null });
     });
   } catch (error) {
     if (error instanceof Error && error.message === "OUT_OF_STOCK") return { ok: false, error: "An item just sold out or its available stock changed. Please review your bag and try again." };
+    if (error instanceof Error && error.message === "COUPON_UNAVAILABLE") return { ok: false, error: "This coupon has just expired, changed or reached its usage limit. Please remove it and try again.", fieldErrors: { couponCode: "Coupon no longer available" } };
     console.error("Order creation failed:", error);
     return { ok: false, error: "We couldn't place your order. Please try again." };
   }

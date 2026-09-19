@@ -14,6 +14,7 @@ export function whatsappCheckoutMessage(order: {
   total: number;
   items: WhatsAppOrderItem[];
 }): string {
+  const orderUrl = absoluteUrl(`/order/${encodeURIComponent(order.orderNumber)}`);
   const lines = [
     "Hello JIS Beauty & Fashion, I want to pay for my order now. Please send me your bank account details.",
     `Order reference: ${order.orderNumber}`,
@@ -23,8 +24,8 @@ export function whatsappCheckoutMessage(order: {
       ...(item.productSlug ? [absoluteUrl(`/product/${encodeURIComponent(item.productSlug)}`)] : []),
     ]),
     `Total to pay: ${formatNaira(order.total)}`,
-    `Order details: ${absoluteUrl(`/order/${encodeURIComponent(order.orderNumber)}`)}`,
-    "I would like to pay immediately. Thank you.",
+    `Order details: ${orderUrl}`,
+    "After I transfer, I will open my order details link and select 'I have paid — request verification' within six hours so my reservation is held for manual review. I understand payment remains pending until you verify the bank receipt.",
   ];
 
   return lines.join("\n");
