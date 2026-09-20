@@ -20,7 +20,7 @@ export default async function AccountLayout({ children }: { children: ReactNode 
         <aside className="lg:col-span-3">
           <AccountNav />
         </aside>
-        <main className="min-w-0 lg:col-span-9" aria-label="Account content">{children}</main>
+        <div className="min-w-0 lg:col-span-9" aria-label="Account content">{children}</div>
       </div>
     </div>
   );
