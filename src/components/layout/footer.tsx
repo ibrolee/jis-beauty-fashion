@@ -66,8 +66,7 @@ export function Footer({ categories }: { categories: CategoryWithCount[] }) {
               <li><Link href="/shop" className="text-sm text-ink-soft transition-colors hover:text-rosewood">All products</Link></li>
               {categories.map((category) => (
                 <li key={category.id}>
-                  <Link href={`/shop/${category.slug}`} className="text-sm text-ink-soft transition-colors hover:text-rosewood">{category.name}</Link>
-                </li>
+                  <Link href={`/shop/${category.slug}`} className="text-sm text-ink-soft transition-colors hover:text-rosewood">{category.name}</Link></li>
               ))}
             </ul>
           </div>
