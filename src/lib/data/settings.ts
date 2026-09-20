@@ -9,11 +9,14 @@ export async function getSiteContent(): Promise<SiteContent> {
   const rows = await db.select().from(siteSettings);
   const map = new Map(rows.map((r) => [r.key, r.value]));
   const announcement = { ...DEFAULT_SITE_CONTENT.announcement, ...(map.get("announcement") ?? {}) };
-  // An old default may already be persisted in site_settings. Update only that
-  // exact legacy default for the new shipping policy; preserve custom announcements.
+  // Replace only the obsolete saved shipping announcements. Leave other
+  // admin-edited announcements intact, without writing to the live database.
   if (announcement.text === "Free delivery on orders above ₦150,000 · Use code JISWELCOME for 5% off") {
     announcement.text = DEFAULT_SITE_CONTENT.announcement.text;
     announcement.href = DEFAULT_SITE_CONTENT.announcement.href;
+  } else if (announcement.text === "Free delivery on orders above ₦150,000") {
+    announcement.text = "Free interstate delivery from ₦50,000 · Free Lagos delivery from ₦150,000";
+    announcement.href = "/shipping";
   }
   return {
     announcement,
