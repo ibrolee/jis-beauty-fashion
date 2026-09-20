@@ -4,7 +4,7 @@ import { SHIPPING_SECTIONS } from "@/content/policies";
 
 export const metadata: Metadata = {
   title: "Shipping & Delivery",
-  description: "Delivery timelines and fees for JIS Beauty & Fashion orders across Nigeria. Free delivery on orders above ₦150,000.",
+  description: "JIS Beauty & Fashion delivery across Nigeria: free interstate delivery from ₦50,000 and free Lagos delivery from ₦150,000.",
   alternates: { canonical: "/shipping" },
 };
 
