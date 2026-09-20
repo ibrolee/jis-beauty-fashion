@@ -12,7 +12,7 @@ export function ProductGallery({ images, name, badges }: { images: string[]; nam
   const selected = images[active];
 
   return (
-    <div className="grid min-w-0 gap-3 lg:grid-cols-[76px_minmax(0,1fr)] lg:gap-4">
+    <div className={cn("grid min-w-0 gap-3 lg:gap-4", images.length > 1 ? "lg:grid-cols-[76px_minmax(0,1fr)]" : "lg:grid-cols-1")}>
       {images.length > 1 && (
         <div className="order-2 flex min-w-0 gap-2 overflow-x-auto pb-1 no-scrollbar lg:order-1 lg:flex-col lg:overflow-visible" role="group" aria-label="Choose a product photograph">
           {images.map((src, index) => (
