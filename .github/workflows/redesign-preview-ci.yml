@@ -1,0 +1,32 @@
+name: JIS redesign preview quality
+on:
+  push:
+    branches:
+      - design/jis-website-2-0
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'package.json'
+      - '.github/workflows/redesign-preview-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preview-code-quality-and-commerce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies without migrations, seed scripts or production secrets
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Isolated payment, coupon, reporting, SEO, delivery and bank regression tests
+        run: node --test tests/manual-payment.test.mjs tests/coupon-redemption.test.mjs tests/whatsapp-report.test.mjs tests/seo-origin.test.mjs tests/shipping-bank.test.mjs

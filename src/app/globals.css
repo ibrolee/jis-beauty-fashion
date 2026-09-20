@@ -1,19 +1,18 @@
 @import "tailwindcss";
 
-/* ------------------------------------------------------------------------- */
-/*  JIS Beauty & Fashion — design tokens                                      */
-/* ------------------------------------------------------------------------- */
+/* JIS editorial palette. Keep the established token names so admin and commerce
+   surfaces retain their existing contrast and component behaviour. */
 @theme {
-  --color-ink: #141414;
-  --color-ink-soft: #3b3836;
-  --color-stone: #6f6a66;
-  --color-mist: #a39d98;
-  --color-line: #e7e2dc;
-  --color-ivory: #f7f4f0;
-  --color-cream: #fbf9f6;
-  --color-blush: #efe1da;
-  --color-rosewood: #9c5b4e;
-  --color-rosewood-dark: #7d463c;
+  --color-ink: #171511;
+  --color-ink-soft: #38352f;
+  --color-stone: #70695f;
+  --color-mist: #a1998f;
+  --color-line: #e4ded5;
+  --color-ivory: #f5f1e9;
+  --color-cream: #fbf8f3;
+  --color-blush: #efe1d8;
+  --color-rosewood: #875b43;
+  --color-rosewood-dark: #6a442f;
   --color-sale: #b03a2e;
   --color-success: #2f6b4f;
 
@@ -26,22 +25,12 @@
   --animate-fade-in: fade-in 0.5s ease both;
 
   @keyframes fade-up {
-    from {
-      opacity: 0;
-      transform: translateY(14px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
   }
   @keyframes fade-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 }
 
@@ -54,10 +43,7 @@
     @apply bg-white font-sans text-ink antialiased;
     font-feature-settings: "kern" 1, "liga" 1;
   }
-  h1,
-  h2,
-  h3,
-  .font-display {
+  h1, h2, h3, .font-display {
     @apply font-serif;
     letter-spacing: -0.01em;
   }
@@ -78,33 +64,75 @@
   }
 }
 
-/* Page container */
 @utility container-x {
   @apply mx-auto w-full max-w-[1320px] px-4 sm:px-6 lg:px-10;
 }
 
-/* Small uppercase label used across the storefront */
 @utility eyebrow {
   @apply text-[11px] font-medium uppercase tracking-[0.22em] text-stone;
 }
 
-/* Hide scrollbars on horizontal carousels */
 @utility no-scrollbar {
   scrollbar-width: none;
-  &::-webkit-scrollbar {
-    display: none;
-  }
+  &::-webkit-scrollbar { display: none; }
 }
 
-/* Simple fade for images once loaded */
 @utility img-fade {
   @apply transition-opacity duration-500;
 }
 
+/* Scoped to the checkout route only. All form controls and transactional logic
+   remain the same components and server actions as before the redesign. */
+@layer components {
+  .jis-checkout form > div > section {
+    border-top: 1px solid var(--color-line);
+    padding-top: 2rem;
+  }
+  .jis-checkout form > div > section h2 {
+    font-size: clamp(2rem, 3.2vw, 3rem);
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+  }
+  .jis-checkout form > aside > div {
+    border-color: var(--color-line);
+    background: #f5f0e8;
+    padding: clamp(1.3rem, 3vw, 2.25rem);
+  }
+  .jis-checkout form > aside h2 {
+    font-size: 2.25rem;
+    line-height: 1.1;
+  }
+  .jis-checkout form input:not([type="radio"]):not([type="checkbox"]),
+  .jis-checkout form select,
+  .jis-checkout form textarea {
+    background: #fff;
+    border-radius: 0;
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+  }
+  .jis-checkout form input:not([type="radio"]):not([type="checkbox"]):focus,
+  .jis-checkout form select:focus,
+  .jis-checkout form textarea:focus {
+    border-color: var(--color-rosewood);
+    box-shadow: 0 0 0 1px var(--color-rosewood);
+  }
+  .jis-checkout form [role="radiogroup"] > label {
+    min-height: 6rem;
+    background: #fff;
+    border-color: var(--color-line);
+    padding: 1.25rem;
+  }
+  .jis-checkout form [role="radiogroup"] > label:has(input:checked) {
+    background: var(--color-ivory);
+    border-color: var(--color-ink);
+  }
+  .jis-checkout form [role="radiogroup"] > label:focus-within {
+    outline: 2px solid var(--color-rosewood);
+    outline-offset: 2px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;

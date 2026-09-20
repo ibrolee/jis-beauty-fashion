@@ -11,13 +11,14 @@ import { WishlistButton } from "./wishlist-button";
 
 export function ProductCard({ product, priority = false, className }: { product: ProductListItem; priority?: boolean; className?: string }) {
   const href = `/product/${product.slug}`;
-  const soldOut = product.stock <= 0;
+  // Variant products can still be purchased after choosing an available variant.
+  const soldOut = product.stock <= 0 && !product.hasVariants;
   const [primary, secondary] = product.images;
 
   return (
-    <article className={cn("group relative flex flex-col", className)}>
-      <div className="relative aspect-[4/5] overflow-hidden bg-ivory">
-        <Link href={href} aria-label={product.name} className="absolute inset-0">
+    <article className={cn("group relative flex min-w-0 flex-col", className)}>
+      <div className="relative aspect-[4/5] overflow-hidden border border-line/60 bg-ivory">
+        <Link href={href} aria-label={`View ${product.name}`} className="absolute inset-0 z-0">
           {primary ? (
             <>
               <Image
@@ -26,7 +27,7 @@ export function ProductCard({ product, priority = false, className }: { product:
                 fill
                 priority={priority}
                 sizes="(min-width: 1280px) 300px, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-                className={cn("object-cover transition-all duration-700 ease-out group-hover:scale-[1.03]", secondary && "group-hover:opacity-0")}
+                className={cn("object-cover transition-all duration-700 ease-out group-hover:scale-[1.045]", secondary && "group-hover:opacity-0")}
               />
               {secondary && (
                 <Image
@@ -34,18 +35,17 @@ export function ProductCard({ product, priority = false, className }: { product:
                   alt=""
                   fill
                   sizes="(min-width: 1280px) 300px, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-                  className="object-cover opacity-0 transition-all duration-700 ease-out group-hover:scale-[1.03] group-hover:opacity-100"
+                  className="object-cover opacity-0 transition-all duration-700 ease-out group-hover:scale-[1.045] group-hover:opacity-100"
                   aria-hidden
                 />
               )}
             </>
           ) : (
-            <div className="flex h-full items-center justify-center text-xs uppercase tracking-widest text-mist">No image</div>
+            <span className="flex h-full items-center justify-center text-xs uppercase tracking-widest text-stone">Image coming soon</span>
           )}
         </Link>
 
-        {/* Badges */}
-        <div className="pointer-events-none absolute left-3 top-3 flex flex-col items-start gap-1.5">
+        <div className="pointer-events-none absolute left-3 top-3 z-10 flex flex-col items-start gap-1.5">
           {soldOut ? (
             <Badge tone="soldout">Sold out</Badge>
           ) : (
@@ -57,34 +57,31 @@ export function ProductCard({ product, priority = false, className }: { product:
           )}
         </div>
 
-        <div className="absolute right-2 top-2">
+        <div className="absolute right-2 top-2 z-20">
           <WishlistButton productId={product.id} productName={product.name} />
         </div>
 
-        {/* Desktop hover actions */}
-        <div className="absolute inset-x-0 bottom-0 hidden translate-y-full gap-px bg-white/95 p-2 transition-transform duration-300 ease-out group-hover:translate-y-0 group-focus-within:translate-y-0 lg:flex">
-          <AddToCartButton product={product} size="sm" className="flex-1" />
+        <div className="absolute inset-x-2 bottom-2 z-20 hidden translate-y-[calc(100%+0.5rem)] gap-1 border border-line/70 bg-cream/95 p-1.5 shadow-soft backdrop-blur-sm transition-transform duration-300 ease-out group-hover:translate-y-0 group-focus-within:translate-y-0 lg:flex">
+          <AddToCartButton product={product} size="sm" className="min-w-0 flex-1" />
           <QuickViewButton product={product} />
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col pt-4">
-        {product.brandName && <p className="eyebrow mb-1">{product.brandName}</p>}
-        <h3 className="font-serif text-[19px] leading-snug text-ink">
-          <Link href={href} className="hover:text-rosewood">
-            {product.name}
-          </Link>
+      <div className="flex flex-1 flex-col pt-4 sm:pt-5">
+        {product.brandName && <p className="eyebrow mb-2 truncate text-[10px] text-rosewood">{product.brandName}</p>}
+        <h3 className="font-serif text-[20px] leading-[1.08] text-ink sm:text-[23px]">
+          <Link href={href} className="transition-colors hover:text-rosewood">{product.name}</Link>
         </h3>
-        <p className="mt-0.5 text-xs text-stone">
-          {product.volume}
-          {product.fragranceType ? ` · ${product.fragranceType}` : ""}
-        </p>
-        <div className="mt-2 flex items-center justify-between gap-3">
+        {(product.volume || product.fragranceType) && (
+          <p className="mt-2 text-xs leading-relaxed text-stone">
+            {product.volume}{product.fragranceType ? ` · ${product.fragranceType}` : ""}
+          </p>
+        )}
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-2 pt-3">
           <Price price={product.price} salePrice={product.salePrice} prefix={product.hasVariants ? "From" : undefined} />
           {product.reviewCount > 0 && <RatingStars rating={product.rating} count={product.reviewCount} size="xs" />}
         </div>
-        {/* Mobile / tablet action */}
-        <div className="mt-3 lg:hidden">
+        <div className="mt-4 lg:hidden">
           <AddToCartButton product={product} size="sm" appearance="secondary" className="w-full" />
         </div>
       </div>

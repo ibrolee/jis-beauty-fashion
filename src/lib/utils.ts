@@ -80,12 +80,12 @@ export function toWhatsAppNumber(phone: string): string {
   return digits;
 }
 
-const PUBLIC_STOREFRONT = "https://jis-beauty-fashion.vercel.app";
+const PUBLIC_STOREFRONT = "https://www.jisbeautyfashion.com";
 
 /**
- * NEXT_PUBLIC_SITE_URL was once configured to a git-main deployment alias.
- * Normalize only that internal Vercel alias; preserve an explicitly configured
- * future custom domain. This origin powers canonical tags, sitemap and order URLs.
+ * Keep canonical URLs, sitemaps, structured data, and emailed links on the
+ * official public domain, even when an older Vercel alias remains in env vars.
+ * Explicit custom-domain and localhost values are still supported.
  */
 export function publicSiteOrigin(): string {
   const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, "");
@@ -93,6 +93,7 @@ export function publicSiteOrigin(): string {
   try {
     const parsed = new URL(configured);
     if (parsed.protocol !== "https:" && parsed.hostname !== "localhost" && parsed.hostname !== "127.0.0.1") return PUBLIC_STOREFRONT;
+    if (parsed.hostname === "jis-beauty-fashion.vercel.app") return PUBLIC_STOREFRONT;
     if (parsed.hostname.startsWith("jis-beauty-fashion-git-") && parsed.hostname.endsWith(".vercel.app")) return PUBLIC_STOREFRONT;
     return parsed.origin;
   } catch {

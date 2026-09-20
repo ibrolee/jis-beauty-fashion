@@ -9,6 +9,7 @@ const ts = require("typescript");
 const utils = readFileSync(new URL("../src/lib/utils.ts", import.meta.url), "utf8");
 const layout = readFileSync(new URL("../src/app/layout.tsx", import.meta.url), "utf8");
 const sitemap = readFileSync(new URL("../src/app/sitemap.ts", import.meta.url), "utf8");
+const CANONICAL = "https://www.jisbeautyfashion.com";
 
 function moduleFor(siteUrl) {
   const js = ts.transpileModule(utils, {
@@ -29,20 +30,20 @@ function moduleFor(siteUrl) {
 
 test("the mistakenly configured Vercel git-main alias never becomes the canonical store URL", () => {
   const { publicSiteOrigin, absoluteUrl } = moduleFor("https://jis-beauty-fashion-git-main-alliibrahim3-1786s-projects.vercel.app");
-  assert.equal(publicSiteOrigin(), "https://jis-beauty-fashion.vercel.app");
-  assert.equal(absoluteUrl("/product/genies-collection-parfums"), "https://jis-beauty-fashion.vercel.app/product/genies-collection-parfums");
+  assert.equal(publicSiteOrigin(), CANONICAL);
+  assert.equal(absoluteUrl("/product/genies-collection-parfums"), `${CANONICAL}/product/genies-collection-parfums`);
 });
 
-test("custom domain can replace the Vercel store domain without changing the source", () => {
+test("a valid custom domain can still override the default site origin", () => {
   const { publicSiteOrigin, absoluteUrl } = moduleFor("https://shop.example.com/");
   assert.equal(publicSiteOrigin(), "https://shop.example.com");
   assert.equal(absoluteUrl("faq"), "https://shop.example.com/faq");
 });
 
-test("missing, insecure or invalid site URL safely falls back to the public store", () => {
+test("missing, insecure or invalid site URL safely falls back to the official JIS domain", () => {
   for (const candidate of [undefined, "not-a-url", "http://random.example.com"]) {
     const { publicSiteOrigin } = moduleFor(candidate);
-    assert.equal(publicSiteOrigin(), "https://jis-beauty-fashion.vercel.app");
+    assert.equal(publicSiteOrigin(), CANONICAL);
   }
 });
 

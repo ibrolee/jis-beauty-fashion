@@ -1,24 +1,35 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
+import { ArrowUpRight } from "lucide-react";
 import { SITE } from "@/lib/constants";
 
 export type InfoSection = { title: string; body: string[] | ReactNode };
 
 export function InfoPage({ eyebrow, title, intro, updated, sections, aside }: { eyebrow: string; title: string; intro?: string; updated?: string; sections: InfoSection[]; aside?: ReactNode }) {
   return (
-    <div className="container-x py-10 lg:py-16">
-      <header className="max-w-2xl border-b border-line pb-8">
-        <p className="eyebrow mb-3">{eyebrow}</p>
-        <h1 className="font-serif text-4xl leading-[1.05] sm:text-5xl">{title}</h1>
-        {intro && <p className="mt-4 text-[15px] leading-relaxed text-stone">{intro}</p>}
-        {updated && <p className="mt-3 text-xs uppercase tracking-[0.14em] text-mist">Last updated {updated}</p>}
+    <div className="pb-20 lg:pb-28">
+      <header className="border-b border-line bg-ivory py-16 sm:py-20 lg:py-24">
+        <div className="container-x grid gap-8 lg:grid-cols-12 lg:items-end">
+          <div className="lg:col-span-8">
+            <p className="eyebrow mb-5">JIS / {eyebrow}</p>
+            <h1 className="max-w-4xl font-serif text-5xl leading-[0.95] tracking-tight sm:text-6xl lg:text-[clamp(5rem,7vw,7.5rem)]">{title}</h1>
+          </div>
+          <div className="lg:col-span-4">
+            {intro && <p className="max-w-md text-base leading-relaxed text-ink-soft">{intro}</p>}
+            {updated && <p className="mt-5 text-[10px] font-medium uppercase tracking-[0.18em] text-stone">Last updated {updated}</p>}
+          </div>
+        </div>
       </header>
-      <div className="mt-10 grid gap-12 lg:grid-cols-12">
-        <div className="space-y-10 lg:col-span-7">
-          {sections.map((s) => (
-            <section key={s.title} aria-labelledby={s.title}>
-              <h2 id={s.title} className="font-serif text-2xl">{s.title}</h2>
-              <div className="mt-3 space-y-3 text-[15px] leading-relaxed text-ink-soft">
-                {Array.isArray(s.body) ? s.body.map((p, i) => <p key={i}>{p}</p>) : s.body}
+      <div className="container-x mt-12 grid gap-12 lg:mt-20 lg:grid-cols-12 lg:gap-16">
+        <div className="lg:col-span-7">
+          {sections.map((section, index) => (
+            <section key={`${section.title}-${index}`} aria-labelledby={`information-section-${index}`} className="grid gap-4 border-b border-line py-9 first:pt-0 sm:grid-cols-[3rem_minmax(0,1fr)] sm:gap-6">
+              <span className="pt-1 text-[11px] font-medium tracking-[0.14em] text-rosewood" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+              <div>
+                <h2 id={`information-section-${index}`} className="font-serif text-3xl leading-tight sm:text-4xl">{section.title}</h2>
+                <div className="mt-4 space-y-4 text-[15px] leading-[1.9] text-ink-soft">
+                  {Array.isArray(section.body) ? section.body.map((paragraph, paragraphIndex) => <p key={paragraphIndex}>{paragraph}</p>) : section.body}
+                </div>
               </div>
             </section>
           ))}
@@ -32,14 +43,15 @@ export function InfoPage({ eyebrow, title, intro, updated, sections, aside }: { 
 export function ContactAside() {
   const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim();
   return (
-    <div className="sticky top-28 border border-line bg-cream p-6">
-      <h2 className="font-serif text-2xl">Need a hand?</h2>
-      <p className="mt-2 text-sm text-stone">You can reach us on WhatsApp or via our contact form.</p>
-      <ul className="mt-4 space-y-2 text-sm">
-        <li><a href={SITE.whatsappUrl} className="underline underline-offset-4">WhatsApp {SITE.whatsapp}</a></li>
-        {contactEmail && <li><a href={`mailto:${contactEmail}`} className="underline underline-offset-4">{contactEmail}</a></li>}
-        <li><a href="/contact" className="underline underline-offset-4">Contact form</a></li>
-      </ul>
+    <div className="sticky top-36 border border-line bg-cream p-7 sm:p-9">
+      <p className="eyebrow mb-4">Personal assistance</p>
+      <h2 className="font-serif text-4xl leading-tight">We’re here to help.</h2>
+      <p className="mt-4 text-sm leading-relaxed text-stone">Questions about a product, payment or delivery? Reach our team using any of the options below.</p>
+      <div className="mt-8 space-y-1 border-t border-line pt-4">
+        <a href={SITE.whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-12 items-center justify-between gap-2 border-b border-line text-sm text-ink-soft transition-colors hover:text-rosewood">WhatsApp {SITE.whatsapp}<ArrowUpRight className="h-4 w-4" aria-hidden="true" /></a>
+        {contactEmail && <a href={`mailto:${contactEmail}`} className="flex min-h-12 items-center justify-between gap-2 border-b border-line text-sm text-ink-soft transition-colors hover:text-rosewood">Email us<ArrowUpRight className="h-4 w-4" aria-hidden="true" /></a>}
+        <Link href="/contact" className="flex min-h-12 items-center justify-between gap-2 border-b border-line text-sm text-ink-soft transition-colors hover:text-rosewood">Contact form<ArrowUpRight className="h-4 w-4" aria-hidden="true" /></Link>
+      </div>
     </div>
   );
 }

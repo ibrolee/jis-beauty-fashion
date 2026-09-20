@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SearchX } from "lucide-react";
 import { Suspense } from "react";
 import { ProductGrid } from "@/components/product/product-grid";
@@ -31,69 +32,81 @@ export async function ShopPage({ eyebrow, title, description, basePath, searchPa
   const to = Math.min(result.total, result.page * result.perPage);
 
   return (
-    <div className="container-x py-10 lg:py-14">
-      <header className="mb-8 max-w-2xl lg:mb-12">
-        {eyebrow && <p className="eyebrow mb-3">{eyebrow}</p>}
-        <h1 className="font-serif text-4xl leading-[1.05] sm:text-5xl">{title}</h1>
-        {description && <p className="mt-4 text-[15px] leading-relaxed text-stone">{description}</p>}
-      </header>
-
-      <div className="grid gap-10 lg:grid-cols-12">
-        <aside className="hidden lg:col-span-3 lg:block" aria-label="Filters">
-          <div className="sticky top-24">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-serif text-2xl">Filters</h2>
-              {activeCount > 0 && (
-                <Suspense>
-                  <ClearFiltersButton />
-                </Suspense>
-              )}
-            </div>
-            <Suspense>
-              <FilterPanel categories={categories} brands={brands} priceBounds={priceBounds} filters={filters} lockCategory={lockCategory} />
-            </Suspense>
+    <>
+      <section className="border-b border-line bg-ivory" aria-label="Collection introduction">
+        <div className="container-x pb-7 pt-12 sm:pb-10 sm:pt-16 lg:pb-12 lg:pt-20">
+          <p className="eyebrow mb-4">{eyebrow ?? "The JIS collection"}</p>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
+            <h1 className="max-w-3xl font-serif text-[clamp(3.25rem,7vw,6.75rem)] leading-[0.88] tracking-[-0.035em] text-ink">{title}</h1>
+            {description && <p className="max-w-sm text-[15px] leading-[1.8] text-stone lg:pb-1">{description}</p>}
           </div>
-        </aside>
+        </div>
+        <nav aria-label="Browse collections" className="container-x -mb-px flex gap-1 overflow-x-auto pb-px no-scrollbar sm:gap-3">
+          <Link href="/shop" aria-current={!filters.category ? "page" : undefined} className={`flex min-h-12 shrink-0 items-center border-b-2 px-3 text-[11px] font-medium uppercase tracking-[0.13em] transition-colors sm:px-4 ${!filters.category ? "border-rosewood text-ink" : "border-transparent text-stone hover:border-line hover:text-ink"}`}>
+            All fragrances
+          </Link>
+          {categories.filter((category) => category.productCount > 0).map((category) => (
+            <Link key={category.id} href={`/shop/${category.slug}`} aria-current={filters.category === category.slug ? "page" : undefined} className={`flex min-h-12 shrink-0 items-center border-b-2 px-3 text-[11px] font-medium uppercase tracking-[0.13em] transition-colors sm:px-4 ${filters.category === category.slug ? "border-rosewood text-ink" : "border-transparent text-stone hover:border-line hover:text-ink"}`}>
+              {category.name}
+            </Link>
+          ))}
+        </nav>
+      </section>
 
-        <div className="lg:col-span-9">
-          <div className="mb-6 flex items-center justify-between gap-4 border-b border-line pb-4">
-            <div className="flex items-center gap-4">
+      <div className="container-x pb-16 pt-10 lg:pb-24 lg:pt-14">
+        <div className="grid gap-9 lg:grid-cols-12 lg:gap-10">
+          <aside className="hidden lg:col-span-3 lg:block" aria-label="Filters">
+            <div className="sticky top-[145px] border-t border-ink pt-5">
+              <div className="mb-5 flex items-center justify-between">
+                <h2 className="font-serif text-3xl leading-none">Refine your edit</h2>
+                {activeCount > 0 && (
+                  <Suspense><ClearFiltersButton /></Suspense>
+                )}
+              </div>
               <Suspense>
-                <MobileFilters categories={categories} brands={brands} priceBounds={priceBounds} filters={filters} lockCategory={lockCategory} activeCount={activeCount} />
+                <FilterPanel categories={categories} brands={brands} priceBounds={priceBounds} filters={filters} lockCategory={lockCategory} />
               </Suspense>
-              <p className="text-sm text-stone" aria-live="polite">
-                {result.total === 0 ? "No products" : `Showing ${from}–${to} of ${result.total}`}
-              </p>
             </div>
-            <Suspense>
-              <SortSelect value={filters.sort} />
-            </Suspense>
-          </div>
+          </aside>
 
-          {result.items.length ? (
-            <>
-              <ProductGrid products={result.items} columns={4} priorityCount={4} />
-              <Pagination page={result.page} totalPages={result.totalPages} basePath={basePath} searchParams={searchParams} />
-            </>
-          ) : (
-            <EmptyState
-              icon={SearchX}
-              title={emptyTitle ?? "No products match these filters"}
-              description={emptyDescription ?? "Try removing a filter or two, or browse the full collection."}
-              action={
-                <>
-                  {activeCount > 0 && (
-                    <Suspense>
-                      <ClearFiltersButton className="inline-flex h-12 items-center border border-ink px-6 no-underline">Clear filters</ClearFiltersButton>
-                    </Suspense>
-                  )}
-                  <ButtonLink href="/shop">Shop all products</ButtonLink>
-                </>
-              }
-            />
-          )}
+          <div className="min-w-0 lg:col-span-9">
+            <div className="mb-7 flex flex-wrap items-center justify-between gap-4 border-b border-line pb-5">
+              <div className="flex items-center gap-4">
+                <Suspense>
+                  <MobileFilters categories={categories} brands={brands} priceBounds={priceBounds} filters={filters} lockCategory={lockCategory} activeCount={activeCount} />
+                </Suspense>
+                <p className="text-xs tracking-wide text-stone" aria-live="polite">
+                  {result.total === 0 ? "No products" : `Showing ${from}–${to} of ${result.total} products`}
+                </p>
+              </div>
+              <Suspense><SortSelect value={filters.sort} /></Suspense>
+            </div>
+
+            {result.items.length ? (
+              <>
+                <ProductGrid products={result.items} columns={4} priorityCount={4} />
+                <Pagination page={result.page} totalPages={result.totalPages} basePath={basePath} searchParams={searchParams} />
+              </>
+            ) : (
+              <EmptyState
+                icon={SearchX}
+                title={emptyTitle ?? "No products match these filters"}
+                description={emptyDescription ?? "Try removing a filter or two, or browse the full collection."}
+                action={
+                  <>
+                    {activeCount > 0 && (
+                      <Suspense>
+                        <ClearFiltersButton className="inline-flex h-12 items-center border border-ink px-6 no-underline">Clear filters</ClearFiltersButton>
+                      </Suspense>
+                    )}
+                    <ButtonLink href="/shop">Shop all products</ButtonLink>
+                  </>
+                }
+              />
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

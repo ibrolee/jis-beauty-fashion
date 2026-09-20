@@ -37,12 +37,13 @@ export const NIGERIAN_STATES = [
   "Taraba", "Yobe", "Zamfara",
 ] as const;
 
-/**
- * Delivery pricing. Adjust freely — the checkout and cart both call
- * `getDeliveryFee()` so there is a single source of truth.
+/** Delivery pricing: shared by cart, checkout and the trusted server-side order action.
+ * Interstate deliveries are free from ₦50,000; Lagos retains its existing
+ * ₦150,000 free-delivery threshold. Thresholds use the order subtotal.
  */
 export const DELIVERY = {
   freeDeliveryThreshold: 150_000,
+  interstateFreeDeliveryThreshold: 50_000,
   zones: [
     { states: ["Lagos"], fee: 2_500, eta: "1 – 2 business days" },
     { states: ["FCT - Abuja", "Ogun", "Oyo"], fee: 4_000, eta: "2 – 3 business days" },
@@ -58,6 +59,7 @@ export function getDeliveryZone(state: string) {
 
 export function getDeliveryFee(state: string | null | undefined, subtotal: number): number {
   if (!state) return 0;
+  if (state !== "Lagos" && subtotal >= DELIVERY.interstateFreeDeliveryThreshold) return 0;
   if (subtotal >= DELIVERY.freeDeliveryThreshold) return 0;
   return getDeliveryZone(state).fee;
 }
