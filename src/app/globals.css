@@ -81,6 +81,56 @@
   @apply transition-opacity duration-500;
 }
 
+/* Scoped to the checkout route only. All form controls and transactional logic
+   remain the same components and server actions as before the redesign. */
+@layer components {
+  .jis-checkout form > div > section {
+    border-top: 1px solid var(--color-line);
+    padding-top: 2rem;
+  }
+  .jis-checkout form > div > section h2 {
+    font-size: clamp(2rem, 3.2vw, 3rem);
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+  }
+  .jis-checkout form > aside > div {
+    border-color: var(--color-line);
+    background: #f5f0e8;
+    padding: clamp(1.3rem, 3vw, 2.25rem);
+  }
+  .jis-checkout form > aside h2 {
+    font-size: 2.25rem;
+    line-height: 1.1;
+  }
+  .jis-checkout form input:not([type="radio"]):not([type="checkbox"]),
+  .jis-checkout form select,
+  .jis-checkout form textarea {
+    background: #fff;
+    border-radius: 0;
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+  }
+  .jis-checkout form input:not([type="radio"]):not([type="checkbox"]):focus,
+  .jis-checkout form select:focus,
+  .jis-checkout form textarea:focus {
+    border-color: var(--color-rosewood);
+    box-shadow: 0 0 0 1px var(--color-rosewood);
+  }
+  .jis-checkout form [role="radiogroup"] > label {
+    min-height: 6rem;
+    background: #fff;
+    border-color: var(--color-line);
+    padding: 1.25rem;
+  }
+  .jis-checkout form [role="radiogroup"] > label:has(input:checked) {
+    background: var(--color-ivory);
+    border-color: var(--color-ink);
+  }
+  .jis-checkout form [role="radiogroup"] > label:focus-within {
+    outline: 2px solid var(--color-rosewood);
+    outline-offset: 2px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
