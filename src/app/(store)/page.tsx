@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { CollectionSection } from "@/components/home/collection-section";
+import { EditorialStory } from "@/components/home/editorial-story";
 import { FeaturedCategories } from "@/components/home/featured-categories";
 import { Hero } from "@/components/home/hero";
-import { BrandStory, NewsletterBand, PromoCta } from "@/components/home/sections";
+import { NewsletterBand, PromoCta } from "@/components/home/sections";
 import { SITE } from "@/lib/constants";
 import { getCategories } from "@/lib/data/categories";
 import { getCollection, getProductsForCategory } from "@/lib/data/products";
@@ -57,7 +58,7 @@ export default async function HomePage() {
         products={newArrivals}
         priorityCount={2}
       />
-      <BrandStory />
+      <EditorialStory />
       <CollectionSection
         eyebrow="The favourites / 03"
         title="Best sellers"
