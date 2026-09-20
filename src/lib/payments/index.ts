@@ -22,11 +22,11 @@ export function providerForMethod(method: PaymentMethod): PaymentProvider | null
   return method === "paystack" ? paystackProvider : null;
 }
 
-// Account details supplied by the shop owner. Do not replace these with
-// deployment environment defaults or unverified demo account information.
+// Owner-confirmed bank recipient for JIS website transfers (20 September 2026).
+// This is the only authoritative account shown by the server-rendered order page.
 export const BANK_TRANSFER_DETAILS = {
   bankName: "GTBank",
-  accountName: "Alli Ibrahim Olanrewaju",
-  accountNumber: "0172349956",
+  accountName: "Salmon Salmat Oyindamola",
+  accountNumber: "0165946091",
   configured: true,
 } as const;
