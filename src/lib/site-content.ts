@@ -32,8 +32,8 @@ export type SiteContent = {
 
 export const DEFAULT_SITE_CONTENT: SiteContent = {
   announcement: {
-    text: "Free delivery on orders above ₦150,000 · Use code JISWELCOME for 5% off",
-    href: "/shop",
+    text: "Free interstate delivery from ₦50,000 · Use code JISWELCOME for 5% off",
+    href: "/shipping",
     enabled: true,
   },
   hero: {
