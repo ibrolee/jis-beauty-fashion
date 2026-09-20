@@ -28,5 +28,5 @@ jobs:
         run: npm run typecheck
       - name: Lint
         run: npm run lint
-      - name: Isolated pure payment, coupon, reporting and canonical URL regression tests
-        run: node --test tests/manual-payment.test.mjs tests/coupon-redemption.test.mjs tests/whatsapp-report.test.mjs tests/seo-origin.test.mjs
+      - name: Isolated payment, coupon, reporting, SEO, delivery and bank regression tests
+        run: node --test tests/manual-payment.test.mjs tests/coupon-redemption.test.mjs tests/whatsapp-report.test.mjs tests/seo-origin.test.mjs tests/shipping-bank.test.mjs
