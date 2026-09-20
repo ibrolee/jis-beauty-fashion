@@ -42,8 +42,7 @@ export default async function ProductPage({ params }: Props) {
     getRelatedProducts(product, 4),
     user ? hasUserReviewed(product.id, user.id) : Promise.resolve(false),
   ]);
-
-  const soldOut = product.stock <= 0 && !product.variants.some((v) => v.stock > 0);
+  const soldOut = product.stock <= 0 && !product.variants.some((variant) => variant.stock > 0);
   const badges = soldOut
     ? [{ tone: "soldout" as const, label: "Sold out" }]
     : [
@@ -51,7 +50,6 @@ export default async function ProductPage({ params }: Props) {
         ...(product.isNewArrival ? [{ tone: "new" as const, label: "New" }] : []),
         ...(product.isBestSeller ? [{ tone: "best" as const, label: "Best seller" }] : []),
       ];
-
   const details: [string, string | null][] = [
     ["Volume", product.volume],
     ["Fragrance type", product.fragranceType],
@@ -60,14 +58,13 @@ export default async function ProductPage({ params }: Props) {
     ["Occasion", product.occasion],
     ["Category", product.categoryName],
   ];
-
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
     description: product.shortDescription ?? product.description,
     sku: product.sku,
-    image: [...product.images, ...product.variants.flatMap((v) => v.images)].map((i) => absoluteUrl(i)),
+    image: [...product.images, ...product.variants.flatMap((variant) => variant.images)].map((image) => absoluteUrl(image)),
     brand: product.brandName ? { "@type": "Brand", name: product.brandName } : undefined,
     category: product.categoryName,
     offers: {
@@ -83,137 +80,118 @@ export default async function ProductPage({ params }: Props) {
   };
 
   return (
-    <div className="container-x py-4 lg:py-8">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+    <div className="bg-cream">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
+      <div className="container-x pb-16 pt-5 lg:pb-24 lg:pt-8">
+        <nav aria-label="Breadcrumb" className="mb-7 flex min-w-0 items-center gap-2 overflow-hidden text-[10px] font-medium uppercase tracking-[0.12em] text-stone lg:mb-10">
+          <Link href="/" className="shrink-0 hover:text-ink">Home</Link>
+          <ChevronRight className="h-3 w-3 shrink-0" aria-hidden="true" />
+          <Link href="/shop" className="shrink-0 hover:text-ink">Shop</Link>
+          <ChevronRight className="h-3 w-3 shrink-0" aria-hidden="true" />
+          <Link href={`/shop/${product.categorySlug}`} className="shrink-0 hover:text-ink">{product.categoryName}</Link>
+          <ChevronRight className="h-3 w-3 shrink-0" aria-hidden="true" />
+          <span className="min-w-0 truncate text-ink" aria-current="page">{product.name}</span>
+        </nav>
 
-      <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-1.5 text-xs text-stone">
-        <Link href="/" className="hover:text-ink">Home</Link>
-        <ChevronRight className="h-3 w-3" aria-hidden />
-        <Link href="/shop" className="hover:text-ink">Shop</Link>
-        <ChevronRight className="h-3 w-3" aria-hidden />
-        <Link href={`/shop/${product.categorySlug}`} className="hover:text-ink">{product.categoryName}</Link>
-        <ChevronRight className="h-3 w-3" aria-hidden />
-        <span className="truncate text-ink" aria-current="page">{product.name}</span>
-      </nav>
-
-      <VariantSelectionProvider product={product}>
-        {product.variants.length > 0 && (
-          <div className="mb-3 lg:hidden">
-            <VariantChoices product={product} />
-          </div>
-        )}
-      <div className="grid gap-5 lg:grid-cols-12 lg:gap-8">
-        <div className="lg:col-span-7">
-          <VariantProductGallery product={product} badges={badges} />
-        </div>
-
-        <div className="lg:col-span-5">
-          <div className="lg:sticky lg:top-24">
-            {product.brandName && <p className="eyebrow">{product.brandName}</p>}
-            <h1 className="mt-1 font-serif text-3xl leading-[1.08] sm:text-4xl">{product.name}</h1>
-            {(product.volume || product.fragranceType) && (
-              <p className="mt-1 text-sm text-stone">
-                {[product.volume, product.fragranceType].filter(Boolean).join(" · ")}
-              </p>
-            )}
-            <div className="mt-4">
-              <PurchasePanel product={product} />
+        <VariantSelectionProvider product={product}>
+          {product.variants.length > 0 && (
+            <div className="mb-5 border-y border-line py-4 lg:hidden">
+              <VariantChoices product={product} />
             </div>
-            <div className="mt-3 flex items-center gap-3">
-              {product.reviewCount > 0 ? (
-                <a href="#reviews" className="inline-flex items-center gap-2 text-sm hover:underline">
-                  <RatingStars rating={product.rating} showValue />
-                  <span className="text-stone">{product.reviewCount} review{product.reviewCount === 1 ? "" : "s"}</span>
-                </a>
-              ) : (
-                <a href="#reviews" className="text-sm text-stone hover:underline">No reviews yet</a>
-              )}
+          )}
+          <div className="grid items-start gap-9 lg:grid-cols-12 lg:gap-12 xl:gap-16">
+            <div className="min-w-0 lg:col-span-7">
+              <VariantProductGallery product={product} badges={badges} />
             </div>
-            {product.shortDescription && <p className="mt-4 text-[15px] leading-relaxed text-ink-soft">{product.shortDescription}</p>}
-
-          </div>
-        </div>
-      </div>
-
-      </VariantSelectionProvider>
-
-      {/* Details */}
-      <div className="mt-16 grid gap-12 border-t border-line pt-12 lg:mt-24 lg:grid-cols-12 lg:pt-16">
-        <section className="lg:col-span-7" aria-labelledby="description-heading">
-          <h2 id="description-heading" className="font-serif text-3xl">About this scent</h2>
-          <p className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-ink-soft">{product.description}</p>
-
-          {(product.topNotes || product.heartNotes || product.baseNotes) && (
-            <div className="mt-10">
-              <h3 className="eyebrow mb-5 font-sans">Fragrance notes</h3>
-              <div className="grid gap-6 sm:grid-cols-3">
-                {[
-                  ["Top notes", product.topNotes, "The first impression — bright and fleeting."],
-                  ["Heart notes", product.heartNotes, "The character that unfolds after a few minutes."],
-                  ["Base notes", product.baseNotes, "The lasting trail that stays for hours."],
-                ].map(([label, value, hint]) =>
-                  value ? (
-                    <div key={label} className="border-l border-line pl-4">
-                      <p className="text-xs font-medium uppercase tracking-[0.14em]">{label}</p>
-                      <p className="mt-2 font-serif text-xl leading-snug">{value}</p>
-                      <p className="mt-1 text-xs text-stone">{hint}</p>
-                    </div>
-                  ) : null,
+            <div className="min-w-0 lg:col-span-5">
+              <div className="lg:sticky lg:top-40">
+                <p className="mb-4 flex items-center gap-3 text-[10px] font-medium uppercase tracking-[0.24em] text-rosewood">
+                  <span className="h-px w-7 bg-rosewood" aria-hidden="true" />
+                  {product.brandName ?? "JIS fragrance edit"}
+                </p>
+                <h1 className="max-w-[15ch] font-serif text-[clamp(2.8rem,5vw,5.5rem)] leading-[0.94] tracking-[-0.035em] text-ink">{product.name}</h1>
+                {(product.volume || product.fragranceType) && (
+                  <p className="mt-5 text-xs font-medium uppercase tracking-[0.16em] text-stone">{[product.volume, product.fragranceType].filter(Boolean).join("  /  ")}</p>
                 )}
+                {product.shortDescription && <p className="mt-5 max-w-prose text-sm leading-7 text-ink-soft">{product.shortDescription}</p>}
+                <div className="mt-7"><PurchasePanel product={product} /></div>
+                <div className="mt-5">
+                  <a href="#reviews" className="inline-flex items-center gap-2 text-xs text-ink-soft underline-offset-4 hover:underline">
+                    {product.reviewCount > 0 ? (
+                      <><RatingStars rating={product.rating} showValue /><span>{product.reviewCount} review{product.reviewCount === 1 ? "" : "s"}</span></>
+                    ) : "See customer reviews"}
+                  </a>
+                </div>
               </div>
             </div>
-          )}
-        </section>
+          </div>
+        </VariantSelectionProvider>
 
-        <aside className="lg:col-span-4 lg:col-start-9" aria-labelledby="details-heading">
-          <h2 id="details-heading" className="font-serif text-3xl">Details</h2>
-          <dl className="mt-4 divide-y divide-line border-y border-line text-sm">
-            {details.map(([k, v]) =>
-              v ? (
-                <div key={k} className="flex justify-between gap-6 py-3">
-                  <dt className="text-stone">{k}</dt>
-                  <dd className="text-right">{v}</dd>
+        <div className="mt-20 grid gap-12 border-t border-line pt-12 lg:mt-28 lg:grid-cols-12 lg:gap-16 lg:pt-20">
+          <section className="lg:col-span-7" aria-labelledby="description-heading">
+            <p className="eyebrow mb-3">Explore the fragrance</p>
+            <h2 id="description-heading" className="font-serif text-4xl leading-tight sm:text-5xl">The scent, in detail.</h2>
+            <p className="mt-6 max-w-[65ch] whitespace-pre-line text-[15px] leading-8 text-ink-soft">{product.description}</p>
+            {(product.topNotes || product.heartNotes || product.baseNotes) && (
+              <div className="mt-12 border-t border-line pt-9">
+                <h3 className="eyebrow mb-6">Fragrance notes</h3>
+                <div className="grid gap-8 sm:grid-cols-3">
+                  {[
+                    ["01 / Top", product.topNotes],
+                    ["02 / Heart", product.heartNotes],
+                    ["03 / Base", product.baseNotes],
+                  ].map(([label, value]) => value ? (
+                    <div key={label} className="border-l border-rosewood/40 pl-4">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-stone">{label}</p>
+                      <p className="mt-3 font-serif text-2xl leading-snug text-ink">{value}</p>
+                    </div>
+                  ) : null)}
                 </div>
-              ) : null,
+              </div>
             )}
-          </dl>
-          <p className="mt-5 text-xs leading-relaxed text-stone">
-            Questions about this fragrance?{" "}
-            <a href={`${SITE.whatsappUrl}?text=${encodeURIComponent(`Hello JIS, I have a question about ${product.name}.`)}`} target="_blank" rel="noopener noreferrer" className="text-ink underline underline-offset-4">
-              Ask us on WhatsApp
-            </a>
-            .
-          </p>
-        </aside>
+          </section>
+          <aside className="lg:col-span-4 lg:col-start-9" aria-labelledby="details-heading">
+            <p className="eyebrow mb-3">The essentials</p>
+            <h2 id="details-heading" className="font-serif text-4xl">Product details</h2>
+            <dl className="mt-6 divide-y divide-line border-y border-line text-sm">
+              {details.map(([label, value]) => value ? (
+                <div key={label} className="flex justify-between gap-6 py-4">
+                  <dt className="text-stone">{label}</dt>
+                  <dd className="max-w-[60%] text-right text-ink">{value}</dd>
+                </div>
+              ) : null)}
+            </dl>
+            <p className="mt-6 text-xs leading-6 text-stone">Questions about this item? <a href={`${SITE.whatsappUrl}?text=${encodeURIComponent(`Hello JIS, I have a question about ${product.name}.`)}`} target="_blank" rel="noopener noreferrer" className="text-ink underline underline-offset-4">Speak with us on WhatsApp</a>.</p>
+          </aside>
+        </div>
       </div>
 
-      {/* Reviews */}
-      <section id="reviews" className="mt-16 grid gap-10 border-t border-line pt-12 lg:mt-24 lg:grid-cols-12 lg:pt-16" aria-labelledby="reviews-heading">
-        <div className="lg:col-span-4">
-          <h2 id="reviews-heading" className="font-serif text-3xl">Customer reviews</h2>
-          {product.reviewCount > 0 && (
-            <div className="mt-4 flex items-end gap-3">
-              <span className="font-serif text-6xl leading-none">{product.rating.toFixed(1)}</span>
-              <div className="pb-1">
-                <RatingStars rating={product.rating} size="md" />
-                <p className="mt-1 text-xs text-stone">Based on {product.reviewCount} review{product.reviewCount === 1 ? "" : "s"}</p>
+      <section id="reviews" className="border-t border-line bg-white py-16 lg:py-24" aria-labelledby="reviews-heading">
+        <div className="container-x grid gap-12 lg:grid-cols-12 lg:gap-16">
+          <div className="lg:col-span-4">
+            <p className="eyebrow mb-3">Your experience</p>
+            <h2 id="reviews-heading" className="font-serif text-4xl leading-tight sm:text-5xl">Customer reviews</h2>
+            {product.reviewCount > 0 && (
+              <div className="mt-6 flex items-end gap-3">
+                <span className="font-serif text-6xl leading-none">{product.rating.toFixed(1)}</span>
+                <div className="pb-1"><RatingStars rating={product.rating} size="md" /><p className="mt-1 text-xs text-stone">Based on {product.reviewCount} review{product.reviewCount === 1 ? "" : "s"}</p></div>
               </div>
+            )}
+            <div className="mt-8 border-t border-line pt-6">
+              <h3 className="mb-4 text-xs font-medium uppercase tracking-[0.16em]">Write a review</h3>
+              <ReviewForm productId={product.id} productSlug={product.slug} canReview={Boolean(user)} alreadyReviewed={alreadyReviewed} />
             </div>
-          )}
-          <div className="mt-8">
-            <h3 className="mb-4 text-xs font-medium uppercase tracking-[0.16em]">Write a review</h3>
-            <ReviewForm productId={product.id} productSlug={product.slug} canReview={Boolean(user)} alreadyReviewed={alreadyReviewed} />
           </div>
-        </div>
-        <div className="lg:col-span-7 lg:col-start-6">
-          <ReviewList reviews={reviews} />
+          <div className="lg:col-span-7 lg:col-start-6"><ReviewList reviews={reviews} /></div>
         </div>
       </section>
 
       {related.length > 0 && (
-        <section className="mt-16 border-t border-line pt-12 lg:mt-24 lg:pt-16" aria-label="You may also like">
-          <SectionHeading eyebrow="Pairs well with" title="You may also like" href={`/shop/${product.categorySlug}`} linkLabel={`More ${product.categoryName.toLowerCase()}`} />
-          <ProductRail products={related} />
+        <section className="border-t border-line bg-ivory py-16 lg:py-24" aria-label="You may also like">
+          <div className="container-x">
+            <SectionHeading eyebrow="Continue the discovery" title="You may also like" href={`/shop/${product.categorySlug}`} linkLabel={`More ${product.categoryName.toLowerCase()}`} />
+            <ProductRail products={related} />
+          </div>
         </section>
       )}
     </div>
