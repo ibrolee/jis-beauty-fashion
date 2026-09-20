@@ -6,19 +6,21 @@ export default async function AccountLayout({ children }: { children: ReactNode 
   const user = await requireUser("/account");
 
   return (
-    <div className="container-x py-10 lg:py-14">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-line pb-6">
-        <div>
-          <p className="eyebrow mb-2">My account</p>
-          <h1 className="font-serif text-4xl">Hello, {user.firstName}</h1>
+    <div className="pb-20 lg:pb-28">
+      <header className="border-b border-line bg-ivory py-12 sm:py-16 lg:py-20">
+        <div className="container-x flex flex-wrap items-end justify-between gap-6">
+          <div>
+            <p className="eyebrow mb-5">Your world of JIS / My account</p>
+            <h1 className="font-serif text-5xl leading-[0.95] sm:text-6xl lg:text-7xl">Welcome back, <span className="italic text-rosewood">{user.firstName}.</span></h1>
+          </div>
+          <p className="max-w-full break-all border-t border-line pt-3 text-xs text-stone sm:border-0 sm:pt-0">{user.email}</p>
         </div>
-        <p className="text-sm text-stone">{user.email}</p>
       </header>
-      <div className="grid gap-10 lg:grid-cols-12">
+      <div className="container-x mt-10 grid gap-10 lg:mt-14 lg:grid-cols-12 lg:gap-12">
         <aside className="lg:col-span-3">
           <AccountNav />
         </aside>
-        <div className="lg:col-span-9">{children}</div>
+        <main className="min-w-0 lg:col-span-9" aria-label="Account content">{children}</main>
       </div>
     </div>
   );
