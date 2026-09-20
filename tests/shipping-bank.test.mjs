@@ -11,9 +11,9 @@ const source = read("../src/lib/constants.ts");
 const js = ts.transpileModule(source, {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
 }).outputText;
-const module = { exports: {} };
-vm.runInNewContext(js, { module, exports: module.exports, require: () => { throw Error("No imports expected"); } }, { timeout: 2000 });
-const { DELIVERY, getDeliveryFee } = module.exports;
+const sandboxModule = { exports: {} };
+vm.runInNewContext(js, { module: sandboxModule, exports: sandboxModule.exports, require: () => { throw Error("No imports expected"); } }, { timeout: 2000 });
+const { DELIVERY, getDeliveryFee } = sandboxModule.exports;
 
 test("free interstate shipping starts at a ₦50,000 product subtotal", () => {
   assert.equal(DELIVERY.interstateFreeDeliveryThreshold, 50_000);
