@@ -14,12 +14,13 @@ import type { Address } from "@/db/schema";
 import { placeOrder } from "@/lib/actions/checkout";
 import type { SessionUser } from "@/lib/auth/session";
 import { DELIVERY, NIGERIAN_STATES, getDeliveryFee, getDeliveryZone } from "@/lib/constants";
+import type { BusinessContent } from "@/lib/site-content";
 import { cn, formatNaira } from "@/lib/utils";
 
-type Props = { user: SessionUser | null; savedAddress: Address | null; paystackEnabled: boolean };
+type Props = { user: SessionUser | null; savedAddress: Address | null; paystackEnabled: boolean; content: BusinessContent };
 type CheckoutPayment = "whatsapp" | "bank_transfer";
 
-export function CheckoutForm({ user, savedAddress }: Props) {
+export function CheckoutForm({ user, savedAddress, content }: Props) {
   const { items, hydrated, subtotal, discount, coupon, clearCart } = useCart();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -79,8 +80,8 @@ export function CheckoutForm({ user, savedAddress }: Props) {
   if (!items.length) return <EmptyState icon={ShoppingBag} title="Nothing to check out yet" description="Your bag is empty. Add a fragrance or two and come back." action={<ButtonLink href="/shop">Browse the collection</ButtonLink>} />;
 
   const paymentOptions: { value: CheckoutPayment; title: string; body: string }[] = [
-    { value: "whatsapp", title: "Instant payment on WhatsApp", body: "Place your order to open WhatsApp with product links, reference and exact total. Request our bank details, transfer within six hours, then return to your order page and select 'I have paid — request verification'. We verify the bank receipt manually." },
-    { value: "bank_transfer", title: "Bank transfer on this website", body: "Place your order to view JIS's confirmed GTBank account details and your exact total on the order page. Transfer within six hours, then select 'I have transferred the amount' on your order page. Reported payments are held for manual review; unreported, unpaid orders are eligible for cancellation after six hours." },
+    { value: "whatsapp", title: content.whatsappPaymentTitle, body: content.whatsappPaymentBody },
+    { value: "bank_transfer", title: content.bankTransferTitle, body: content.bankTransferBody },
   ];
 
   return (
@@ -115,7 +116,7 @@ export function CheckoutForm({ user, savedAddress }: Props) {
           <div className="space-y-3" role="radiogroup" aria-label="Payment method">
             {paymentOptions.map((opt) => <label key={opt.value} className={cn("flex cursor-pointer gap-4 border p-4 transition-colors", paymentMethod === opt.value ? "border-ink bg-cream" : "border-line hover:border-stone")}><input type="radio" name="paymentMethod" value={opt.value} checked={paymentMethod === opt.value} onChange={() => setPaymentMethod(opt.value)} className="mt-1 h-4 w-4 accent-ink" /><span className="flex-1"><span className="block text-sm font-medium">{opt.title}</span><span className="mt-1 block text-xs leading-relaxed text-stone">{opt.body}</span></span></label>)}
           </div>
-          <p className="text-xs text-stone">Payment is confirmed only after we verify that your transfer has reached our account. Merely opening WhatsApp or reporting payment does not confirm it.</p>
+          <p className="text-xs text-stone">{content.paymentVerificationNote}</p>
         </section>
       </div>
       <aside className="lg:col-span-5"><div className="border border-line bg-cream p-6 lg:sticky lg:top-28">
