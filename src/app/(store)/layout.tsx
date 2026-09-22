@@ -17,7 +17,7 @@ export default async function StoreLayout({ children }: { children: ReactNode })
       <main id="main" className="flex-1">
         {children}
       </main>
-      <Footer categories={categories} />
+      <Footer categories={categories} content={content.business} />
       <WhatsAppButton />
     </>
   );
