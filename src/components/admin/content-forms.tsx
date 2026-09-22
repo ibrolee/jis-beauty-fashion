@@ -78,3 +78,76 @@ export function PromoForm({ content }: { content: SiteContent["promo"] }) {
     </Section>
   );
 }
+
+export function BusinessCopyForm({ content }: { content: SiteContent["business"] }) {
+  const [state, action, pending] = useActionState(saveSiteContentAction, initialActionState);
+  return (
+    <Section title="Store copy, bank details and payment instructions">
+      <form action={action} className="space-y-4">
+        <input type="hidden" name="key" value="business" />
+        {state.ok && <FormMessage type="success">{state.message}</FormMessage>}
+        {state.error && <FormMessage type="error">{state.error}</FormMessage>}
+
+        <Field label="Footer tagline" htmlFor="business-footer-tagline">
+          <Textarea id="business-footer-tagline" name="footerTagline" defaultValue={content.footerTagline} className="min-h-[72px]" />
+        </Field>
+        <Field label="Footer payment note" htmlFor="business-footer-payment-note">
+          <Input id="business-footer-payment-note" name="footerPaymentNote" defaultValue={content.footerPaymentNote} />
+        </Field>
+        <Field label="Checkout intro" htmlFor="business-checkout-intro">
+          <Textarea id="business-checkout-intro" name="checkoutIntro" defaultValue={content.checkoutIntro} className="min-h-[72px]" />
+        </Field>
+        <Field label="Payment verification warning" htmlFor="business-payment-note">
+          <Textarea id="business-payment-note" name="paymentVerificationNote" defaultValue={content.paymentVerificationNote} className="min-h-[72px]" />
+        </Field>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="WhatsApp payment title" htmlFor="business-whatsapp-title">
+            <Input id="business-whatsapp-title" name="whatsappPaymentTitle" defaultValue={content.whatsappPaymentTitle} />
+          </Field>
+          <Field label="Bank transfer title" htmlFor="business-bank-title">
+            <Input id="business-bank-title" name="bankTransferTitle" defaultValue={content.bankTransferTitle} />
+          </Field>
+          <Field label="WhatsApp payment body" htmlFor="business-whatsapp-body">
+            <Textarea id="business-whatsapp-body" name="whatsappPaymentBody" defaultValue={content.whatsappPaymentBody} className="min-h-[112px]" />
+          </Field>
+          <Field label="Bank transfer body" htmlFor="business-bank-body">
+            <Textarea id="business-bank-body" name="bankTransferBody" defaultValue={content.bankTransferBody} className="min-h-[112px]" />
+          </Field>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field label="Bank name" htmlFor="business-bank-name">
+            <Input id="business-bank-name" name="bankName" defaultValue={content.bankName} />
+          </Field>
+          <Field label="Account name" htmlFor="business-account-name">
+            <Input id="business-account-name" name="bankAccountName" defaultValue={content.bankAccountName} />
+          </Field>
+          <Field label="Account number" htmlFor="business-account-number">
+            <Input id="business-account-number" name="bankAccountNumber" defaultValue={content.bankAccountNumber} />
+          </Field>
+        </div>
+
+        <Field
+          label="Website transfer instructions"
+          htmlFor="business-transfer-instructions"
+          hint="You can use {total} and {orderNumber}; the site replaces them automatically."
+        >
+          <Textarea id="business-transfer-instructions" name="bankTransferInstructions" defaultValue={content.bankTransferInstructions} className="min-h-[96px]" />
+        </Field>
+        <Field
+          label="WhatsApp payment instructions"
+          htmlFor="business-whatsapp-instructions"
+          hint="You can use {total} and {orderNumber}; the site replaces them automatically."
+        >
+          <Textarea id="business-whatsapp-instructions" name="whatsappOrderInstructions" defaultValue={content.whatsappOrderInstructions} className="min-h-[96px]" />
+        </Field>
+        <Field label="Payment reported notice" htmlFor="business-submitted-notice">
+          <Textarea id="business-submitted-notice" name="submittedPaymentNotice" defaultValue={content.submittedPaymentNotice} className="min-h-[72px]" />
+        </Field>
+
+        <Button type="submit" loading={pending} size="sm">Save</Button>
+      </form>
+    </Section>
+  );
+}
