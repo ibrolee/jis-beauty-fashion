@@ -1,3 +1,5 @@
+import type { DeliverySettings } from "@/lib/constants";
+
 /**
  * Admin-editable homepage/site content. Stored in the `site_settings` table
  * as JSON keyed by these names; the defaults below are used as fallbacks.
@@ -41,11 +43,43 @@ export type BusinessContent = {
   submittedPaymentNotice: string;
 };
 
+export type BlogComment = {
+  id: string;
+  postSlug: string;
+  userId: number;
+  name: string;
+  body: string;
+  createdAt: string;
+};
+
+export type BlogPost = {
+  id: string;
+  title: string;
+  slug: string;
+  category: string;
+  excerpt: string;
+  body: string;
+  image: string;
+  published: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type BlogContent = {
+  intro: string;
+  categories: string[];
+  posts: BlogPost[];
+  comments: BlogComment[];
+  likes: Record<string, number[]>;
+};
+
 export type SiteContent = {
   announcement: AnnouncementContent;
   hero: HeroContent;
   promo: PromoContent;
   business: BusinessContent;
+  delivery: DeliverySettings;
+  blog: BlogContent;
 };
 
 export const DEFAULT_SITE_CONTENT: SiteContent = {
@@ -87,5 +121,23 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     bankTransferInstructions: "Transfer exactly {total} and use {orderNumber} as your narration. Only press the button after making your transfer. We will verify receipt before marking the order paid.",
     whatsappOrderInstructions: "Your WhatsApp message includes the products, product links, order reference and total of {total}. Request our bank details and pay within six hours. Return to this page to report your transfer. Merely opening or sending a WhatsApp message does not confirm payment or hold the order for review.",
     submittedPaymentNotice: "Your reservation is held for manual review. Do not pay again unless our team confirms you need to.",
+  },
+  delivery: {
+    freeDeliveryThreshold: 150_000,
+    interstateFreeDeliveryThreshold: 50_000,
+    lagosFee: 2_500,
+    regionalFee: 4_000,
+    defaultFee: 4_500,
+    lagosEta: "1 - 2 business days",
+    regionalEta: "2 - 3 business days",
+    defaultEta: "3 - 5 business days",
+    regionalStates: ["FCT - Abuja", "Ogun", "Oyo"],
+  },
+  blog: {
+    intro: "Fragrance tips, care notes and JIS updates for finding and keeping your signature scent.",
+    categories: ["Fragrance Tips", "Gift Guides", "Beauty Notes"],
+    posts: [],
+    comments: [],
+    likes: {},
   },
 };
