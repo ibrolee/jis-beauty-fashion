@@ -356,7 +356,7 @@ export async function deleteReviewAction(id: number): Promise<void> {
 export async function saveSiteContentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   await requireAdmin();
   const key = String(formData.get("key"));
-  if (!["announcement", "hero", "promo"].includes(key)) return { error: "Unknown content section." };
+  if (!["announcement", "hero", "promo", "business"].includes(key)) return { error: "Unknown content section." };
 
   const value: Record<string, unknown> = {};
   for (const [k, v] of formData.entries()) {
