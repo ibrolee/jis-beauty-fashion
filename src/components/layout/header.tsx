@@ -24,7 +24,7 @@ export function Header({ user, categories }: { user: SessionUser | null; categor
         </div>
 
         <div className="flex justify-center">
-          <Logo compact className="shrink-0" />
+          <Logo className="shrink-0" />
         </div>
 
         <div className="flex min-w-0 items-center justify-end">
