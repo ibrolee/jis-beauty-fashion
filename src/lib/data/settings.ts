@@ -22,5 +22,6 @@ export async function getSiteContent(): Promise<SiteContent> {
     announcement,
     hero: { ...DEFAULT_SITE_CONTENT.hero, ...(map.get("hero") ?? {}) },
     promo: { ...DEFAULT_SITE_CONTENT.promo, ...(map.get("promo") ?? {}) },
+    business: { ...DEFAULT_SITE_CONTENT.business, ...(map.get("business") ?? {}) },
   } as SiteContent;
 }
