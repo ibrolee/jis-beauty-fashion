@@ -51,6 +51,7 @@ export function MobileMenu({ categories, user }: { categories: CategoryWithCount
   }, [open]);
 
   const secondary = [
+{ label: "Blog", href: "/blog" },
     { label: "About JIS", href: "/about" },
     { label: "FAQ", href: "/faq" },
     { label: "Shipping & Delivery", href: "/shipping" },
