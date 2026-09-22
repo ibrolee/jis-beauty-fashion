@@ -13,14 +13,14 @@ import { Checkbox, Field, FormMessage, Input, Select, Textarea } from "@/compone
 import type { Address } from "@/db/schema";
 import { placeOrder } from "@/lib/actions/checkout";
 import type { SessionUser } from "@/lib/auth/session";
-import { DELIVERY, NIGERIAN_STATES, getDeliveryFee, getDeliveryZone } from "@/lib/constants";
+import { NIGERIAN_STATES, getDeliveryFee, getDeliveryZone, type DeliverySettings } from "@/lib/constants";
 import type { BusinessContent } from "@/lib/site-content";
 import { cn, formatNaira } from "@/lib/utils";
 
-type Props = { user: SessionUser | null; savedAddress: Address | null; paystackEnabled: boolean; content: BusinessContent };
+type Props = { user: SessionUser | null; savedAddress: Address | null; paystackEnabled: boolean; content: BusinessContent; delivery: DeliverySettings };
 type CheckoutPayment = "whatsapp" | "bank_transfer";
 
-export function CheckoutForm({ user, savedAddress, content }: Props) {
+export function CheckoutForm({ user, savedAddress, content, delivery }: Props) {
   const { items, hydrated, subtotal, discount, coupon, clearCart } = useCart();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -28,9 +28,9 @@ export function CheckoutForm({ user, savedAddress, content }: Props) {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [state, setState] = useState<string>(savedAddress?.state ?? "");
   const [paymentMethod, setPaymentMethod] = useState<CheckoutPayment>("whatsapp");
-  const deliveryFee = useMemo(() => getDeliveryFee(state, subtotal), [state, subtotal]);
+  const deliveryFee = useMemo(() => getDeliveryFee(state, subtotal, delivery), [state, subtotal, delivery]);
   const total = subtotal - discount + deliveryFee;
-  const eta = state ? getDeliveryZone(state).eta : null;
+  const eta = state ? getDeliveryZone(state, delivery).eta : null;
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -124,8 +124,8 @@ export function CheckoutForm({ user, savedAddress, content }: Props) {
         <ul className="mt-5 max-h-80 divide-y divide-line overflow-y-auto">{items.map((item) => <li key={item.key} className="flex gap-4 py-3"><div className="relative h-16 w-14 shrink-0 overflow-hidden bg-ivory">{item.image && <Image src={item.image} alt="" fill sizes="56px" className="object-cover" />}<span className="absolute -right-0 -top-0 flex h-5 min-w-5 items-center justify-center bg-ink px-1 text-[10px] text-white">{item.quantity}</span></div><div className="flex-1 text-sm"><p className="font-medium leading-tight">{item.name}</p><p className="text-xs text-stone">{item.variantName ?? item.brandName}</p></div><p className="text-sm tabular-nums">{formatNaira(item.price * item.quantity)}</p></li>)}</ul>
         <div className="mt-4 border-t border-line pt-4"><CouponForm compact /></div>
         <dl className="mt-5 space-y-2.5 text-sm"><div className="flex justify-between"><dt className="text-stone">Subtotal</dt><dd className="tabular-nums">{formatNaira(subtotal)}</dd></div>{discount > 0 && <div className="flex justify-between text-success"><dt>Discount ({coupon?.code})</dt><dd className="tabular-nums">−{formatNaira(discount)}</dd></div>}<div className="flex justify-between"><dt className="text-stone">Delivery</dt><dd className="tabular-nums">{!state ? <span className="text-xs text-stone">Select state</span> : deliveryFee === 0 ? <span className="text-success">Free</span> : formatNaira(deliveryFee)}</dd></div><div className="flex justify-between border-t border-line pt-3 text-lg font-medium"><dt>Total</dt><dd className="tabular-nums">{formatNaira(total)}</dd></div></dl>
-        {state && deliveryFee > 0 && <p className="mt-2 text-xs text-stone">{state === "Lagos" ? `Free Lagos delivery from ${formatNaira(DELIVERY.freeDeliveryThreshold)}.` : `Free interstate delivery from ${formatNaira(DELIVERY.interstateFreeDeliveryThreshold)}.`}</p>}
-        {!state && <p className="mt-2 text-xs text-stone">Free interstate delivery from {formatNaira(DELIVERY.interstateFreeDeliveryThreshold)}; free Lagos delivery from {formatNaira(DELIVERY.freeDeliveryThreshold)}. Select a state for your final total.</p>}
+        {state && deliveryFee > 0 && <p className="mt-2 text-xs text-stone">{state === "Lagos" ? `Free Lagos delivery from ${formatNaira(delivery.freeDeliveryThreshold)}.` : `Free interstate delivery from ${formatNaira(delivery.interstateFreeDeliveryThreshold)}.`}</p>}
+        {!state && <p className="mt-2 text-xs text-stone">Free interstate delivery from {formatNaira(delivery.interstateFreeDeliveryThreshold)}; free Lagos delivery from {formatNaira(delivery.freeDeliveryThreshold)}. Select a state for your final total.</p>}
         <Button type="submit" size="lg" loading={pending} className="mt-6 w-full">{paymentMethod === "whatsapp" ? "Place order & open WhatsApp" : "Place order & view bank details"}</Button>
         <p className="mt-3 text-center text-xs text-stone">By placing your order you agree to our <Link href="/terms" className="underline">terms</Link> and <Link href="/returns" className="underline">returns policy</Link>.</p>
       </div></aside>
