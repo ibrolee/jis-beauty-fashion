@@ -1,5 +1,5 @@
 import { requireAdmin } from "@/lib/auth/session";
-import { AnnouncementForm, BusinessCopyForm, HeroForm, PromoForm } from "@/components/admin/content-forms";
+import { AnnouncementForm, BusinessCopyForm, DeliverySettingsForm, HeroForm, PromoForm } from "@/components/admin/content-forms";
 import { AdminPageHeader } from "@/components/admin/ui";
 import { getSiteContent } from "@/lib/data/settings";
 
@@ -14,6 +14,7 @@ export default async function AdminContentPage() {
       <div className="grid gap-6 xl:grid-cols-2">
         <div className="space-y-6">
           <AnnouncementForm content={content.announcement} />
+          <DeliverySettingsForm content={content.delivery} />
           <PromoForm content={content.promo} />
           <BusinessCopyForm content={content.business} />
         </div>
