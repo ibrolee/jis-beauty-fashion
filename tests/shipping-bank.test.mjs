@@ -33,9 +33,9 @@ test("Lagos retains its original ₦150,000 free-delivery threshold", () => {
 });
 
 test("server checkout and client checkout use the same delivery calculator", () => {
-  assert.match(read("../src/lib/actions/checkout.ts"), /getDeliveryFee\(input\.state, subtotal\)/);
-  assert.match(read("../src/components/checkout/checkout-form.tsx"), /getDeliveryFee\(state, subtotal\)/);
-  assert.match(read("../src/components/cart/cart-view.tsx"), /getDeliveryFee\(state, subtotal\)/);
+  assert.match(read("../src/lib/actions/checkout.ts"), /getDeliveryFee\(input\.state, subtotal, content\.delivery\)/);
+  assert.match(read("../src/components/checkout/checkout-form.tsx"), /getDeliveryFee\(state, subtotal, delivery\)/);
+  assert.match(read("../src/components/cart/cart-view.tsx"), /getDeliveryFee\(state, subtotal, delivery\)/);
 });
 
 test("only owner-confirmed GTBank account ending 6091 appears in payment configuration", () => {
