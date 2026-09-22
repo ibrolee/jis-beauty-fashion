@@ -21,6 +21,7 @@ import {
 } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
 import { ORDER_STATUSES } from "@/lib/constants";
+import { getBlogContent, saveBlogContent } from "@/lib/data/blog";
 import { refreshProductRating } from "@/lib/data/reviews";
 import { cancelOrderAndRelease } from "@/lib/orders/reservations";
 import { slugify } from "@/lib/utils";
@@ -356,7 +357,7 @@ export async function deleteReviewAction(id: number): Promise<void> {
 export async function saveSiteContentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   await requireAdmin();
   const key = String(formData.get("key"));
-  if (!["announcement", "hero", "promo", "business"].includes(key)) return { error: "Unknown content section." };
+  if (!["announcement", "hero", "promo", "business", "delivery", "blog"].includes(key)) return { error: "Unknown content section." };
 
   const value: Record<string, unknown> = {};
   for (const [k, v] of formData.entries()) {
@@ -364,6 +365,15 @@ export async function saveSiteContentAction(_prev: ActionState, formData: FormDa
     value[k] = v;
   }
   if (key === "announcement") value.enabled = formData.get("enabled") === "on";
+  if (key === "delivery") {
+    for (const field of ["freeDeliveryThreshold", "interstateFreeDeliveryThreshold", "lagosFee", "regionalFee", "defaultFee"]) {
+      value[field] = Math.max(0, Number(formData.get(field)) || 0);
+    }
+    value.regionalStates = String(formData.get("regionalStates") ?? "")
+      .split(",")
+      .map((state) => state.trim())
+      .filter(Boolean);
+  }
 
   await db
     .insert(siteSettings)
@@ -377,6 +387,64 @@ export async function markContactReadAction(id: number): Promise<void> {
   await requireAdmin();
   await db.update(contactMessages).set({ isRead: true }).where(and(eq(contactMessages.id, id), eq(contactMessages.isRead, false)));
   revalidatePath("/admin/messages");
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                    Blog                                    */
+/* -------------------------------------------------------------------------- */
+
+export async function saveBlogPostAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireAdmin();
+  const now = new Date().toISOString();
+  const id = String(formData.get("id") ?? "").trim() || crypto.randomUUID();
+  const title = String(formData.get("title") ?? "").trim();
+  const slug = slugify(String(formData.get("slug") ?? "").trim() || title);
+  const category = String(formData.get("category") ?? "").trim() || "Fragrance Tips";
+  const excerpt = String(formData.get("excerpt") ?? "").trim();
+  const body = String(formData.get("body") ?? "").trim();
+  const image = String(formData.get("image") ?? "").trim();
+  const published = formData.get("published") === "on";
+
+  if (!title || !slug || !excerpt || !body) return { error: "Title, slug, excerpt and body are required." };
+
+  const blog = await getBlogContent();
+  const existing = blog.posts.find((post) => post.id === id);
+  const duplicate = blog.posts.find((post) => post.slug === slug && post.id !== id);
+  if (duplicate) return { error: "Another blog post already uses this slug." };
+
+  const post = {
+    id,
+    title,
+    slug,
+    category,
+    excerpt,
+    body,
+    image,
+    published,
+    createdAt: existing?.createdAt ?? now,
+    updatedAt: now,
+  };
+
+  const posts = existing ? blog.posts.map((item) => item.id === id ? post : item) : [post, ...blog.posts];
+  const categories = Array.from(new Set([category, ...blog.categories.map((item) => item.trim()).filter(Boolean)]));
+  await saveBlogContent({ ...blog, categories, posts });
+  revalidatePath("/blog", "layout");
+  revalidatePath("/admin/blog");
+  return { ok: true, message: existing ? "Blog post updated." : "Blog post created." };
+}
+
+export async function deleteBlogPostAction(id: string): Promise<void> {
+  await requireAdmin();
+  const blog = await getBlogContent();
+  const deleted = blog.posts.find((post) => post.id === id);
+  await saveBlogContent({
+    ...blog,
+    posts: blog.posts.filter((post) => post.id !== id),
+    comments: blog.comments.filter((comment) => comment.postSlug !== deleted?.slug),
+    likes: Object.fromEntries(Object.entries(blog.likes).filter(([slug]) => slug !== deleted?.slug)),
+  });
+  revalidatePath("/blog", "layout");
+  revalidatePath("/admin/blog");
 }
 
 /** Helper for the admin dashboard: sales for the last 30 days grouped by day. */
