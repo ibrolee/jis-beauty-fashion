@@ -4,6 +4,7 @@ import { NewsletterForm } from "@/components/marketing/newsletter-form";
 import { InstagramIcon, TikTokIcon, WhatsAppIcon } from "@/components/ui/social-icons";
 import { SITE } from "@/lib/constants";
 import { isOnlinePaymentEnabled } from "@/lib/payments";
+import type { BusinessContent } from "@/lib/site-content";
 import type { CategoryWithCount } from "@/types";
 import { Logo } from "./logo";
 
@@ -22,7 +23,7 @@ const COMPANY_LINKS = [
   { label: "Terms & conditions", href: "/terms" },
 ];
 
-export function Footer({ categories }: { categories: CategoryWithCount[] }) {
+export function Footer({ categories, content }: { categories: CategoryWithCount[]; content: BusinessContent }) {
   const onlinePaymentsEnabled = isOnlinePaymentEnabled();
 
   return (
@@ -43,7 +44,7 @@ export function Footer({ categories }: { categories: CategoryWithCount[] }) {
         <div className="lg:col-span-4">
           <Logo className="items-start" />
           <p className="mt-6 max-w-sm text-[15px] leading-[1.85] text-stone">
-            {SITE.tagline}. Fragrances, perfume oils and beauty essentials, thoughtfully curated in Lagos.
+            {SITE.tagline}. {content.footerTagline}
           </p>
           <div className="mt-7 flex items-center gap-3">
             <a href={SITE.instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="JIS on Instagram" className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-ink transition-colors hover:border-rosewood hover:bg-blush">
@@ -102,7 +103,7 @@ export function Footer({ categories }: { categories: CategoryWithCount[] }) {
       <div className="border-t border-line">
         <div className="container-x flex flex-col gap-3 py-6 text-xs text-stone sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} {SITE.name}. All rights reserved.</p>
-          <p>{onlinePaymentsEnabled ? "Online payment and direct bank transfer options at checkout" : "See available payment options at checkout"}</p>
+          <p>{onlinePaymentsEnabled ? content.footerPaymentNote : "See available payment options at checkout"}</p>
         </div>
       </div>
     </footer>
