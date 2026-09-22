@@ -151,3 +151,51 @@ export function BusinessCopyForm({ content }: { content: SiteContent["business"]
     </Section>
   );
 }
+
+export function DeliverySettingsForm({ content }: { content: SiteContent["delivery"] }) {
+  const [state, action, pending] = useActionState(saveSiteContentAction, initialActionState);
+  return (
+    <Section title="Delivery fees and timelines">
+      <form action={action} className="space-y-4">
+        <input type="hidden" name="key" value="delivery" />
+        {state.ok && <FormMessage type="success">{state.message}</FormMessage>}
+        {state.error && <FormMessage type="error">{state.error}</FormMessage>}
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field label="Lagos fee" htmlFor="delivery-lagos-fee">
+            <Input id="delivery-lagos-fee" name="lagosFee" type="number" min="0" defaultValue={content.lagosFee} />
+          </Field>
+          <Field label="Nearby-state fee" htmlFor="delivery-regional-fee">
+            <Input id="delivery-regional-fee" name="regionalFee" type="number" min="0" defaultValue={content.regionalFee} />
+          </Field>
+          <Field label="Other states fee" htmlFor="delivery-default-fee">
+            <Input id="delivery-default-fee" name="defaultFee" type="number" min="0" defaultValue={content.defaultFee} />
+          </Field>
+          <Field label="Free Lagos delivery from" htmlFor="delivery-lagos-threshold">
+            <Input id="delivery-lagos-threshold" name="freeDeliveryThreshold" type="number" min="0" defaultValue={content.freeDeliveryThreshold} />
+          </Field>
+          <Field label="Free interstate delivery from" htmlFor="delivery-interstate-threshold">
+            <Input id="delivery-interstate-threshold" name="interstateFreeDeliveryThreshold" type="number" min="0" defaultValue={content.interstateFreeDeliveryThreshold} />
+          </Field>
+          <Field label="Nearby states" htmlFor="delivery-regional-states" hint="Separate states with commas.">
+            <Input id="delivery-regional-states" name="regionalStates" defaultValue={content.regionalStates.join(", ")} />
+          </Field>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field label="Lagos timeline" htmlFor="delivery-lagos-eta">
+            <Input id="delivery-lagos-eta" name="lagosEta" defaultValue={content.lagosEta} />
+          </Field>
+          <Field label="Nearby-state timeline" htmlFor="delivery-regional-eta">
+            <Input id="delivery-regional-eta" name="regionalEta" defaultValue={content.regionalEta} />
+          </Field>
+          <Field label="Other states timeline" htmlFor="delivery-default-eta">
+            <Input id="delivery-default-eta" name="defaultEta" defaultValue={content.defaultEta} />
+          </Field>
+        </div>
+
+        <Button type="submit" loading={pending} size="sm">Save</Button>
+      </form>
+    </Section>
+  );
+}
