@@ -12,6 +12,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { GENDER_LABELS, SITE } from "@/lib/constants";
 import { getProductBySlug, getRelatedProducts } from "@/lib/data/products";
 import { getProductReviews, hasUserReviewed } from "@/lib/data/reviews";
+import { getSiteContent } from "@/lib/data/settings";
 import { absoluteUrl, discountPercent, effectivePrice, isOnSale } from "@/lib/utils";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -37,10 +38,11 @@ export default async function ProductPage({ params }: Props) {
   if (!product || !product.isActive) notFound();
 
   const user = await getCurrentUser();
-  const [reviews, related, alreadyReviewed] = await Promise.all([
+  const [reviews, related, alreadyReviewed, content] = await Promise.all([
     getProductReviews(product.id),
     getRelatedProducts(product, 4),
     user ? hasUserReviewed(product.id, user.id) : Promise.resolve(false),
+    getSiteContent(),
   ]);
   const soldOut = product.stock <= 0 && !product.variants.some((variant) => variant.stock > 0);
   const badges = soldOut
@@ -114,7 +116,7 @@ export default async function ProductPage({ params }: Props) {
                   <p className="mt-5 text-xs font-medium uppercase tracking-[0.16em] text-stone">{[product.volume, product.fragranceType].filter(Boolean).join("  /  ")}</p>
                 )}
                 {product.shortDescription && <p className="mt-5 max-w-prose text-sm leading-7 text-ink-soft">{product.shortDescription}</p>}
-                <div className="mt-7"><PurchasePanel product={product} /></div>
+                <div className="mt-7"><PurchasePanel product={product} delivery={content.delivery} /></div>
                 <div className="mt-5">
                   <a href="#reviews" className="inline-flex items-center gap-2 text-xs text-ink-soft underline-offset-4 hover:underline">
                     {product.reviewCount > 0 ? (
