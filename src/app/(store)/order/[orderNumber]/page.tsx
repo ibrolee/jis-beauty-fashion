@@ -7,9 +7,10 @@ import { RetryPaymentButton } from "@/components/orders/retry-payment-button";
 import { TransferSubmissionButton } from "@/components/orders/transfer-submission-button";
 import { ButtonLink } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getSiteContent } from "@/lib/data/settings";
 import { SITE } from "@/lib/constants";
 import { getOrderByNumber } from "@/lib/data/orders";
-import { BANK_TRANSFER_DETAILS, isOnlinePaymentEnabled } from "@/lib/payments";
+import { isOnlinePaymentEnabled } from "@/lib/payments";
 import { bankTransferDeadline } from "@/lib/orders/reservations";
 import { whatsappCheckoutMessage } from "@/lib/orders/whatsapp-checkout";
 import { formatNaira } from "@/lib/utils";
@@ -17,8 +18,14 @@ import { formatNaira } from "@/lib/utils";
 export const metadata: Metadata = { title: "Order confirmation", robots: { index: false } };
 type Props = { params: Promise<{ orderNumber: string }>; searchParams: Promise<{ payment?: string }> };
 
+function fillOrderCopy(template: string, orderNumber: string, total: number) {
+  return template
+    .replaceAll("{orderNumber}", orderNumber)
+    .replaceAll("{total}", formatNaira(total));
+}
+
 export default async function OrderConfirmationPage({ params, searchParams }: Props) {
-  const [{ orderNumber }, { payment }, user] = await Promise.all([params, searchParams, getCurrentUser()]);
+  const [{ orderNumber }, { payment }, user, content] = await Promise.all([params, searchParams, getCurrentUser(), getSiteContent()]);
   // The order query checks overdue, unreported reservations before rendering.
   const order = await getOrderByNumber(orderNumber);
   if (!order) notFound();
@@ -87,27 +94,27 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
             </h2>
             {(whatsappCheckout || websiteTransfer) && (
               submitted
-                ? <p className="mt-3 text-sm font-medium text-ink">Your reservation is held for manual review. Do not pay again unless our team confirms you need to.</p>
+                ? <p className="mt-3 text-sm font-medium text-ink">{content.business.submittedPaymentNotice}</p>
                 : <p className="mt-3 text-sm font-medium text-ink">Payment window: until {deadline.toLocaleString("en-NG", { timeZone: "Africa/Lagos", dateStyle: "medium", timeStyle: "short" })} (Lagos time). Unreported orders are eligible for cancellation afterward. Check that your order is still pending before transferring.</p>
             )}
 
-            {websiteTransfer && !submitted && (
+          {websiteTransfer && !submitted && (
               <div className="mt-4 space-y-5">
-                {BANK_TRANSFER_DETAILS.configured ? (
+                {content.business.bankName && content.business.bankAccountName && content.business.bankAccountNumber ? (
                   <dl className="grid gap-3 text-sm sm:grid-cols-3">
-                    <div><dt className="text-stone">Bank</dt><dd className="font-medium">{BANK_TRANSFER_DETAILS.bankName}</dd></div>
-                    <div><dt className="text-stone">Account name</dt><dd className="font-medium">{BANK_TRANSFER_DETAILS.accountName}</dd></div>
-                    <div><dt className="text-stone">Account number</dt><dd className="flex items-center gap-2 font-medium tabular-nums">{BANK_TRANSFER_DETAILS.accountNumber} <Copy className="h-3.5 w-3.5 text-stone" aria-hidden /></dd></div>
+                    <div><dt className="text-stone">Bank</dt><dd className="font-medium">{content.business.bankName}</dd></div>
+                    <div><dt className="text-stone">Account name</dt><dd className="font-medium">{content.business.bankAccountName}</dd></div>
+                    <div><dt className="text-stone">Account number</dt><dd className="flex items-center gap-2 font-medium tabular-nums">{content.business.bankAccountNumber} <Copy className="h-3.5 w-3.5 text-stone" aria-hidden /></dd></div>
                   </dl>
                 ) : <p className="text-sm text-ink-soft">Request and verify our account details on WhatsApp before paying.</p>}
                 <p className="text-sm text-ink-soft">
-                  Transfer exactly <strong>{formatNaira(order.total)}</strong> and use <strong>{order.orderNumber}</strong> as your narration. Only press the button after making your transfer. We will verify receipt before marking the order paid.
+                  {fillOrderCopy(content.business.bankTransferInstructions, order.orderNumber, order.total)}
                 </p>
               </div>
             )}
             {whatsappCheckout && !submitted && (
               <p className="mt-4 text-sm text-ink-soft">
-                Your WhatsApp message includes the products, product links, order reference and total of <strong>{formatNaira(order.total)}</strong>. Request our bank details and pay within six hours. Return to this page to report your transfer. Merely opening or sending a WhatsApp message does not confirm payment or hold the order for review.
+                {fillOrderCopy(content.business.whatsappOrderInstructions, order.orderNumber, order.total)}
               </p>
             )}
             {(websiteTransfer || whatsappCheckout) && (

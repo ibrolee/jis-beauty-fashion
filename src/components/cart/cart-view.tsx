@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { DELIVERY, getDeliveryFee } from "@/lib/constants";
+import { getDeliveryFee, type DeliverySettings } from "@/lib/constants";
 import { describeCoupon } from "@/lib/coupons";
 import { formatNaira } from "@/lib/utils";
 import { useCart } from "./cart-provider";
@@ -54,12 +54,12 @@ export function CouponForm({ compact = false }: { compact?: boolean }) {
   );
 }
 
-export function CartSummary({ state, showCheckout = true }: { state?: string | null; showCheckout?: boolean }) {
+export function CartSummary({ state, showCheckout = true, delivery }: { state?: string | null; showCheckout?: boolean; delivery: DeliverySettings }) {
   const { subtotal, discount, itemCount } = useCart();
-  const estimatedDelivery = state ? getDeliveryFee(state, subtotal) : null;
+  const estimatedDelivery = state ? getDeliveryFee(state, subtotal, delivery) : null;
   const total = subtotal - discount + (estimatedDelivery ?? 0);
-  const freeEverywhere = subtotal >= DELIVERY.freeDeliveryThreshold;
-  const freeInterstate = subtotal >= DELIVERY.interstateFreeDeliveryThreshold;
+  const freeEverywhere = subtotal >= delivery.freeDeliveryThreshold;
+  const freeInterstate = subtotal >= delivery.interstateFreeDeliveryThreshold;
 
   return (
     <div className="border border-line bg-[#f5f0e8] p-6 sm:p-8">
@@ -71,8 +71,8 @@ export function CartSummary({ state, showCheckout = true }: { state?: string | n
         <div className="flex justify-between gap-4"><dt className="text-stone">Delivery</dt><dd className="text-right text-xs text-stone">{state ? (estimatedDelivery === 0 ? <span className="text-success">Free</span> : formatNaira(estimatedDelivery ?? 0)) : freeEverywhere ? <span className="text-success">Free nationwide</span> : freeInterstate ? <span className="text-success">Free interstate · Lagos at checkout</span> : "Calculated at checkout"}</dd></div>
         <div className="flex items-end justify-between gap-4 border-t border-line pt-6"><dt className="text-[10px] font-medium uppercase tracking-[0.18em] text-stone">{state ? "Total" : "Total before delivery"}</dt><dd className="font-serif text-3xl tabular-nums text-ink">{formatNaira(total)}</dd></div>
       </dl>
-      {!freeInterstate && <p className="mt-5 border-l border-rosewood/50 pl-3 text-xs leading-5 text-stone">Add {formatNaira(DELIVERY.interstateFreeDeliveryThreshold - subtotal)} more for free interstate delivery. Lagos delivery is free from {formatNaira(DELIVERY.freeDeliveryThreshold)}.</p>}
-      {freeInterstate && !freeEverywhere && <p className="mt-5 border-l border-rosewood/50 pl-3 text-xs leading-5 text-stone">Your order qualifies for free interstate delivery. Delivery within Lagos is free from {formatNaira(DELIVERY.freeDeliveryThreshold)}.</p>}
+      {!freeInterstate && <p className="mt-5 border-l border-rosewood/50 pl-3 text-xs leading-5 text-stone">Add {formatNaira(delivery.interstateFreeDeliveryThreshold - subtotal)} more for free interstate delivery. Lagos delivery is free from {formatNaira(delivery.freeDeliveryThreshold)}.</p>}
+      {freeInterstate && !freeEverywhere && <p className="mt-5 border-l border-rosewood/50 pl-3 text-xs leading-5 text-stone">Your order qualifies for free interstate delivery. Delivery within Lagos is free from {formatNaira(delivery.freeDeliveryThreshold)}.</p>}
       {showCheckout && (
         <div className="mt-8 space-y-3">
           <ButtonLink href="/checkout" size="lg" className="w-full">Proceed to checkout <ArrowRight className="h-4 w-4" aria-hidden="true" /></ButtonLink>
@@ -84,7 +84,7 @@ export function CartSummary({ state, showCheckout = true }: { state?: string | n
   );
 }
 
-export function CartView() {
+export function CartView({ delivery }: { delivery: DeliverySettings }) {
   const { items, hydrated, setQuantity, removeItem } = useCart();
 
   if (!hydrated) return (
@@ -142,7 +142,7 @@ export function CartView() {
         </ul>
         <div className="mt-8 max-w-md border-t border-line pt-7"><CouponForm /></div>
       </div>
-      <aside className="lg:col-span-4"><div className="lg:sticky lg:top-40"><CartSummary /></div></aside>
+      <aside className="lg:col-span-4"><div className="lg:sticky lg:top-40"><CartSummary delivery={delivery} /></div></aside>
     </div>
   );
 }

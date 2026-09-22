@@ -6,6 +6,7 @@ import { addresses, coupons, orderItems, orders, payments, productVariants, prod
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDeliveryFee, SITE } from "@/lib/constants";
 import { validateCouponCode } from "@/lib/data/coupons";
+import { getSiteContent } from "@/lib/data/settings";
 import { orderConfirmationEmail, sendEmail } from "@/lib/email";
 import { getPaymentProvider, isOnlinePaymentEnabled } from "@/lib/payments";
 import { expireUnpaidBankTransfers } from "@/lib/orders/reservations";
@@ -63,7 +64,8 @@ export async function placeOrder(rawInput: CheckoutInput): Promise<PlaceOrderRes
     couponId = validation.couponId;
     couponCode = validation.coupon.code;
   }
-  const deliveryFee = getDeliveryFee(input.state, subtotal);
+  const content = await getSiteContent();
+  const deliveryFee = getDeliveryFee(input.state, subtotal, content.delivery);
   const total = subtotal - discount + deliveryFee;
   const orderNumber = generateOrderNumber();
   const reference = generateReference();

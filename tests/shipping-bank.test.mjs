@@ -33,18 +33,21 @@ test("Lagos retains its original ₦150,000 free-delivery threshold", () => {
 });
 
 test("server checkout and client checkout use the same delivery calculator", () => {
-  assert.match(read("../src/lib/actions/checkout.ts"), /getDeliveryFee\(input\.state, subtotal\)/);
-  assert.match(read("../src/components/checkout/checkout-form.tsx"), /getDeliveryFee\(state, subtotal\)/);
-  assert.match(read("../src/components/cart/cart-view.tsx"), /getDeliveryFee\(state, subtotal\)/);
+  assert.match(read("../src/lib/actions/checkout.ts"), /getDeliveryFee\(input\.state, subtotal, content\.delivery\)/);
+  assert.match(read("../src/components/checkout/checkout-form.tsx"), /getDeliveryFee\(state, subtotal, delivery\)/);
+  assert.match(read("../src/components/cart/cart-view.tsx"), /getDeliveryFee\(state, subtotal, delivery\)/);
 });
 
 test("only owner-confirmed GTBank account ending 6091 appears in payment configuration", () => {
   const payment = read("../src/lib/payments/index.ts");
+  const content = read("../src/lib/site-content.ts");
   const checkout = read("../src/components/checkout/checkout-form.tsx");
   assert.match(payment, /accountName:\s*"Salmon Salmat Oyindamola"/);
   assert.match(payment, /accountNumber:\s*"0165946091"/);
-  assert.doesNotMatch(payment + checkout, /0172349956|Alli Ibrahim Olanrewaju/);
-  assert.match(read("../src/app/(store)/order/[orderNumber]/page.tsx"), /BANK_TRANSFER_DETAILS\.accountNumber/);
+  assert.match(content, /bankAccountName:\s*"Salmon Salmat Oyindamola"/);
+  assert.match(content, /bankAccountNumber:\s*"0165946091"/);
+  assert.doesNotMatch(payment + content + checkout, /0172349956|Alli Ibrahim Olanrewaju/);
+  assert.match(read("../src/app/(store)/order/[orderNumber]/page.tsx"), /content\.business\.bankAccountNumber/);
 });
 
 test("shipping and promotion wording reflects only location-appropriate offers", () => {

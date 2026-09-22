@@ -6,7 +6,7 @@ import { absoluteUrl } from "@/lib/utils";
 // Generated on request so new products/categories appear without a rebuild.
 export const dynamic = "force-dynamic";
 
-const STATIC_PATHS = ["/", "/shop", "/categories", "/about", "/contact", "/faq", "/shipping", "/returns", "/privacy", "/terms"];
+const STATIC_PATHS = ["/", "/shop", "/categories", "/blog", "/about", "/contact", "/faq", "/shipping", "/returns", "/privacy", "/terms"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = STATIC_PATHS.map((path) => ({

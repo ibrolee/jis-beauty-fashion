@@ -26,6 +26,7 @@ export const MAIN_NAV = [
   { label: "Unisex", href: "/shop/unisex" },
   { label: "Kids", href: "/shop/kids" },
   { label: "Perfume Oils", href: "/shop/perfume-oils" },
+  { label: "Blog", href: "/blog" },
   { label: "About", href: "/about" },
 ] as const;
 
@@ -41,27 +42,41 @@ export const NIGERIAN_STATES = [
  * Interstate deliveries are free from ₦50,000; Lagos retains its existing
  * ₦150,000 free-delivery threshold. Thresholds use the order subtotal.
  */
-export const DELIVERY = {
+export type DeliverySettings = {
+  freeDeliveryThreshold: number;
+  interstateFreeDeliveryThreshold: number;
+  lagosFee: number;
+  regionalFee: number;
+  defaultFee: number;
+  lagosEta: string;
+  regionalEta: string;
+  defaultEta: string;
+  regionalStates: string[];
+};
+
+export const DELIVERY: DeliverySettings = {
   freeDeliveryThreshold: 150_000,
   interstateFreeDeliveryThreshold: 50_000,
-  zones: [
-    { states: ["Lagos"], fee: 2_500, eta: "1 – 2 business days" },
-    { states: ["FCT - Abuja", "Ogun", "Oyo"], fee: 4_000, eta: "2 – 3 business days" },
-  ],
+  lagosFee: 2_500,
+  regionalFee: 4_000,
   defaultFee: 4_500,
+  lagosEta: "1 - 2 business days",
+  regionalEta: "2 - 3 business days",
   defaultEta: "3 – 5 business days",
+  regionalStates: ["FCT - Abuja", "Ogun", "Oyo"],
 } as const;
 
-export function getDeliveryZone(state: string) {
-  const zone = DELIVERY.zones.find((z) => (z.states as readonly string[]).includes(state));
-  return zone ? { fee: zone.fee, eta: zone.eta } : { fee: DELIVERY.defaultFee, eta: DELIVERY.defaultEta };
+export function getDeliveryZone(state: string, delivery: DeliverySettings = DELIVERY) {
+  if (state === "Lagos") return { fee: delivery.lagosFee, eta: delivery.lagosEta };
+  if (delivery.regionalStates.includes(state)) return { fee: delivery.regionalFee, eta: delivery.regionalEta };
+  return { fee: delivery.defaultFee, eta: delivery.defaultEta };
 }
 
-export function getDeliveryFee(state: string | null | undefined, subtotal: number): number {
+export function getDeliveryFee(state: string | null | undefined, subtotal: number, delivery: DeliverySettings = DELIVERY): number {
   if (!state) return 0;
-  if (state !== "Lagos" && subtotal >= DELIVERY.interstateFreeDeliveryThreshold) return 0;
-  if (subtotal >= DELIVERY.freeDeliveryThreshold) return 0;
-  return getDeliveryZone(state).fee;
+  if (state !== "Lagos" && subtotal >= delivery.interstateFreeDeliveryThreshold) return 0;
+  if (subtotal >= delivery.freeDeliveryThreshold) return 0;
+  return getDeliveryZone(state, delivery).fee;
 }
 
 export const ORDER_STATUSES: OrderStatus[] = [

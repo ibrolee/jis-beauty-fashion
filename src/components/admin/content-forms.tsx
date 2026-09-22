@@ -78,3 +78,124 @@ export function PromoForm({ content }: { content: SiteContent["promo"] }) {
     </Section>
   );
 }
+
+export function BusinessCopyForm({ content }: { content: SiteContent["business"] }) {
+  const [state, action, pending] = useActionState(saveSiteContentAction, initialActionState);
+  return (
+    <Section title="Store copy, bank details and payment instructions">
+      <form action={action} className="space-y-4">
+        <input type="hidden" name="key" value="business" />
+        {state.ok && <FormMessage type="success">{state.message}</FormMessage>}
+        {state.error && <FormMessage type="error">{state.error}</FormMessage>}
+
+        <Field label="Footer tagline" htmlFor="business-footer-tagline">
+          <Textarea id="business-footer-tagline" name="footerTagline" defaultValue={content.footerTagline} className="min-h-[72px]" />
+        </Field>
+        <Field label="Footer payment note" htmlFor="business-footer-payment-note">
+          <Input id="business-footer-payment-note" name="footerPaymentNote" defaultValue={content.footerPaymentNote} />
+        </Field>
+        <Field label="Checkout intro" htmlFor="business-checkout-intro">
+          <Textarea id="business-checkout-intro" name="checkoutIntro" defaultValue={content.checkoutIntro} className="min-h-[72px]" />
+        </Field>
+        <Field label="Payment verification warning" htmlFor="business-payment-note">
+          <Textarea id="business-payment-note" name="paymentVerificationNote" defaultValue={content.paymentVerificationNote} className="min-h-[72px]" />
+        </Field>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="WhatsApp payment title" htmlFor="business-whatsapp-title">
+            <Input id="business-whatsapp-title" name="whatsappPaymentTitle" defaultValue={content.whatsappPaymentTitle} />
+          </Field>
+          <Field label="Bank transfer title" htmlFor="business-bank-title">
+            <Input id="business-bank-title" name="bankTransferTitle" defaultValue={content.bankTransferTitle} />
+          </Field>
+          <Field label="WhatsApp payment body" htmlFor="business-whatsapp-body">
+            <Textarea id="business-whatsapp-body" name="whatsappPaymentBody" defaultValue={content.whatsappPaymentBody} className="min-h-[112px]" />
+          </Field>
+          <Field label="Bank transfer body" htmlFor="business-bank-body">
+            <Textarea id="business-bank-body" name="bankTransferBody" defaultValue={content.bankTransferBody} className="min-h-[112px]" />
+          </Field>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field label="Bank name" htmlFor="business-bank-name">
+            <Input id="business-bank-name" name="bankName" defaultValue={content.bankName} />
+          </Field>
+          <Field label="Account name" htmlFor="business-account-name">
+            <Input id="business-account-name" name="bankAccountName" defaultValue={content.bankAccountName} />
+          </Field>
+          <Field label="Account number" htmlFor="business-account-number">
+            <Input id="business-account-number" name="bankAccountNumber" defaultValue={content.bankAccountNumber} />
+          </Field>
+        </div>
+
+        <Field
+          label="Website transfer instructions"
+          htmlFor="business-transfer-instructions"
+          hint="You can use {total} and {orderNumber}; the site replaces them automatically."
+        >
+          <Textarea id="business-transfer-instructions" name="bankTransferInstructions" defaultValue={content.bankTransferInstructions} className="min-h-[96px]" />
+        </Field>
+        <Field
+          label="WhatsApp payment instructions"
+          htmlFor="business-whatsapp-instructions"
+          hint="You can use {total} and {orderNumber}; the site replaces them automatically."
+        >
+          <Textarea id="business-whatsapp-instructions" name="whatsappOrderInstructions" defaultValue={content.whatsappOrderInstructions} className="min-h-[96px]" />
+        </Field>
+        <Field label="Payment reported notice" htmlFor="business-submitted-notice">
+          <Textarea id="business-submitted-notice" name="submittedPaymentNotice" defaultValue={content.submittedPaymentNotice} className="min-h-[72px]" />
+        </Field>
+
+        <Button type="submit" loading={pending} size="sm">Save</Button>
+      </form>
+    </Section>
+  );
+}
+
+export function DeliverySettingsForm({ content }: { content: SiteContent["delivery"] }) {
+  const [state, action, pending] = useActionState(saveSiteContentAction, initialActionState);
+  return (
+    <Section title="Delivery fees and timelines">
+      <form action={action} className="space-y-4">
+        <input type="hidden" name="key" value="delivery" />
+        {state.ok && <FormMessage type="success">{state.message}</FormMessage>}
+        {state.error && <FormMessage type="error">{state.error}</FormMessage>}
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field label="Lagos fee" htmlFor="delivery-lagos-fee">
+            <Input id="delivery-lagos-fee" name="lagosFee" type="number" min="0" defaultValue={content.lagosFee} />
+          </Field>
+          <Field label="Nearby-state fee" htmlFor="delivery-regional-fee">
+            <Input id="delivery-regional-fee" name="regionalFee" type="number" min="0" defaultValue={content.regionalFee} />
+          </Field>
+          <Field label="Other states fee" htmlFor="delivery-default-fee">
+            <Input id="delivery-default-fee" name="defaultFee" type="number" min="0" defaultValue={content.defaultFee} />
+          </Field>
+          <Field label="Free Lagos delivery from" htmlFor="delivery-lagos-threshold">
+            <Input id="delivery-lagos-threshold" name="freeDeliveryThreshold" type="number" min="0" defaultValue={content.freeDeliveryThreshold} />
+          </Field>
+          <Field label="Free interstate delivery from" htmlFor="delivery-interstate-threshold">
+            <Input id="delivery-interstate-threshold" name="interstateFreeDeliveryThreshold" type="number" min="0" defaultValue={content.interstateFreeDeliveryThreshold} />
+          </Field>
+          <Field label="Nearby states" htmlFor="delivery-regional-states" hint="Separate states with commas.">
+            <Input id="delivery-regional-states" name="regionalStates" defaultValue={content.regionalStates.join(", ")} />
+          </Field>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field label="Lagos timeline" htmlFor="delivery-lagos-eta">
+            <Input id="delivery-lagos-eta" name="lagosEta" defaultValue={content.lagosEta} />
+          </Field>
+          <Field label="Nearby-state timeline" htmlFor="delivery-regional-eta">
+            <Input id="delivery-regional-eta" name="regionalEta" defaultValue={content.regionalEta} />
+          </Field>
+          <Field label="Other states timeline" htmlFor="delivery-default-eta">
+            <Input id="delivery-default-eta" name="defaultEta" defaultValue={content.defaultEta} />
+          </Field>
+        </div>
+
+        <Button type="submit" loading={pending} size="sm">Save</Button>
+      </form>
+    </Section>
+  );
+}

@@ -14,18 +14,24 @@ export function Logo({
   return (
     <Link
       href="/"
-      className={cn("inline-flex items-center", className)}
+      className={cn("group inline-flex items-center", className)}
       aria-label="JIS Beauty & Fashion -- home"
       onClick={onClick}
     >
-      <Image
-        src="/images/jis-logo.PNG"
-        alt="JIS Beauty & Fashion"
-        width={150}
-        height={100}
-        className="h-auto w-[120px] object-contain sm:w-[145px]"
-        priority
-      />
+      <span
+        className={cn(
+          "relative block h-[58px] w-[168px] shrink-0 overflow-hidden bg-cream transition-transform duration-300 group-hover:scale-[1.01] sm:h-[64px] sm:w-[188px]"
+        )}
+      >
+        <Image
+          src="/images/jis-logo.PNG"
+          alt="JIS Beauty & Fashion"
+          fill
+          sizes="(min-width: 640px) 188px, 168px"
+          className="object-contain mix-blend-multiply"
+          priority
+        />
+      </span>
     </Link>
   );
 }
