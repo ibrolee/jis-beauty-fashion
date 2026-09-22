@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ContactAside } from "@/components/info/info-page";
-import { FAQ_ITEMS } from "@/content/policies";
+import { getFaqItems } from "@/lib/delivery-copy";
+import { getSiteContent } from "@/lib/data/settings";
 
 export const metadata: Metadata = {
   title: "FAQ",
@@ -8,11 +9,13 @@ export const metadata: Metadata = {
   alternates: { canonical: "/faq" },
 };
 
-export default function FaqPage() {
+export default async function FaqPage() {
+  const content = await getSiteContent();
+  const faqItems = getFaqItems(content.delivery);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: FAQ_ITEMS.map((item) => ({ "@type": "Question", name: item.q, acceptedAnswer: { "@type": "Answer", text: item.a } })),
+    mainEntity: faqItems.map((item) => ({ "@type": "Question", name: item.q, acceptedAnswer: { "@type": "Answer", text: item.a } })),
   };
 
   return (
@@ -30,7 +33,7 @@ export default function FaqPage() {
       <div className="container-x mt-12 grid gap-12 lg:mt-20 lg:grid-cols-12 lg:gap-16">
         <section className="lg:col-span-7" aria-label="Frequently asked questions">
           <div className="divide-y divide-line border-y border-line">
-            {FAQ_ITEMS.map((item, index) => (
+            {faqItems.map((item, index) => (
               <details key={item.q} className="group py-6 open:pb-8">
                 <summary className="flex cursor-pointer list-none items-start gap-5 text-ink focus-visible:outline-offset-4 [&::-webkit-details-marker]:hidden">
                   <span className="mt-2 shrink-0 text-[11px] tracking-[0.14em] text-rosewood" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
