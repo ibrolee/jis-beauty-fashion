@@ -6,6 +6,7 @@ import {
   Inbox,
   LayoutDashboard,
   LayoutTemplate,
+  Newspaper,
   MessageSquareText,
   Package,
   ShoppingCart,
@@ -28,6 +29,7 @@ const ADMIN_LINKS = [
   { href: "/admin/reviews", label: "Reviews", icon: MessageSquareText },
   { href: "/admin/messages", label: "Messages", icon: Inbox },
   { href: "/admin/content", label: "Site content", icon: LayoutTemplate },
+  { href: "/admin/blog", label: "Blog", icon: Newspaper },
 ];
 
 export function AdminNav() {
