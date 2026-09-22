@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ContactAside, InfoPage } from "@/components/info/info-page";
-import { SHIPPING_SECTIONS } from "@/content/policies";
+import { getSiteContent } from "@/lib/data/settings";
+import { getShippingSections } from "@/lib/delivery-copy";
 
 export const metadata: Metadata = {
   title: "Shipping & Delivery",
@@ -8,6 +9,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/shipping" },
 };
 
-export default function ShippingPage() {
-  return <InfoPage eyebrow="Help centre" title="Shipping & delivery" intro="Fast, careful delivery from Lagos to every state in Nigeria." sections={SHIPPING_SECTIONS} aside={<ContactAside />} />;
+export default async function ShippingPage() {
+  const content = await getSiteContent();
+  return <InfoPage eyebrow="Help centre" title="Shipping & delivery" intro="Fast, careful delivery from Lagos to every state in Nigeria." sections={getShippingSections(content.delivery)} aside={<ContactAside />} />;
 }
