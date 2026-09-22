@@ -30,7 +30,7 @@ export default async function CheckoutPage() {
             <li className="text-stone"><span className="mr-2">03</span> Confirmation</li>
           </ol>
         </header>
-        <CheckoutForm user={user} savedAddress={savedAddress ?? null} paystackEnabled={isOnlinePaymentEnabled()} content={content.business} />
+        <CheckoutForm user={user} savedAddress={savedAddress ?? null} paystackEnabled={isOnlinePaymentEnabled()} content={content.business} delivery={content.delivery} />
       </div>
     </div>
   );
