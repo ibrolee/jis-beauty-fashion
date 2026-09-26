@@ -11,7 +11,7 @@ import { getSiteContent } from "@/lib/data/settings";
 import { publicSiteOrigin } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: `${SITE.name} — ${SITE.tagline}`,
+  title: SITE.name + " — " + SITE.tagline,
   description: SITE.description,
   alternates: { canonical: "/" },
 };
@@ -39,7 +39,7 @@ export default async function HomePage() {
     name: SITE.name,
     description: SITE.description,
     url: publicSiteOrigin(),
-    telephone: `+234${SITE.phone.slice(1)}`,
+    telephone: "+234" + SITE.phone.slice(1),
     address: { "@type": "PostalAddress", addressLocality: "Lagos", addressCountry: "NG" },
     sameAs: [SITE.instagramUrl, SITE.tiktokUrl],
     priceRange: "₦₦",
@@ -51,47 +51,47 @@ export default async function HomePage() {
       <Hero content={content.hero} />
       <FeaturedCategories categories={categories} />
       <CollectionSection
-        eyebrow="The latest edit / 02"
-        title="New & noteworthy"
-        description="Explore the latest products added to the JIS collection."
+        eyebrow="Fresh on the shelf / 02"
+        title="New scents, new moods"
+        description="The newest additions to JIS — ready for your next signature."
         href="/shop?newArrivals=1&sort=newest"
         products={newArrivals}
         priorityCount={2}
       />
       <EditorialStory />
       <CollectionSection
-        eyebrow="The favourites / 03"
-        title="Best sellers"
-        description="Discover what customers are choosing."
+        eyebrow="Most wanted / 03"
+        title="The bottles everyone notices"
+        description="Customer favourites worth starting with when you want something memorable."
         href="/shop?bestSellers=1"
         products={bestSellers}
         tone="ivory"
       />
       <CollectionSection
-        eyebrow="The women's edit"
-        title="Fragrance for her"
+        eyebrow="Soft, bold, unforgettable"
+        title="The women's fragrance edit"
         href="/shop/women"
         products={women}
-        feature={{ image: categoryImage("women", "/images/products/women-2.jpg"), title: "Explore the women's edit", subtitle: "The collection" }}
+        feature={{ image: categoryImage("women", "/catalog/category-women-v2.jpg"), title: "Meet the women's edit", subtitle: "For her" }}
         tone="ivory"
       />
       <CollectionSection
-        eyebrow="The men's edit"
-        title="Fragrance for him"
+        eyebrow="Clean, deep, confident"
+        title="The men's fragrance edit"
         href="/shop/men"
         products={men}
-        feature={{ image: categoryImage("men", "/images/products/men-1.jpg"), title: "Explore the men's edit", subtitle: "The collection" }}
+        feature={{ image: categoryImage("men", "/catalog/category-men-v2.jpg"), title: "Meet the men's edit", subtitle: "For him" }}
       />
-      <CollectionSection eyebrow="For everyone" title="Unisex fragrances" href="/shop/unisex" products={unisex} tone="ivory" />
+      <CollectionSection eyebrow="No labels, just good scent" title="Unisex favourites" href="/shop/unisex" products={unisex} tone="ivory" />
       <CollectionSection
-        eyebrow="Everyday essentials"
+        eyebrow="Easy everyday energy"
         title="Body sprays & deodorants"
         href="/shop/body-sprays-deodorants"
         products={bodySprays}
-        feature={{ image: categoryImage("body-sprays-deodorants", "/catalog/category-deodorants-selected-20260918.jpg"), title: "Your everyday edit", subtitle: "Body & fragrance" }}
+        feature={{ image: categoryImage("body-sprays-deodorants", "/catalog/category-deodorants-v2.jpg"), title: "Freshness, styled your way", subtitle: "Body & fragrance" }}
       />
-      <CollectionSection eyebrow="Little ones" title="Kids' fragrances" href="/shop/kids" products={kids} />
-      <CollectionSection eyebrow="The concentrated edit" title="Perfume oils" href="/shop/perfume-oils" products={oils} tone="ivory" />
+      <CollectionSection eyebrow="Small scents, big personality" title="Kids' fragrances" href="/shop/kids" products={kids} />
+      <CollectionSection eyebrow="A little goes a long way" title="Perfume oils" href="/shop/perfume-oils" products={oils} tone="ivory" />
       <NewsletterBand />
       <PromoCta content={content.promo} />
     </>

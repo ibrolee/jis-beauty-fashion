@@ -11,7 +11,7 @@ export default async function StoreLayout({ children }: { children: ReactNode })
   const [user, categories, content] = await Promise.all([getCurrentUser(), getCategories(), getSiteContent()]);
 
   return (
-    <>
+    <div className="jis-store min-h-dvh">
       <AnnouncementBar content={content.announcement} />
       <Header user={user} categories={categories} />
       <main id="main" className="flex-1">
@@ -19,6 +19,6 @@ export default async function StoreLayout({ children }: { children: ReactNode })
       </main>
       <Footer categories={categories} content={content.business} />
       <WhatsAppButton />
-    </>
+    </div>
   );
 }
