@@ -6,7 +6,7 @@ import type { CategoryWithCount } from "@/types";
 const ACCENTS = ["bg-[#ff8ab6]", "bg-[#ffb66f]", "bg-[#9b84ff]", "bg-[#76d8c5]", "bg-[#f2d65c]", "bg-[#f39bc7]", "bg-[#89b8ff]"] as const;
 
 export function FeaturedCategories({ categories }: { categories: CategoryWithCount[] }) {
-  const available = categories.filter((category) => category.productCount > 0);
+  const available = categories.filter((category) => category.productCount > 0 || category.slug === "men");
   if (!available.length) return null;
 
   return (
@@ -56,7 +56,7 @@ export function FeaturedCategories({ categories }: { categories: CategoryWithCou
                 </span>
                 <div className="absolute inset-x-5 bottom-5 flex items-end justify-between gap-4 rounded-[1.5rem] border border-white/20 bg-black/15 p-5 backdrop-blur-[2px] sm:inset-x-6 sm:bottom-6 sm:p-6">
                   <div>
-                    <p className="mb-2 text-[9px] font-semibold uppercase tracking-[0.19em] text-white/75">{category.productCount} {category.productCount === 1 ? "product" : "products"}</p>
+                    <p className="mb-2 text-[9px] font-semibold uppercase tracking-[0.19em] text-white/75">{category.productCount > 0 ? `${category.productCount} ${category.productCount === 1 ? "product" : "products"}` : "Explore category"}</p>
                     <h3 className="font-serif text-[clamp(2.3rem,4vw,4.4rem)] leading-[0.9] tracking-[-0.03em]">{category.name.replace("Perfumes for ", "").replace(" Perfumes", "")}</h3>
                     {category.description && <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/78">{category.description}</p>}
                   </div>
