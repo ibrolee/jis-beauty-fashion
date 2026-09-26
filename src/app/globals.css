@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-/* JIS editorial palette. Keep the established token names so admin and commerce
-   surfaces retain their existing contrast and component behaviour. */
 @theme {
   --color-ink: #171511;
   --color-ink-soft: #38352f;
@@ -81,8 +79,6 @@
   @apply transition-opacity duration-500;
 }
 
-/* Scoped to the checkout route only. All form controls and transactional logic
-   remain the same components and server actions as before the redesign. */
 @layer components {
   .jis-checkout form > div > section {
     border-top: 1px solid var(--color-line);
@@ -128,6 +124,160 @@
   .jis-checkout form [role="radiogroup"] > label:focus-within {
     outline: 2px solid var(--color-rosewood);
     outline-offset: 2px;
+  }
+}
+
+/* Premium colour system is scoped to the public store only, leaving admin
+   and transactional logic untouched. Existing Tailwind tokens resolve to
+   these values inside .jis-store, so legacy pages inherit the new identity. */
+.jis-store {
+  --color-ink: #28111f;
+  --color-ink-soft: #4e3343;
+  --color-stone: #7c6472;
+  --color-mist: #a98f9e;
+  --color-line: #ecd8e2;
+  --color-ivory: #fff1ed;
+  --color-cream: #fffaf6;
+  --color-blush: #ffe0eb;
+  --color-rosewood: #b72e73;
+  --color-rosewood-dark: #7e1f50;
+  --shadow-soft: 0 18px 50px -18px rgb(85 25 62 / 0.22);
+  position: relative;
+  overflow-x: clip;
+  background:
+    radial-gradient(circle at 12% 14%, rgb(255 129 177 / 0.10), transparent 26rem),
+    radial-gradient(circle at 88% 31%, rgb(126 103 255 / 0.09), transparent 30rem),
+    #fffaf6;
+  color: var(--color-ink);
+}
+
+.jis-store main {
+  background:
+    radial-gradient(circle at 2% 18%, rgb(255 125 167 / 0.05), transparent 28rem),
+    radial-gradient(circle at 98% 58%, rgb(103 216 203 / 0.05), transparent 30rem);
+}
+
+.jis-store .eyebrow {
+  font-weight: 600;
+}
+
+.jis-hero {
+  background:
+    radial-gradient(circle at 20% 22%, rgb(255 114 166 / 0.34), transparent 31%),
+    radial-gradient(circle at 73% 16%, rgb(126 103 255 / 0.24), transparent 32%),
+    radial-gradient(circle at 78% 82%, rgb(255 178 98 / 0.30), transparent 31%),
+    linear-gradient(135deg, #fff7f1 0%, #fff0f5 46%, #f5f1ff 100%);
+}
+
+.jis-orb {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  filter: blur(8px);
+  opacity: 0.7;
+  animation: jis-float 10s ease-in-out infinite;
+}
+
+.jis-orb-one {
+  width: 14rem;
+  height: 14rem;
+  left: -5rem;
+  top: 16%;
+  background: linear-gradient(145deg, #ff6fa9, #ffb260);
+}
+
+.jis-orb-two {
+  width: 10rem;
+  height: 10rem;
+  right: 38%;
+  top: 8%;
+  background: linear-gradient(145deg, #856cff, #c7b9ff);
+  animation-delay: -3s;
+}
+
+.jis-orb-three {
+  width: 13rem;
+  height: 13rem;
+  right: -4rem;
+  bottom: 12%;
+  background: linear-gradient(145deg, #69d5c1, #f3d75e);
+  animation-delay: -6s;
+}
+
+.jis-hero-image-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.30);
+}
+
+.jis-float-card {
+  position: absolute;
+  z-index: 4;
+  max-width: 15rem;
+  border: 1px solid rgb(255 255 255 / 0.7);
+  border-radius: 1.25rem;
+  background: rgb(255 255 255 / 0.82);
+  padding: 1rem 1.15rem;
+  box-shadow: 0 18px 55px rgb(68 19 52 / 0.15);
+  backdrop-filter: blur(16px);
+  animation: jis-float-card 6.5s ease-in-out infinite;
+}
+
+.jis-float-card-one {
+  left: -0.75rem;
+  bottom: 16%;
+}
+
+.jis-float-card-two {
+  right: -1.25rem;
+  top: 14%;
+  animation-delay: -3s;
+}
+
+.jis-reveal {
+  animation: jis-reveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.jis-store .shadow-soft {
+  box-shadow: 0 18px 50px -18px rgb(85 25 62 / 0.22);
+}
+
+.jis-store footer {
+  background:
+    radial-gradient(circle at 7% 8%, rgb(255 111 169 / 0.11), transparent 21rem),
+    radial-gradient(circle at 90% 32%, rgb(125 100 255 / 0.10), transparent 24rem),
+    var(--color-cream);
+}
+
+@keyframes jis-reveal {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes jis-float {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(0, 18px, 0) scale(1.06); }
+}
+
+@keyframes jis-float-card {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-1deg); }
+  50% { transform: translate3d(0, -10px, 0) rotate(1deg); }
+}
+
+@media (max-width: 639px) {
+  .jis-hero {
+    background:
+      radial-gradient(circle at 15% 8%, rgb(255 114 166 / 0.30), transparent 20rem),
+      radial-gradient(circle at 92% 45%, rgb(126 103 255 / 0.18), transparent 22rem),
+      linear-gradient(160deg, #fff7f1, #fff1f6 52%, #f5f2ff);
+  }
+
+  .jis-orb {
+    opacity: 0.45;
   }
 }
 

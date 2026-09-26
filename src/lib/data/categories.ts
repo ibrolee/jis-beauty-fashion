@@ -4,15 +4,13 @@ import { ensureSeeded } from "@/db/ensure-seed";
 import { categories, products, type Category } from "@/db/schema";
 import type { CategoryWithCount } from "@/types";
 
-/** Site-owned collection artwork. Keep this mapping authoritative: old seed/category
- * database image values must never bring the original demo stock pictures back. */
 const collectionImages: Record<string, string> = {
-  women: "/catalog/category-women-selected-20260918.jpg",
-  men: "/catalog/category-men-selected-20260918.jpg",
-  unisex: "/catalog/category-unisex-selected-20260918.jpg",
-  kids: "/catalog/category-kids-selected-20260918.jpg",
-  "perfume-oils": "/catalog/category-oils-selected-20260918.jpg",
-  "body-sprays-deodorants": "/catalog/category-deodorants-selected-20260918.jpg",
+  women: "/catalog/category-women-v2.jpg",
+  men: "/catalog/category-men-v2.jpg",
+  unisex: "/catalog/category-unisex-v2.jpg",
+  kids: "/catalog/category-kids-v2.jpg",
+  "perfume-oils": "/catalog/category-oils-v2.jpg",
+  "body-sprays-deodorants": "/catalog/category-deodorants-v2.jpg",
   "gift-sets": "/catalog/category-gifts-selected-20260918.jpg",
 };
 

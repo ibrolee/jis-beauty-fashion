@@ -10,20 +10,19 @@ import { QuickViewButton } from "./quick-view";
 import { WishlistButton } from "./wishlist-button";
 
 export function ProductCard({ product, priority = false, className }: { product: ProductListItem; priority?: boolean; className?: string }) {
-  const href = `/product/${product.slug}`;
-  // Variant products can still be purchased after choosing an available variant.
+  const href = "/product/" + product.slug;
   const soldOut = product.stock <= 0 && !product.hasVariants;
   const [primary, secondary] = product.images;
 
   return (
-    <article className={cn("group relative flex min-w-0 flex-col", className)}>
-      <div className="relative aspect-[4/5] overflow-hidden border border-line/60 bg-ivory">
-        <Link href={href} aria-label={`View ${product.name}`} className="absolute inset-0 z-0">
+    <article className={cn("group relative flex min-w-0 flex-col rounded-[1.7rem] bg-white/72 p-2 pb-5 shadow-[0_10px_38px_rgba(77,27,59,0.055)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_58px_rgba(77,27,59,0.12)]", className)}>
+      <div className="relative aspect-[4/5] overflow-hidden rounded-[1.3rem] border border-line/60 bg-ivory">
+        <Link href={href} aria-label={"View " + product.name} className="absolute inset-0 z-0">
           {primary ? (
             <>
               <Image
                 src={primary}
-                alt={`${product.name} by ${product.brandName ?? "JIS"}`}
+                alt={product.name + " by " + (product.brandName ?? "JIS")}
                 fill
                 priority={priority}
                 sizes="(min-width: 1280px) 300px, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
@@ -61,20 +60,20 @@ export function ProductCard({ product, priority = false, className }: { product:
           <WishlistButton productId={product.id} productName={product.name} />
         </div>
 
-        <div className="absolute inset-x-2 bottom-2 z-20 hidden translate-y-[calc(100%+0.5rem)] gap-1 border border-line/70 bg-cream/95 p-1.5 shadow-soft backdrop-blur-sm transition-transform duration-300 ease-out group-hover:translate-y-0 group-focus-within:translate-y-0 lg:flex">
+        <div className="absolute inset-x-2 bottom-2 z-20 hidden translate-y-[calc(100%+0.5rem)] gap-1 rounded-[1rem] border border-line/70 bg-cream/95 p-1.5 shadow-soft backdrop-blur-sm transition-transform duration-300 ease-out group-hover:translate-y-0 group-focus-within:translate-y-0 lg:flex">
           <AddToCartButton product={product} size="sm" className="min-w-0 flex-1" />
           <QuickViewButton product={product} />
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col pt-4 sm:pt-5">
+      <div className="flex flex-1 flex-col px-2 pt-4 sm:pt-5">
         {product.brandName && <p className="eyebrow mb-2 truncate text-[10px] text-rosewood">{product.brandName}</p>}
         <h3 className="font-serif text-[20px] leading-[1.08] text-ink sm:text-[23px]">
           <Link href={href} className="transition-colors hover:text-rosewood">{product.name}</Link>
         </h3>
         {(product.volume || product.fragranceType) && (
           <p className="mt-2 text-xs leading-relaxed text-stone">
-            {product.volume}{product.fragranceType ? ` · ${product.fragranceType}` : ""}
+            {product.volume}{product.fragranceType ? " · " + product.fragranceType : ""}
           </p>
         )}
         <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-2 pt-3">
@@ -82,7 +81,7 @@ export function ProductCard({ product, priority = false, className }: { product:
           {product.reviewCount > 0 && <RatingStars rating={product.rating} count={product.reviewCount} size="xs" />}
         </div>
         <div className="mt-4 lg:hidden">
-          <AddToCartButton product={product} size="sm" appearance="secondary" className="w-full" />
+          <AddToCartButton product={product} size="sm" appearance="secondary" className="w-full rounded-full" />
         </div>
       </div>
     </article>
