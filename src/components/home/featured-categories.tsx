@@ -14,7 +14,15 @@ export function FeaturedCategories({ categories }: { categories: CategoryWithCou
       <div className="container-x">
         <div className="mb-8 flex gap-2 overflow-x-auto pb-2 no-scrollbar" aria-label="Jump to a category">
           <Link href="/shop" className="shrink-0 rounded-full bg-ink px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.17em] text-white">Shop all</Link>
-          {available.map((category) => (
+          {available.filter((category) => category.slug === "women").map((category) => (
+            <Link key={category.id} href={"/shop/" + category.slug} className="shrink-0 rounded-full border border-line bg-white/80 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.17em] text-ink transition-all hover:-translate-y-0.5 hover:border-rosewood hover:text-rosewood">
+              {category.name.replace("Perfumes for ", "").replace(" Perfumes", "")}
+            </Link>
+          ))}
+          <Link href="/shop/men" className="shrink-0 rounded-full border border-line bg-white/80 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.17em] text-ink transition-all hover:-translate-y-0.5 hover:border-rosewood hover:text-rosewood">
+            Men
+          </Link>
+          {available.filter((category) => category.slug !== "women" && category.slug !== "men").map((category) => (
             <Link key={category.id} href={"/shop/" + category.slug} className="shrink-0 rounded-full border border-line bg-white/80 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.17em] text-ink transition-all hover:-translate-y-0.5 hover:border-rosewood hover:text-rosewood">
               {category.name.replace("Perfumes for ", "").replace(" Perfumes", "")}
             </Link>
