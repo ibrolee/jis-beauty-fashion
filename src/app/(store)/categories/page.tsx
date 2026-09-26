@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 const ACCENTS = ["#ff83b2", "#ffb56b", "#9881ff", "#6fd4c0", "#efd35d", "#f29ac7", "#85b7ff"] as const;
 
 export default async function CategoriesPage() {
-  const categories = (await getCategories()).filter((category) => category.productCount > 0);
+  const categories = (await getCategories()).filter((category) => category.productCount > 0 || category.slug === "men");
 
   return (
     <div className="pb-20 lg:pb-28">
@@ -53,7 +53,7 @@ export default async function CategoriesPage() {
                       <h2 className="font-serif text-[clamp(2.6rem,5vw,5rem)] leading-[0.9] tracking-[-0.035em]">{category.name.replace("Perfumes for ", "").replace(" Perfumes", "")}</h2>
                       <div className="mt-4 flex items-end justify-between gap-5 border-t border-white/35 pt-4">
                         <p className="max-w-md text-sm leading-relaxed text-white/80">{category.description || "Explore the collection."}</p>
-                        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.15em] text-white/75">{category.productCount} {category.productCount === 1 ? "item" : "items"}</span>
+                        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.15em] text-white/75">{category.productCount > 0 ? `${category.productCount} ${category.productCount === 1 ? "item" : "items"}` : "Explore"}</span>
                       </div>
                     </div>
                   </div>
