@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { issueSignedToken, presignUrl } from "@vercel/blob";
-import { experimental_generateImage as generateImage, generateText } from "ai";
+import { generateImage, generateText } from "ai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
