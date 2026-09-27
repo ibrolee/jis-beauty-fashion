@@ -91,11 +91,11 @@ export function BlogPostForm({ post, categories }: { post?: BlogPost | null; cat
   }
 
   return (
-    <form action={action} className="space-y-5 border border-line bg-white p-5">
+    <form action={action} className="min-w-0 max-w-full space-y-5 overflow-hidden border border-line bg-white p-4 sm:p-5">
       <input type="hidden" name="id" value={post?.id ?? ""} />
       <input type="hidden" name="image" value={images[0] ?? ""} />
 
-      <div className="border border-line bg-ivory/60 p-4">
+      <div className="min-w-0 max-w-full border border-line bg-ivory/60 p-3 sm:p-4">
         <div className="flex items-start gap-3">
           <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink text-white">
             <Sparkles className="h-4 w-4" aria-hidden />
@@ -108,7 +108,7 @@ export function BlogPostForm({ post, categories }: { post?: BlogPost | null; cat
           </div>
         </div>
 
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 min-w-0 max-w-full space-y-3">
           <Field label="Topic (optional)" htmlFor="blog-ai-topic" hint="Leave blank and JIS will choose a fresh topic automatically.">
             <Input
               id="blog-ai-topic"
@@ -132,13 +132,13 @@ export function BlogPostForm({ post, categories }: { post?: BlogPost | null; cat
             </Select>
           </Field>
 
-          <Button type="button" variant="secondary" size="sm" loading={generating} onClick={() => void generateBlog()} className="w-full">
+          <Button type="button" variant="secondary" size="sm" loading={generating} onClick={() => void generateBlog()} className="w-full max-w-full">
             {!generating && <Sparkles className="h-4 w-4" aria-hidden />}
             {post ? "Regenerate with AI" : "Generate blog + image"}
           </Button>
 
           <p className="text-[11px] leading-5 text-stone">
-            Each generation uses your Vercel AI Gateway credits. The generated content stays editable before you save it.
+            Article generation uses a free Vercel AI model. The matching JIS cover is generated automatically and everything stays editable before you save it.
           </p>
         </div>
       </div>
