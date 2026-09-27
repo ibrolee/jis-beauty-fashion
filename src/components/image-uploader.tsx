@@ -215,7 +215,7 @@ export function ImageUploader({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 max-w-full space-y-4">
       {value.length > 0 && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {value.map((url, index) => (
@@ -265,7 +265,7 @@ export function ImageUploader({
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading || (maxImages !== undefined && value.length >= maxImages)}
-        className="inline-flex min-h-12 w-full items-center justify-center border border-line px-4 text-xs font-medium uppercase tracking-[0.14em] transition-colors hover:border-ink disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex min-h-12 w-full min-w-0 max-w-full items-center justify-center whitespace-normal break-words border border-line px-3 py-2 text-center text-xs font-medium uppercase leading-snug tracking-[0.12em] transition-colors hover:border-ink disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:tracking-[0.14em]"
       >
         {uploading
           ? `Uploading ${progress}%…`

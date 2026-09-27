@@ -34,12 +34,33 @@
 
 @layer base {
   html {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
     scroll-behavior: smooth;
     -webkit-tap-highlight-color: transparent;
   }
   body {
     @apply bg-white font-sans text-ink antialiased;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
     font-feature-settings: "kern" 1, "liga" 1;
+  }
+  main, section, article, aside, nav, header, footer, form, fieldset {
+    min-width: 0;
+    max-width: 100%;
+  }
+  input, select, textarea {
+    min-width: 0;
+    max-width: 100%;
+  }
+  img, picture, video, canvas {
+    max-width: 100%;
+  }
+  p, h1, h2, h3, h4, h5, h6 {
+    overflow-wrap: anywhere;
   }
   h1, h2, h3, .font-display {
     @apply font-serif;
@@ -63,7 +84,7 @@
 }
 
 @utility container-x {
-  @apply mx-auto w-full max-w-[1320px] px-4 sm:px-6 lg:px-10;
+  @apply mx-auto w-full min-w-0 max-w-[1320px] px-4 sm:px-6 lg:px-10;
 }
 
 @utility eyebrow {

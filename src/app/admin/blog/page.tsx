@@ -15,15 +15,15 @@ export default async function AdminBlogPage({ searchParams }: { searchParams: Pr
   const editing = edit ? posts.find((post) => post.id === edit) ?? null : null;
 
   return (
-    <div className="space-y-8">
+    <div className="min-w-0 max-w-full space-y-8">
       <AdminPageHeader
         title="Blog"
         description="Create fragrance tips, guides and updates for the storefront blog."
         actions={editing ? <Link href="/admin/blog" className="text-xs uppercase tracking-[0.16em] underline underline-offset-4">New post</Link> : undefined}
       />
 
-      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
-        <section>
+      <div className="grid min-w-0 max-w-full gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <section className="min-w-0 max-w-full">
           <Table>
             <thead><tr><th className={th}>Post</th><th className={th}>Category</th><th className={th}>Status</th><th className={th}>Updated</th><th className={th}>Actions</th></tr></thead>
             <tbody>
@@ -49,7 +49,7 @@ export default async function AdminBlogPage({ searchParams }: { searchParams: Pr
           </Table>
         </section>
 
-        <aside>
+        <aside className="min-w-0 max-w-full">
           <BlogPostForm post={editing} categories={blog.categories} />
         </aside>
       </div>
