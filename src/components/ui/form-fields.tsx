@@ -2,7 +2,7 @@ import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTML
 import { cn } from "@/lib/utils";
 
 const control =
-  "block w-full border border-line bg-white px-4 text-[15px] text-ink placeholder:text-mist transition-colors focus:border-ink focus:outline-none disabled:bg-ivory";
+  "block w-full min-w-0 max-w-full border border-line bg-white px-4 text-[15px] text-ink placeholder:text-mist transition-colors focus:border-ink focus:outline-none disabled:bg-ivory";
 
 export function Field({
   label,
@@ -22,7 +22,7 @@ export function Field({
   required?: boolean;
 }) {
   return (
-    <div className={cn("space-y-1.5", className)}>
+    <div className={cn("min-w-0 max-w-full space-y-1.5", className)}>
       <label htmlFor={htmlFor} className="block text-xs font-medium uppercase tracking-[0.14em] text-ink-soft">
         {label}
         {required && <span className="ml-0.5 text-rosewood" aria-hidden>*</span>}
@@ -68,7 +68,7 @@ export function FormMessage({ type, children }: { type: "error" | "success"; chi
   return (
     <div
       role={type === "error" ? "alert" : "status"}
-      className={cn("border px-4 py-3 text-sm", type === "error" ? "border-sale/40 bg-red-50 text-sale" : "border-success/30 bg-green-50 text-success")}
+      className={cn("max-w-full break-words border px-4 py-3 text-sm", type === "error" ? "border-sale/40 bg-red-50 text-sale" : "border-success/30 bg-green-50 text-success")}
     >
       {children}
     </div>
