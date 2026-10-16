@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { siteSettings } from "@/db/schema";
 import { legacyContent } from "@/lib/data/settings";
 import { editableContent } from "@/lib/website-schema";
+import { stripReactActionFields } from "@/lib/form-action-fields";
 import { resolveAnnouncement } from "@/lib/storefront-settings";
 import { CONTENT_KEYS, type PublicationState } from "@/lib/content-publishing";
 import type { ContentDraft, ContentVersion, EditorState } from "@/lib/website-content";
@@ -13,9 +14,9 @@ export function publicationFromRows(rows: { key: string; value: unknown }[]): Pu
   const legacy = legacyContent(rows);
   legacy.announcement = resolveAnnouncement(legacy.announcement, legacy.delivery);
   return {
-    published: map.get(CONTENT_KEYS.published) as ContentVersion ?? { revision: "legacy", content: editableContent(legacy), savedAt: "", savedBy: "Original website" },
-    draft: map.get(CONTENT_KEYS.draft) as ContentDraft ?? null,
-    history: (map.get(CONTENT_KEYS.history) as { versions?: ContentVersion[] })?.versions ?? [],
+    published: stripReactActionFields(map.get(CONTENT_KEYS.published) as ContentVersion ?? { revision: "legacy", content: editableContent(legacy), savedAt: "", savedBy: "Original website" }),
+    draft: stripReactActionFields(map.get(CONTENT_KEYS.draft) as ContentDraft ?? null),
+    history: stripReactActionFields((map.get(CONTENT_KEYS.history) as { versions?: ContentVersion[] })?.versions ?? []),
   };
 }
 export function editorState(state: PublicationState): EditorState {
