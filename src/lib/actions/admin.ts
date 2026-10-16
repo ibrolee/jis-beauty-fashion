@@ -300,6 +300,10 @@ const originalPaymentStatus = String(formData.get("originalPaymentStatus") ?? ""
 if (order.status !== originalStatus || order.paymentStatus !== originalPaymentStatus) {
   return { error: "This order changed since you opened it. Refresh the page before saving." };
 }
+if (order.paymentMethod === "bank_transfer" && order.paymentStatus !== "paid" &&
+    paymentStatus === "paid" && formData.get("bankVerified") !== "on") {
+  return { error: "Before marking this order Paid, check the actual bank account and tick the bank verification box." };
+}
 
 if (status === "cancelled" && order.status !== "cancelled") {
   const cancelled = await cancelOrderAndRelease(orderId, { paymentStatus, adminNotes });
