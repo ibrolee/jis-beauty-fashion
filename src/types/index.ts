@@ -19,6 +19,7 @@ export type ProductListItem = Product & {
   brandName: string | null;
   hasVariants: boolean;
   minVariantPrice?: number | null;
+  minVariantStock?: number | null;
 };
 
 export type ProductDetail = ProductListItem & {
