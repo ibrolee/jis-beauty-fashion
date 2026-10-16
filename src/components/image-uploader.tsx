@@ -177,10 +177,10 @@ export function ImageUploader({
     setProgress(0);
 
     try {
-      if (maxImages !== undefined && value.length + files.length > maxImages) {
+      if (maxImages !== undefined && value.length + files.length > maxImages && !(maxImages === 1 && files.length === 1)) {
         throw new Error(`Choose up to ${maxImages} photos. Remove an existing photo first if needed.`);
       }
-      let nextUrls = [...value];
+      let nextUrls = maxImages === 1 ? [] : [...value];
 
       for (const file of Array.from(files)) {
         const blobUrl = await uploadFile(file);
@@ -266,24 +266,24 @@ export function ImageUploader({
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        disabled={uploading || (maxImages !== undefined && value.length >= maxImages)}
+        disabled={uploading || (maxImages !== undefined && maxImages !== 1 && value.length >= maxImages)}
         className="inline-flex min-h-12 w-full min-w-0 max-w-full items-center justify-center whitespace-normal break-words border border-line px-3 py-2 text-center text-xs font-medium uppercase leading-snug tracking-[0.12em] transition-colors hover:border-ink disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:tracking-[0.14em]"
       >
         {uploading
           ? `Uploading ${progress}%…`
           : maxImages !== undefined && value.length >= maxImages
             ? `Photo limit reached (${maxImages})`
-            : "Upload photos"}
+            : maxImages === 1 ? (value.length ? "Change photo" : "Upload a photo") : "Upload photos"}
       </button>
 
       <p className="text-xs leading-5 text-stone">
         JPG, PNG or WebP. Maximum 10MB per image.
-        You can select multiple photos at once. The
-        first image will be used as the main image.
+        {maxImages !== 1 && "You can select multiple photos at once. The first image will be used as the main image."}
       </p>
 
-      <MediaBrowser disabled={uploading || (maxImages !== undefined && value.length >= maxImages)} onSelect={(url) => {
-        if (!value.includes(url)) onChange([...value, url]);
+      <MediaBrowser disabled={uploading || (maxImages !== undefined && maxImages !== 1 && value.length >= maxImages)} onSelect={(url) => {
+        if (maxImages === 1) onChange([url]);
+        else if (!value.includes(url)) onChange([...value, url]);
       }} />
 
       {error && (
