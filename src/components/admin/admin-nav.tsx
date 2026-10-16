@@ -6,6 +6,7 @@ import {
   Inbox,
   LayoutDashboard,
   LayoutTemplate,
+  BookOpen,
   Newspaper,
   MessageSquareText,
   Package,
@@ -31,6 +32,7 @@ const ADMIN_LINKS = [
   { href: "/admin/messages", label: "Messages", icon: Inbox },
   { href: "/admin/content", label: "Edit website", icon: LayoutTemplate },
   { href: "/admin/media", label: "My photos", icon: FolderTree },
+  { href: "/admin/help", label: "How to use the shop", icon: BookOpen },
   { href: "/admin/blog", label: "Blog", icon: Newspaper },
 ];
 
