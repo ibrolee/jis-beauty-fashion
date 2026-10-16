@@ -18,7 +18,7 @@ export default async function PaymentReviewPage() {
       <ol className="mt-2 list-decimal space-y-1 pl-5">
         <li>Open the order below and check its exact amount.</li>
         <li>Check your bank account independently. Match the amount and payment reference or sender.</li>
-        <li>Only then open the order, change Payment status to Paid, and save. A customer's WhatsApp message or screenshot is not proof.</li>
+        <li>Only then open the order, change Payment status to Paid, and save. A customer&apos;s WhatsApp message or screenshot is not proof.</li>
       </ol>
       <p className="mt-2">Do not prepare or dispatch products until the transfer is verified.</p>
     </section>
