@@ -9,7 +9,20 @@ import { discardWebsiteDraftAction, publishWebsiteAction, restoreWebsiteAction, 
 
 type Value = string | number | boolean | Value[] | { [key: string]: Value };
 const inputClass = "min-h-11 w-full min-w-0 rounded-lg border border-line bg-white px-3 py-2 text-sm focus:border-ink focus:outline-none disabled:bg-ivory disabled:text-stone";
-const names: Record<string, string> = { eyebrow: "Small heading", href: "Destination", primaryHref: "Main button destination", secondaryHref: "Second button destination", primaryCta: "Main button text", secondaryCta: "Second button text", subheadline: "Introduction", cta: "Button text", enabled: "Show this item", autoDeliveryText: "Use delivery settings for the announcement", includeCategories: "Include product categories in both menus", hideEmptyCategories: "Hide empty categories from the menus", brandLine: "Store line below the main banner", source: "Products to display", categorySlug: "Product category", limit: "Maximum products", tone: "Background", sections: "Page sections", quickLinks: "Quick shop links", regionalStates: "Nearby states", freeDeliveryThreshold: "Free Lagos delivery from (₦)", interstateFreeDeliveryThreshold: "Free interstate delivery from (₦)", logo: "Store logo", shareImage: "Social sharing image", primaryColor: "Main brand colour", accentColor: "Accent colour" };
+const names: Record<string, string> = {
+  eyebrow: "Small heading (optional)", href: "Where should this link open?", primaryHref: "Where the main button goes", secondaryHref: "Where the second button goes", buttonHref: "Where the button goes",
+  primaryCta: "Main button words", secondaryCta: "Second button words", buttonLabel: "Words on the button", label: "Menu name", subheadline: "Short introduction", cta: "Button words",
+  headline: "Main heading", title: "Heading", intro: "Introduction", image: "Photo", enabled: "Show on website", autoDeliveryText: "Show delivery offer automatically",
+  includeCategories: "Show product categories in the menu", hideEmptyCategories: "Hide categories with no products", brandLine: "Small line below the banner",
+  source: "Which products should appear?", categorySlug: "Choose a collection", limit: "Number of products", tone: "Section background",
+  sections: "More information on this page", quickLinks: "Shopping shortcuts", regionalStates: "Nearby states", freeDeliveryThreshold: "Free Lagos delivery when a customer spends (₦)",
+  interstateFreeDeliveryThreshold: "Free delivery outside Lagos from (₦)", lagosFee: "Lagos delivery charge (₦)", regionalFee: "Delivery charge for nearby states (₦)", defaultFee: "Delivery charge for other states (₦)",
+  lagosEta: "Delivery time within Lagos", regionalEta: "Delivery time to nearby states", defaultEta: "Delivery time to other states",
+  logo: "Business logo", shareImage: "Photo shown when someone shares the website", primaryColor: "Main website colour", accentColor: "Second website colour",
+  question: "Question", answer: "Answer", body: "Description", shortName: "Short business name", whatsapp: "WhatsApp number", phone: "Phone number", instagram: "Instagram username", tiktok: "TikTok username",
+  bankName: "Bank name", bankAccountName: "Account name", bankAccountNumber: "Account number", footerTagline: "Short footer description", footerPaymentNote: "Payment note",
+  showNewsletter: "Show email signup", name: "Business name", subtitle: "Small description", sortOrder: "Display order",
+};
 function label(key: string) { return names[key] ?? key.replace(/([A-Z])/g, " $1").replace(/^./, (letter) => letter.toUpperCase()); }
 function addition(path: string): Value {
   if (path === "website.home.sections") return newHomeSection("text", crypto.randomUUID()) as unknown as Value;
@@ -27,16 +40,16 @@ export function ContentField({ value, path, title, onChange, categories, disable
     const choices = key === "type" && path.includes("home.sections") ? { hero: "Main banner", categories: "Category collection", collection: "Product collection", editorial: "Image and story", newsletter: "Newsletter signup", promo: "Final promotion", text: "Text and optional image" }
       : key === "source" ? { category: "One category", newArrivals: "New arrivals", bestSellers: "Best sellers" }
       : key === "tone" ? { white: "White", ivory: "Cream" } : null;
-    if (["image", "logo", "shareImage"].includes(key)) return <div className="min-w-0 space-y-2"><p className="text-sm font-medium">{title}</p><ImageUploader name={null} maxImages={1} value={value ? [String(value)] : []} onChange={(urls) => onChange(urls[0] ?? "")} /><label htmlFor={id} className="block text-xs text-stone">Or paste an image URL</label><input id={id} className={inputClass} value={value} onChange={(event) => onChange(event.target.value)} /></div>;
+    if (["image", "logo", "shareImage"].includes(key)) return <div className="min-w-0 space-y-2"><p className="text-sm font-medium">{title}</p><ImageUploader name={null} maxImages={1} value={value ? [String(value)] : []} onChange={(urls) => onChange(urls[0] ?? "")} /><details className="rounded-lg border border-line/70 p-3"><summary className="cursor-pointer text-xs text-stone">Use a photo link instead (optional)</summary><label htmlFor={id} className="mt-3 block text-xs text-stone">Photo link</label><input id={id} className={inputClass} value={value} onChange={(event) => onChange(event.target.value)} /></details></div>;
     return <div className="min-w-0 space-y-2"><label className="block text-sm font-medium" htmlFor={id}>{title}</label>
       {choices ? <select id={id} className={inputClass} value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)}>{Object.entries(choices).map(([option, name]) => <option key={option} value={option}>{name}</option>)}</select>
         : key === "categorySlug" ? <select id={id} className={inputClass} value={value} onChange={(event) => onChange(event.target.value)}><option value="">Select a category</option>{categories.map((category) => <option key={category.slug} value={category.slug}>{category.name}</option>)}</select>
         : (/body|description|intro|answer|instructions|notice|note|tagline/i.test(key) || path.includes(".body.")) ? <textarea id={id} className={`${inputClass} min-h-28`} value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)} />
         : <input id={id} className={inputClass} type={typeof value === "number" ? "number" : /color$/i.test(key) ? "color" : "text"} min={typeof value === "number" ? 0 : undefined} value={value} disabled={disabled} onChange={(event) => onChange(typeof value === "number" ? Number(event.target.value) : event.target.value)} />}
-      {/href$/i.test(key) && <p className="text-xs text-stone">Choose a website path such as /shop, an HTTPS link, mailto: email link or tel: phone link.</p>}
+      {/href$/i.test(key) && <p className="text-xs text-stone">For a shop button, use /shop. For Contact, use /contact. You can also paste a full website link.</p>}
     </div>;
   }
-  if (Array.isArray(value)) return <div className="min-w-0 space-y-3"><div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-medium">{title}</h3><button type="button" onClick={() => onChange([...value, addition(path)])} className="min-h-10 rounded-lg border border-line px-3 text-sm">Add item</button></div>
+  if (Array.isArray(value)) return <div className="min-w-0 space-y-3"><div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-medium">{title}</h3><button type="button" onClick={() => onChange([...value, addition(path)])} className="min-h-10 rounded-lg border border-line px-3 text-sm">{path === "website.home.sections" ? "Add homepage section" : path === "website.faq" ? "Add question" : /links$/i.test(path) ? "Add link" : path.endsWith("sections") ? "Add page section" : "Add another"}</button></div>
     {value.map((item, index) => {
       const object = item && typeof item === "object" && !Array.isArray(item) ? item : null;
       const itemLabel = object ? String(object.title || object.label || object.question || `Item ${index + 1}`) : `Paragraph ${index + 1}`;
@@ -54,7 +67,36 @@ export function ContentField({ value, path, title, onChange, categories, disable
     const fields = type === "hero" || type === "promo" ? ["type", "enabled", "title"] : type === "collection" ? ["type", "enabled", "eyebrow", "title", "body", "image", "buttonLabel", "buttonHref", "source", "categorySlug", "limit", "tone"] : type === "newsletter" ? ["type", "enabled", "eyebrow", "title", "body"] : type === "categories" ? ["type", "enabled", "eyebrow", "title", "body", "buttonLabel", "buttonHref"] : ["type", "enabled", "eyebrow", "title", "body", "image", "buttonLabel", "buttonHref", "tone"];
     entries = entries.filter(([name]) => fields.includes(name));
   }
-  return <div className="min-w-0 space-y-5">{entries.map(([name, child]) => <ContentField key={name} value={child} path={`${path}.${name}`} title={label(name)} categories={categories} disabled={path === "announcement" && value.autoDeliveryText === true && ["text", "href"].includes(name)} onChange={(next) => onChange({ ...value, [name]: next })} />)}</div>;
+  // Start with the settings a shop owner normally needs. All other options remain available.
+  const primaryByPath: Record<string, string[]> = {
+    "announcement": ["autoDeliveryText", "enabled", "text", "href"],
+    "hero": ["headline", "subheadline", "image", "primaryCta", "primaryHref"],
+    "promo": ["headline", "body", "couponCode", "cta", "href"],
+    "website.brand": ["name", "logo", "description", "phone", "whatsapp", "email", "instagram", "tiktok", "address"],
+    "website.home": ["sections"],
+    "website.navigation": ["links", "includeCategories"],
+    "website.footer": ["title", "buttonLabel", "buttonHref", "showNewsletter", "copyright"],
+    "business": ["bankName", "bankAccountName", "bankAccountNumber", "bankTransferInstructions", "whatsappOrderInstructions"],
+  };
+  const primary = path.startsWith("website.pages.") && path.split(".").length === 3
+    ? ["title", "intro", "image", "sections"]
+    : primaryByPath[path];
+  const shown = entries.filter(([name]) => !primary || primary.includes(name));
+  const extra = primary ? entries.filter(([name]) => !primary.includes(name)) : [];
+  const renderEntry = ([name, child]: [string, Value]) =>
+    <ContentField key={name} value={child} path={`${path}.${name}`} title={label(name)} categories={categories}
+      disabled={path === "announcement" && value.autoDeliveryText === true && ["text", "href"].includes(name)}
+      onChange={(next) => onChange({ ...value, [name]: next })} />;
+  const main = path === "announcement" && value.autoDeliveryText === true
+    ? shown.filter(([name]) => !["text", "href"].includes(name))
+    : shown;
+  return <div className="min-w-0 space-y-5">
+    {main.map(renderEntry)}
+    {extra.length > 0 && <details className="rounded-xl border border-line bg-ivory/50 p-4">
+      <summary className="cursor-pointer text-sm font-medium">More options (optional)</summary>
+      <div className="mt-4 space-y-5">{extra.map(renderEntry)}</div>
+    </details>}
+  </div>;
 }
 
 const tabs = ["Homepage", "Pages", "Navigation", "Brand & contact", "Footer", "Delivery & payment", "Version history"] as const;
