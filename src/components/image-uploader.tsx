@@ -271,9 +271,11 @@ export function ImageUploader({
       >
         {uploading
           ? `Uploading ${progress}%…`
-          : maxImages !== undefined && value.length >= maxImages
-            ? `Photo limit reached (${maxImages})`
-            : maxImages === 1 ? (value.length ? "Change photo" : "Upload a photo") : "Upload photos"}
+          : maxImages === 1
+            ? (value.length ? "Change photo" : "Upload a photo")
+            : maxImages !== undefined && value.length >= maxImages
+              ? `Photo limit reached (${maxImages})`
+              : "Upload photos"}
       </button>
 
       <p className="text-xs leading-5 text-stone">
