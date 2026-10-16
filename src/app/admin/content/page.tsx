@@ -11,7 +11,7 @@ export default async function AdminContentPage() {
   const [state, categories] = await Promise.all([getWebsiteEditorState(), getCategories()]);
   return (
     <div>
-      <AdminPageHeader title="Website editor" description="Manage your pages, images, menus and store settings. Preview a draft before publishing." />
+      <AdminPageHeader title="Edit your website" description="Change photos, words, menus and business details without coding." />
       <WebsiteEditor initial={state} categories={categories.map(({ name, slug }) => ({ name, slug }))} />
     </div>
   );
