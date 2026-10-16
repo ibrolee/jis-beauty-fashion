@@ -113,3 +113,44 @@ test("media picker searches, selects an existing image and restores focus after 
     assert.equal(document.activeElement, trigger);
   } finally { await ui.dispose(); }
 });
+
+test("React form action metadata from legacy settings cannot appear as editable fields", async () => {
+  const { stripReactActionFields } = loadSource("src/lib/form-action-fields.ts");
+  const { legacyContent } = loadSource("src/lib/data/settings.ts", {
+    "@/db": { db: {} },
+    "@/db/ensure-seed": { ensureSeeded: async () => {} },
+  });
+  const injected = {
+    "$ACTION_4:0": '{"id":"internal-handler"}',
+    "$ACTION_4:1": "[{}]",
+    "$ACTION_KEY": "internal-reference",
+    "$ACTION_REF_4": "",
+  };
+  const oldSettings = [
+    { key: "announcement", value: { ...injected, text: "Free Lagos delivery today", enabled: true, href: "/shipping" } },
+    { key: "hero", value: { ...injected, headline: "New collection", image: "/images/hero.jpg" } },
+  ];
+  const legacy = legacyContent(oldSettings);
+  assert.equal(legacy.announcement.text, "Free Lagos delivery today");
+  assert.equal(legacy.hero.headline, "New collection");
+  assert.equal(Object.keys(legacy.announcement).some((key) => key.startsWith("$ACTION")), false);
+  assert.equal(Object.keys(legacy.hero).some((key) => key.startsWith("$ACTION")), false);
+
+  const raw = { ...state(), content: { ...content(), hero: { ...content().hero, ...injected } } };
+  const clean = stripReactActionFields(raw);
+  assert.equal(clean.content.hero.headline, raw.content.hero.headline);
+  assert.equal(Object.keys(clean.content.hero).some((key) => key.startsWith("$ACTION")), false);
+  const { ContentField } = loadSource("src/components/admin/website-editor.tsx", { ...common, "@/lib/actions/website": {} });
+  const ui = await mount(React.createElement(ContentField, {
+    value: raw.content.hero,
+    path: "hero",
+    title: "Main banner",
+    categories: [],
+    onChange: () => {},
+  }));
+  try {
+    assert.equal(ui.container.textContent.includes("$ACTION"), false);
+    assert.equal(ui.container.querySelectorAll('[id*="ACTION"]').length, 0);
+    assert.match(ui.container.textContent, /Headline/);
+  } finally { await ui.dispose(); }
+});

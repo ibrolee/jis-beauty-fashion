@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { HomeSection } from "@/lib/website-content";
 import type { CategoryWithCount } from "@/types";
 export function FeaturedCategories({ categories, section, hideEmpty = false }: { categories: CategoryWithCount[]; section: HomeSection; hideEmpty?: boolean }) {
-  const available = categories.filter((category) => category.isActive && (!hideEmpty || category.productCount > 0));
+  const available = categories.filter((category) => category.isActive && (!hideEmpty || category.productCount > 0)).sort((a, b) => Number(b.productCount > 0) - Number(a.productCount > 0)).slice(0, 4);
   if (!available.length) return null;
   return <section id={section.id} className="scroll-mt-36 py-18 sm:py-24 lg:py-30" aria-label={section.title}><div className="container-x">
     <div className="mb-10 flex flex-wrap items-end justify-between gap-6 border-b border-line pb-9"><div><p className="eyebrow mb-4">{section.eyebrow}</p><h2 className="max-w-4xl font-serif text-5xl leading-[0.95] sm:text-6xl">{section.title}</h2><p className="mt-5 max-w-xl text-base leading-relaxed text-stone">{section.body}</p></div>{section.buttonLabel && <Link href={section.buttonHref || "/categories"} className="inline-flex min-h-12 items-center gap-3 rounded-full border border-line bg-white px-5 text-xs uppercase tracking-wider">{section.buttonLabel}<ArrowUpRight className="h-4 w-4" /></Link>}</div>

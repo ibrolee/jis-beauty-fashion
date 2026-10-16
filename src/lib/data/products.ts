@@ -33,6 +33,10 @@ const listColumns = {
   categorySlug: categories.slug,
   brandName: brands.name,
   hasVariants: sql<boolean>`exists(select 1 from ${productVariants} where ${productVariants.productId} = ${products.id} and ${productVariants.isActive} = true)`,
+  minVariantPrice: sql<number | null>`(
+    select min(case when pv.sale_price is not null and pv.sale_price > 0 and pv.sale_price < pv.price then pv.sale_price else pv.price end)::integer
+    from product_variants pv where pv.product_id = ${products.id} and pv.is_active = true and pv.stock > 0
+  )`,
 };
 
 function baseQuery() {

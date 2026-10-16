@@ -18,6 +18,7 @@ export type ProductListItem = Product & {
   categorySlug: string;
   brandName: string | null;
   hasVariants: boolean;
+  minVariantPrice?: number | null;
 };
 
 export type ProductDetail = ProductListItem & {
