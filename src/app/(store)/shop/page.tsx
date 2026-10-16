@@ -1,22 +1,9 @@
-import type { Metadata } from "next";
 import { ShopPage } from "@/components/shop/shop-page";
+import { PageExtras } from "@/components/info/page-extras";
+import { pageContent, pageMetadata } from "@/lib/data/page-content";
 import type { SearchParamsRecord } from "@/lib/shop-params";
-
-export const metadata: Metadata = {
-  title: "Shop All Fragrances",
-  description: "Browse authentic perfumes for women, men, unisex, kids and long-lasting perfume oils. Filter by price, brand, notes and more. Delivered across Nigeria.",
-  alternates: { canonical: "/shop" },
-};
-
+export const generateMetadata = () => pageMetadata("shop");
 export default async function ShopAllPage({ searchParams }: { searchParams: Promise<SearchParamsRecord> }) {
-  const params = await searchParams;
-  return (
-    <ShopPage
-      eyebrow="The collection"
-      title="Shop all"
-      description="Every fragrance and perfume oil in one place. Use the filters to find your signature scent."
-      basePath="/shop"
-      searchParams={params}
-    />
-  );
+  const [params, {page}] = await Promise.all([searchParams, pageContent("shop")]);
+  return <><ShopPage eyebrow={page.eyebrow} title={page.title} description={page.intro} basePath="/shop" searchParams={params} /><PageExtras page={page} /></>;
 }

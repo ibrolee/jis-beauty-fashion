@@ -1,4 +1,5 @@
 import type { DeliverySettings } from "@/lib/constants";
+import { DEFAULT_WEBSITE_CONTENT, type WebsiteContent } from "@/lib/website-content";
 
 /**
  * Admin-editable homepage/site content. Stored in the `site_settings` table
@@ -74,6 +75,7 @@ export type BlogContent = {
 };
 
 export type SiteContent = {
+  website: WebsiteContent;
   announcement: AnnouncementContent;
   hero: HeroContent;
   promo: PromoContent;
@@ -83,6 +85,7 @@ export type SiteContent = {
 };
 
 export const DEFAULT_SITE_CONTENT: SiteContent = {
+  website: DEFAULT_WEBSITE_CONTENT,
   announcement: {
     text: "Free interstate delivery from ₦50,000 · Use code JISWELCOME for 5% off",
     href: "/shipping",
@@ -108,7 +111,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   },
   business: {
     footerTagline: "Fragrances, perfume oils and beauty essentials, thoughtfully curated in Lagos.",
-    footerPaymentNote: "Online payment and direct bank transfer options at checkout",
+    footerPaymentNote: "See available payment options at checkout",
     checkoutIntro: "Your details, your delivery and your preferred way to pay. Review everything before placing your order.",
     paymentVerificationNote: "Payment is confirmed only after we verify that your transfer has reached our account. Merely opening WhatsApp or reporting payment does not confirm it.",
     whatsappPaymentTitle: "Instant payment on WhatsApp",

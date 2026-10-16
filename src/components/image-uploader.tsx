@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import { useRef, useState } from "react";
+import { MediaBrowser } from "@/components/admin/media-browser";
+import { registerWebsiteMediaAction } from "@/lib/actions/media";
 
 type ImageUploaderProps = {
   value: string[];
@@ -182,10 +184,10 @@ export function ImageUploader({
 
       for (const file of Array.from(files)) {
         const blobUrl = await uploadFile(file);
-
         nextUrls = [...nextUrls, blobUrl];
-
         onChange(nextUrls);
+        try { await registerWebsiteMediaAction(blobUrl, file.name); }
+        catch { setError("Photo uploaded, but it could not be added to the media library. Save this page to keep the photo, or retry from Manage images."); }
       }
 
       setProgress(100);
@@ -271,15 +273,18 @@ export function ImageUploader({
           ? `Uploading ${progress}%…`
           : maxImages !== undefined && value.length >= maxImages
             ? `Photo limit reached (${maxImages})`
-            : "Upload product photos"}
+            : "Upload photos"}
       </button>
 
       <p className="text-xs leading-5 text-stone">
         JPG, PNG or WebP. Maximum 10MB per image.
         You can select multiple photos at once. The
-        first image will be used as the main product
-        image.
+        first image will be used as the main image.
       </p>
+
+      <MediaBrowser disabled={uploading || (maxImages !== undefined && value.length >= maxImages)} onSelect={(url) => {
+        if (!value.includes(url)) onChange([...value, url]);
+      }} />
 
       {error && (
         <p

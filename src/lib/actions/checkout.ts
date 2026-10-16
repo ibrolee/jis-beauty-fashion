@@ -1,12 +1,13 @@
 "use server";
+import { brandLinks } from "@/lib/website-content";
 
 import { and, eq, gt, gte, inArray, isNull, lt, lte, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { addresses, coupons, orderItems, orders, payments, productVariants, products } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getDeliveryFee, SITE } from "@/lib/constants";
+import { getDeliveryFee } from "@/lib/constants";
 import { validateCouponCode } from "@/lib/data/coupons";
-import { getSiteContent } from "@/lib/data/settings";
+import { getPublishedSiteContent } from "@/lib/data/settings";
 import { orderConfirmationEmail, sendEmail } from "@/lib/email";
 import { getPaymentProvider, isOnlinePaymentEnabled } from "@/lib/payments";
 import { expireUnpaidBankTransfers } from "@/lib/orders/reservations";
@@ -64,7 +65,7 @@ export async function placeOrder(rawInput: CheckoutInput): Promise<PlaceOrderRes
     couponId = validation.couponId;
     couponCode = validation.coupon.code;
   }
-  const content = await getSiteContent();
+  const content = await getPublishedSiteContent();
   const deliveryFee = getDeliveryFee(input.state, subtotal, content.delivery);
   const total = subtotal - discount + deliveryFee;
   const orderNumber = generateOrderNumber();
@@ -113,7 +114,7 @@ export async function placeOrder(rawInput: CheckoutInput): Promise<PlaceOrderRes
   void sendEmail({ to: input.email, ...orderConfirmationEmail({ firstName: input.firstName, orderNumber, total: formatNaira(total), orderUrl: absoluteUrl(`/order/${orderNumber}`) }) }).catch(() => undefined);
   if (input.paymentMethod === "whatsapp") {
     const message = whatsappCheckoutMessage({ orderNumber, total, items: lines.map((line) => ({ name: line.name, quantity: line.quantity, unitPrice: line.unitPrice, variantName: line.variantName, productSlug: line.productSlug })) });
-    return { ok: true, orderNumber, redirectUrl: `${SITE.whatsappUrl}?text=${encodeURIComponent(message)}` };
+    return { ok: true, orderNumber, redirectUrl: `${brandLinks(content.website.brand).whatsappUrl}?text=${encodeURIComponent(message)}` };
   }
   return { ok: true, orderNumber };
 }

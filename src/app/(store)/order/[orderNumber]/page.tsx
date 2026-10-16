@@ -7,8 +7,8 @@ import { RetryPaymentButton } from "@/components/orders/retry-payment-button";
 import { TransferSubmissionButton } from "@/components/orders/transfer-submission-button";
 import { ButtonLink } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getSiteContent } from "@/lib/data/settings";
-import { SITE } from "@/lib/constants";
+import { getPublishedSiteContent } from "@/lib/data/settings";
+import { brandLinks } from "@/lib/website-content";
 import { getOrderByNumber } from "@/lib/data/orders";
 import { isOnlinePaymentEnabled } from "@/lib/payments";
 import { bankTransferDeadline } from "@/lib/orders/reservations";
@@ -25,7 +25,8 @@ function fillOrderCopy(template: string, orderNumber: string, total: number) {
 }
 
 export default async function OrderConfirmationPage({ params, searchParams }: Props) {
-  const [{ orderNumber }, { payment }, user, content] = await Promise.all([params, searchParams, getCurrentUser(), getSiteContent()]);
+  const [{ orderNumber }, { payment }, user, content] = await Promise.all([params, searchParams, getCurrentUser(), getPublishedSiteContent()]);
+  const SITE = brandLinks(content.website.brand);
   // The order query checks overdue, unreported reservations before rendering.
   const order = await getOrderByNumber(orderNumber);
   if (!order) notFound();

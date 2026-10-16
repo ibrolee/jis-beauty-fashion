@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getSiteContent } from "@/lib/data/settings";
+import { getPublishedSiteContent } from "@/lib/data/settings";
 import { getDefaultAddress } from "@/lib/data/users";
 import { isOnlinePaymentEnabled } from "@/lib/payments";
 
 export const metadata: Metadata = { title: "Checkout", robots: { index: false } };
 
 export default async function CheckoutPage() {
-  const [user, content] = await Promise.all([getCurrentUser(), getSiteContent()]);
+  const [user, content] = await Promise.all([getCurrentUser(), getPublishedSiteContent()]);
   const savedAddress = user ? await getDefaultAddress(user.id) : null;
 
   return (

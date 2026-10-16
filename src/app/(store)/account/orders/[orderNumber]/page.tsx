@@ -6,7 +6,8 @@ import { OrderItemsList, OrderMeta, OrderStatusTracker, OrderTotals } from "@/co
 import { RetryPaymentButton } from "@/components/orders/retry-payment-button";
 import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/session";
-import { SITE } from "@/lib/constants";
+import { brandLinks } from "@/lib/website-content";
+import { getPublishedSiteContent } from "@/lib/data/settings";
 import { getOrderForUser } from "@/lib/data/orders";
 import { isOnlinePaymentEnabled } from "@/lib/payments";
 
@@ -18,6 +19,7 @@ export default async function AccountOrderPage({ params }: { params: Promise<{ o
   const order = await getOrderForUser(orderNumber, user.id);
   if (!order) notFound();
 
+  const SITE = brandLinks((await getPublishedSiteContent()).website.brand);
   const unpaid = order.paymentStatus !== "paid" && order.status !== "cancelled";
 
   return (

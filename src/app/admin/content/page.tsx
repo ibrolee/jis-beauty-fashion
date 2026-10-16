@@ -1,25 +1,18 @@
 import { requireAdmin } from "@/lib/auth/session";
-import { AnnouncementForm, BusinessCopyForm, DeliverySettingsForm, HeroForm, PromoForm } from "@/components/admin/content-forms";
+import { WebsiteEditor } from "@/components/admin/website-editor";
 import { AdminPageHeader } from "@/components/admin/ui";
-import { getSiteContent } from "@/lib/data/settings";
+import { getWebsiteEditorState } from "@/lib/data/website-editor";
+import { getCategories } from "@/lib/data/categories";
 
 export const metadata = { title: "Site content" };
 
 export default async function AdminContentPage() {
   await requireAdmin(); // defense in depth: pages render in parallel with the layout
-  const content = await getSiteContent();
+  const [state, categories] = await Promise.all([getWebsiteEditorState(), getCategories()]);
   return (
     <div>
-      <AdminPageHeader title="Site content" description="Edit key homepage, checkout, bank transfer and footer copy without touching code." />
-      <div className="grid gap-6 xl:grid-cols-2">
-        <div className="space-y-6">
-          <AnnouncementForm content={content.announcement} />
-          <DeliverySettingsForm content={content.delivery} />
-          <PromoForm content={content.promo} />
-          <BusinessCopyForm content={content.business} />
-        </div>
-        <HeroForm content={content.hero} />
-      </div>
+      <AdminPageHeader title="Website editor" description="Manage your pages, images, menus and store settings. Preview a draft before publishing." />
+      <WebsiteEditor initial={state} categories={categories.map(({ name, slug }) => ({ name, slug }))} />
     </div>
   );
 }

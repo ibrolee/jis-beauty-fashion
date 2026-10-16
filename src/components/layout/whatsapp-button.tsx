@@ -1,8 +1,10 @@
 import { WhatsAppIcon } from "@/components/ui/social-icons";
-import { SITE } from "@/lib/constants";
+import { DEFAULT_WEBSITE_CONTENT, brandLinks, type BrandContent } from "@/lib/website-content";
 
-export function WhatsAppButton({ message = "Hello JIS Beauty & Fashion, I'd like to make an enquiry." }: { message?: string }) {
-  const href = `${SITE.whatsappUrl}?text=${encodeURIComponent(message)}`;
+export function WhatsAppButton({ message, brand = DEFAULT_WEBSITE_CONTENT.brand }: { message?: string; brand?: BrandContent }) {
+  const SITE = brandLinks(brand);
+  if (!SITE.whatsappUrl) return null;
+  const href = `${SITE.whatsappUrl}?text=${encodeURIComponent(message || `Hello ${brand.name}, I would like to make an enquiry.`)}`;
   return (
     <a
       href={href}

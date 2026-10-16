@@ -7,6 +7,7 @@ import { InstagramIcon, TikTokIcon } from "@/components/ui/social-icons";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { seedTestimonials } from "@/db/seed-data/catalog";
 import { SITE } from "@/lib/constants";
+import { brandLinks, DEFAULT_WEBSITE_CONTENT, type BrandContent, type HomeSection } from "@/lib/website-content";
 import type { PromoContent } from "@/lib/site-content";
 
 /* ------------------------------ Brand story ------------------------------ */
@@ -136,16 +137,17 @@ export function SocialSection() {
 }
 
 /* -------------------------------- Newsletter ------------------------------- */
-export function NewsletterBand() {
+export function NewsletterBand({ section }: { section?: HomeSection }) {
+  const headingId = `newsletter-heading-${section?.id ?? "default"}`;
   return (
-    <section className="bg-ink text-white" aria-labelledby="newsletter-heading">
+    <section className="bg-ink text-white" aria-labelledby={headingId}>
       <div className="container-x grid gap-8 py-16 lg:grid-cols-2 lg:items-center lg:py-20">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/60">Newsletter</p>
-          <h2 id="newsletter-heading" className="mt-3 font-serif text-4xl leading-tight sm:text-5xl">
-            First to know. <span className="italic font-normal text-blush">Always.</span>
+          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/60">{section?.eyebrow ?? "Newsletter"}</p>
+          <h2 id={headingId} className="mt-3 font-serif text-4xl leading-tight sm:text-5xl">
+            {section?.title ?? "First to know. Always."}
           </h2>
-          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-white/70">New arrivals, restock alerts and subscriber-only offers, once or twice a month.</p>
+          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-white/70">{section?.body ?? "New arrivals, restock alerts and subscriber-only offers, once or twice a month."}</p>
         </div>
         <div className="lg:max-w-md lg:justify-self-end lg:w-full">
           <NewsletterForm dark />
@@ -157,7 +159,8 @@ export function NewsletterBand() {
 }
 
 /* --------------------------------- Promo CTA ------------------------------- */
-export function PromoCta({ content }: { content: PromoContent }) {
+export function PromoCta({ content, brand = DEFAULT_WEBSITE_CONTENT.brand }: { content: PromoContent; brand?: BrandContent }) {
+  const contact = brandLinks(brand);
   return (
     <section className="container-x py-16 lg:py-24" aria-labelledby="promo-heading">
       <div className="relative overflow-hidden border border-line bg-blush/60 px-6 py-14 text-center sm:px-12 lg:py-20">
@@ -176,9 +179,7 @@ export function PromoCta({ content }: { content: PromoContent }) {
           <ButtonLink href={content.href || "/shop"} size="lg">
             {content.cta}
           </ButtonLink>
-          <ButtonLink href={SITE.whatsappUrl} variant="secondary" size="lg">
-            Chat on WhatsApp
-          </ButtonLink>
+          {contact.whatsappUrl && <ButtonLink href={contact.whatsappUrl} variant="secondary" size="lg">Chat on WhatsApp</ButtonLink>}
         </div>
       </div>
     </section>

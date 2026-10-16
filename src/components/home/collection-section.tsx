@@ -16,18 +16,20 @@ type Props = {
   feature?: { image: string; title: string; subtitle: string };
   tone?: "white" | "ivory";
   priorityCount?: number;
+  limit?: number;
+  linkLabel?: string;
 };
 
-export function CollectionSection({ eyebrow, title, description, href, products, feature, tone = "white", priorityCount = 0 }: Props) {
+export function CollectionSection({ eyebrow, title, description, href, products, feature, tone = "white", priorityCount = 0, limit = 4, linkLabel = "View all" }: Props) {
   if (!products.length) return null;
 
   return (
     <section className={cn("py-16 lg:py-24", tone === "ivory" && "bg-ivory")} aria-label={title}>
       <div className="container-x">
-        <SectionHeading eyebrow={eyebrow} title={title} description={description} href={href} />
+        <SectionHeading eyebrow={eyebrow} title={title} description={description} href={href} linkLabel={linkLabel} />
         {feature ? (
           <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 no-scrollbar sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-x-6 sm:gap-y-10 sm:overflow-visible sm:px-0 lg:grid-cols-4">
-            <Link href={href} className="group relative w-[72vw] shrink-0 snap-start overflow-hidden bg-ink sm:w-auto sm:col-span-2 lg:col-span-1 lg:row-span-1">
+            <Link href={href || "/shop"} className="group relative w-[72vw] shrink-0 snap-start overflow-hidden bg-ink sm:w-auto sm:col-span-2 lg:col-span-1 lg:row-span-1">
               <div className="relative aspect-[4/5] sm:aspect-auto sm:h-full sm:min-h-[420px]">
                 <Image src={feature.image} alt={feature.title} fill sizes="(min-width: 1024px) 25vw, 100vw" className="object-cover opacity-90 transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-ink/70 to-transparent" aria-hidden />
@@ -38,12 +40,12 @@ export function CollectionSection({ eyebrow, title, description, href, products,
                 </div>
               </div>
             </Link>
-            {products.slice(0, 3).map((p, i) => (
+            {products.slice(0, limit).map((p, i) => (
               <ProductCard key={p.id} product={p} priority={i < priorityCount} className="w-[72vw] shrink-0 snap-start sm:w-auto" />
             ))}
           </div>
         ) : (
-          <ProductRail products={products.slice(0, 4)} priorityCount={priorityCount} />
+          <ProductRail products={products.slice(0, limit)} priorityCount={priorityCount} />
         )}
       </div>
     </section>

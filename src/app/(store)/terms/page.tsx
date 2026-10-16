@@ -1,13 +1,4 @@
-import type { Metadata } from "next";
-import { InfoPage } from "@/components/info/info-page";
-import { TERMS_SECTIONS } from "@/content/policies";
-
-export const metadata: Metadata = {
-  title: "Terms & Conditions",
-  description: "Terms and conditions for shopping with JIS Beauty & Fashion.",
-  alternates: { canonical: "/terms" },
-};
-
-export default function TermsPage() {
-  return <InfoPage eyebrow="Legal" title="Terms & conditions" sections={TERMS_SECTIONS} />;
-}
+import { ManagedInfoPage } from "@/components/info/managed-info-page";
+import { pageMetadata } from "@/lib/data/page-content";
+export async function generateMetadata() { return pageMetadata("terms"); }
+export default function Page() { return <ManagedInfoPage pageKey="terms" help={false} />; }
