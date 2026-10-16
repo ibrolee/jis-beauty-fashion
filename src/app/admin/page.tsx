@@ -2,7 +2,6 @@ import { requireAdmin } from "@/lib/auth/session";
 import Link from "next/link";
 import { OrderStatusBadge, PaymentStatusBadge } from "@/components/orders/order-details";
 import { AdminPageHeader, Card, Table, td, th } from "@/components/admin/ui";
-import { MobileOrderActions } from "@/components/admin/mobile-order-actions";
 import { getDashboardStats } from "@/lib/data/orders";
 import { formatDate, formatNaira } from "@/lib/utils";
 
@@ -11,6 +10,7 @@ export default async function AdminDashboardPage() {
   const stats = await getDashboardStats();
 
   const cards = [
+    { label: "Payments to verify", value: String(stats.bankReviewCount), hint: "Reported transfers — check the bank" },
     {
       label: "Revenue (paid)",
       value: formatNaira(stats.revenue),
@@ -39,6 +39,7 @@ export default async function AdminDashboardPage() {
       />
       <nav aria-label="Daily store actions" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
         {[
+          { href: "/admin/payment-review", label: "Check payments", detail: stats.bankReviewCount ? `${stats.bankReviewCount} awaiting verification` : "No new reports" },
           { href: "/admin/orders", label: "Review orders", detail: stats.pendingOrders ? `${stats.pendingOrders} pending` : "Payments & dispatch" },
           { href: "/admin/products/new", label: "Add a product", detail: "Photos & variants" },
           { href: "/admin/products?view=active", label: "Manage products", detail: "Price, stock & duplicates" },
@@ -52,6 +53,11 @@ export default async function AdminDashboardPage() {
           </Link>
         ))}
       </nav>
+
+      {stats.bankReviewCount > 0 && <Link href="/admin/payment-review" className="block rounded-xl border border-amber-400 bg-amber-50 p-4 text-sm text-amber-950">
+        <strong>{stats.bankReviewCount} customer-reported payment{stats.bankReviewCount === 1 ? "" : "s"} need bank verification.</strong>
+        <span className="mt-1 block">Tap here to review them. Do not mark any order paid until your bank confirms the transfer.</span>
+      </Link>}
 
       {/* Dashboard statistics */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -241,11 +247,7 @@ export default async function AdminDashboardPage() {
 
                 {/* Direct mobile controls */}
                 <div className="px-4 py-4">
-                  <MobileOrderActions
-                    orderId={o.id}
-                    status={o.status}
-                    paymentStatus={o.paymentStatus}
-                  />
+                  <Link href={`/admin/orders/${o.id}`} className="flex min-h-11 items-center justify-center rounded-lg border border-ink px-4 text-sm font-medium">View order and update safely</Link>
                 </div>
               </div>
             ))}
