@@ -81,3 +81,23 @@ test("category edit page loads saved fields, photo and visibility with working e
   assert.match(html, /href="\/admin\/categories\?edit=2#category-editor"/);
   await assert.rejects(Page({ searchParams: Promise.resolve({ edit: "999" }) }), /NOT_FOUND/);
 });
+
+test("homepage uses compact two-column mobile category tiles and excludes empty categories", () => {
+  const { FeaturedCategories } = loadSource("src/components/home/featured-categories.tsx", common);
+  const groups = [
+    ...categories,
+    { id: 4, name: "Perfumes for Men", slug: "men", isActive: true, productCount: 0, image: "/men.jpg", description: "Fresh scents" },
+    { id: 5, name: "Long Name Body Sprays & Deodorants", slug: "body-sprays", isActive: true, productCount: 2, image: "/body.jpg", description: "Body care" },
+  ];
+  const section = { id: "home-categories", eyebrow: "Shop by category", title: "Choose your scent", body: "Explore your favourites", buttonLabel: "All categories", buttonHref: "/categories" };
+  const html = renderToStaticMarkup(React.createElement(FeaturedCategories, { categories: groups, section }));
+  assert.match(html, /grid grid-cols-2 gap-3/);
+  assert.match(html, /aspect-\\[4\\/5\\]/);
+  assert.match(html, /sm:min-h-\\[350px\\]/);
+  assert.match(html, /href="\\/shop\\/skincare"/);
+  assert.match(html, /href="\\/shop\\/body-sprays"/);
+  assert.doesNotMatch(html, /href="\\/shop\\/men"/);
+  assert.doesNotMatch(html, /href="\\/shop\\/hidden"/);
+  assert.match(html, /hidden max-w-lg text-sm/);
+  assert.match(html, /href="\\/categories"/);
+});
