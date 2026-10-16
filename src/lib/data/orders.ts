@@ -1,6 +1,6 @@
-import { and, count, desc, eq, gte, ne, sql, sum } from "drizzle-orm";
+import { and, count, desc, eq, exists, gte, ne, or, sql, sum } from "drizzle-orm";
 import { db } from "@/db";
-import { orderItems, orders, products, users, type OrderStatus } from "@/db/schema";
+import { orderItems, orders, payments, products, users, type OrderStatus } from "@/db/schema";
 import { expireUnpaidBankTransfers } from "@/lib/orders/reservations";
 
 export async function getOrderByNumber(orderNumber: string) {
@@ -39,6 +39,33 @@ export async function getAllOrdersAdmin(status?: OrderStatus, limit = 100) {
     orderBy: [desc(orders.createdAt)],
     limit,
   });
+}
+
+/** A customer's transfer report is NOT a confirmed payment. This queue is read-only. */
+const awaitingBankReview = and(
+  eq(orders.paymentMethod, "bank_transfer"),
+  eq(orders.paymentStatus, "pending"),
+  eq(orders.status, "pending"),
+  exists(
+    db.select({ id: payments.id }).from(payments).where(and(
+      eq(payments.orderId, orders.id),
+      or(eq(payments.channel, "transfer_submitted"), sql`${payments.metadata}->>'transferReportedAt' IS NOT NULL`),
+    )),
+  ),
+);
+
+export async function getBankReviewQueueAdmin(limit = 100) {
+  await expireUnpaidBankTransfers();
+  const [items, [total]] = await Promise.all([
+    db.query.orders.findMany({
+      where: awaitingBankReview,
+      with: { payments: { orderBy: (payment, { desc }) => [desc(payment.createdAt)] } },
+      orderBy: [desc(orders.createdAt)],
+      limit: Math.min(100, Math.max(1, limit)),
+    }),
+    db.select({ value: count() }).from(orders).where(awaitingBankReview),
+  ]);
+  return { items, total: total?.value ?? 0 };
 }
 
 export async function getOrderByIdAdmin(id: number) {
@@ -85,7 +112,10 @@ export async function getDashboardStats() {
         .limit(5),
     ]);
 
+  const [reviewCount] = await db.select({ value: count() }).from(orders).where(awaitingBankReview);
+
   return {
+    bankReviewCount: reviewCount?.value ?? 0,
     revenue: Number(revenue?.value ?? 0),
     orders: orderCount.value,
     customers: customerCount.value,
