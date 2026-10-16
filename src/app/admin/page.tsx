@@ -34,9 +34,24 @@ export default async function AdminDashboardPage() {
   return (
     <div className="space-y-8">
       <AdminPageHeader
-        title="Dashboard"
-        description="A snapshot of how the store is doing."
+        title="Store overview"
+        description="Orders, customers and everyday tasks in one place."
       />
+      <nav aria-label="Daily store actions" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+        {[
+          { href: "/admin/orders", label: "Review orders", detail: stats.pendingOrders ? `${stats.pendingOrders} pending` : "Payments & dispatch" },
+          { href: "/admin/products/new", label: "Add a product", detail: "Photos & variants" },
+          { href: "/admin/products?view=active", label: "Manage products", detail: "Price, stock & duplicates" },
+          { href: "/admin/messages", label: "Messages", detail: "Customer enquiries" },
+          { href: "/admin/content", label: "Edit website", detail: "Draft & publish" },
+          { href: "/admin/media", label: "Media library", detail: "Upload & reuse images" },
+        ].map((link) => (
+          <Link key={link.href} href={link.href} className="min-w-0 border border-line bg-white p-3 transition-colors hover:border-ink hover:bg-ivory">
+            <span className="block text-sm font-semibold text-ink">{link.label}</span>
+            <span className="mt-1 block text-xs text-stone">{link.detail}</span>
+          </Link>
+        ))}
+      </nav>
 
       {/* Dashboard statistics */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
