@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ImageUploader } from "@/components/image-uploader";
+import { isReactActionField } from "@/lib/form-action-fields";
 import { Button } from "@/components/ui/button";
 import { PAGE_KEYS, newHomeSection, type EditableContent, type EditorState } from "@/lib/website-content";
 import { discardWebsiteDraftAction, publishWebsiteAction, restoreWebsiteAction, saveWebsiteDraftAction, startWebsitePreviewAction, type EditorResult } from "@/lib/actions/website";
@@ -47,7 +48,7 @@ export function ContentField({ value, path, title, onChange, categories, disable
     })}
     {!value.length && <p className="text-sm text-stone">No items yet. Add one above.</p>}
   </div>;
-  let entries = Object.entries(value).filter(([name]) => name !== "id");
+  let entries = Object.entries(value).filter(([name]) => name !== "id" && !isReactActionField(name));
   if (path.startsWith("website.home.sections.")) {
     const type = value.type;
     const fields = type === "hero" || type === "promo" ? ["type", "enabled", "title"] : type === "collection" ? ["type", "enabled", "eyebrow", "title", "body", "image", "buttonLabel", "buttonHref", "source", "categorySlug", "limit", "tone"] : type === "newsletter" ? ["type", "enabled", "eyebrow", "title", "body"] : type === "categories" ? ["type", "enabled", "eyebrow", "title", "body", "buttonLabel", "buttonHref"] : ["type", "enabled", "eyebrow", "title", "body", "image", "buttonLabel", "buttonHref", "tone"];
