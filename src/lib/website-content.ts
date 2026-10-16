@@ -47,7 +47,7 @@ const collection = (id: string, title: string, source: HomeSection["source"], ca
 
 export const DEFAULT_WEBSITE_CONTENT: WebsiteContent = {
   brand: { name: SITE.name, shortName: SITE.shortName, tagline: SITE.tagline, description: SITE.description, logo: "/images/jis-logo.PNG", shareImage: "/catalog/category-women-v2.jpg", email: "", phone: SITE.phone, whatsapp: SITE.whatsapp, instagram: SITE.instagram, tiktok: SITE.tiktok, address: SITE.address, primaryColor: "#28111f", accentColor: "#b72e73" },
-  navigation: { includeCategories: true, hideEmptyCategories: false, links: links([["Shop All", "/shop"], ["Blog", "/blog"], ["About", "/about"]]) },
+  navigation: { includeCategories: true, hideEmptyCategories: true, links: links([["Shop All", "/shop"], ["Blog", "/blog"], ["About", "/about"]]) },
   home: {
     quickLinks: links([["For her", "/shop/women"], ["For him", "/shop/men"], ["Unisex", "/shop/unisex"], ["Perfume oils", "/shop/perfume-oils"], ["Body sprays", "/shop/body-sprays-deodorants"]]),
     brandLine: "JIS Beauty & Fashion · Lagos, Nigeria",
@@ -57,14 +57,14 @@ export const DEFAULT_WEBSITE_CONTENT: WebsiteContent = {
       collection("new-arrivals", "New scents, new moods", "newArrivals", "", "Fresh on the shelf / 02"),
       { ...newHomeSection("editorial", "story"), eyebrow: "Wear the feeling", title: "A scent can change the whole energy.", body: "The last detail before you step out. The memory someone keeps after you leave. JIS brings together fragrance and beauty finds for every version of your style — soft, playful, polished, bold or completely your own.", image: "/catalog/category-unisex-v2.jpg", buttonLabel: "Discover our story", buttonHref: "/about" },
       collection("best-sellers", "The bottles everyone notices", "bestSellers", "", "Most wanted / 03", "ivory"),
-      collection("women", "The women's fragrance edit", "category", "women", "Soft, bold, unforgettable", "ivory"),
-      collection("men", "The men's fragrance edit", "category", "men", "Clean, deep, confident"),
-      collection("unisex", "Unisex favourites", "category", "unisex", "No labels, just good scent", "ivory"),
-      collection("body-sprays", "Body sprays & deodorants", "category", "body-sprays-deodorants", "Easy everyday energy"),
-      collection("kids", "Kids' fragrances", "category", "kids", "Small scents, big personality"),
-      collection("oils", "Perfume oils", "category", "perfume-oils", "A little goes a long way", "ivory"),
-      { ...newHomeSection("newsletter", "newsletter"), eyebrow: "Newsletter", title: "First to know. Always.", body: "New arrivals, restock alerts and subscriber-only offers, once or twice a month." },
-      { ...newHomeSection("promo", "promotion"), title: "Final promotion" },
+      { ...collection("women", "The women's fragrance edit", "category", "women", "Soft, bold, unforgettable", "ivory"), enabled: false },
+      { ...collection("men", "The men's fragrance edit", "category", "men", "Clean, deep, confident"), enabled: false },
+      { ...collection("unisex", "Unisex favourites", "category", "unisex", "No labels, just good scent", "ivory"), enabled: false },
+      { ...collection("body-sprays", "Body sprays & deodorants", "category", "body-sprays-deodorants", "Easy everyday energy"), enabled: false },
+      { ...collection("kids", "Kids' fragrances", "category", "kids", "Small scents, big personality"), enabled: false },
+      { ...collection("oils", "Perfume oils", "category", "perfume-oils", "A little goes a long way", "ivory"), enabled: false },
+      { ...newHomeSection("newsletter", "newsletter"), enabled: false, eyebrow: "Newsletter", title: "First to know. Always.", body: "New arrivals, restock alerts and subscriber-only offers, once or twice a month." },
+      { ...newHomeSection("promo", "promotion"), enabled: false, title: "Final promotion" },
     ],
   },
   pages: {
