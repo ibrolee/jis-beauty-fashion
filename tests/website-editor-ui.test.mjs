@@ -41,7 +41,7 @@ test("homepage section controls add, reorder, hide and remove sections without l
   }
   const ui = await mount(React.createElement(Harness));
   try {
-    await act(() => button(ui.container, "Add item").click());
+    await act(() => button(ui.container, "Add homepage section").click());
     assert.equal(latest.length, 3);
     assert.equal(latest[2].type, "text");
     const addedId = latest[2].id;
@@ -72,22 +72,22 @@ test("editor keeps publishing disabled until the draft is saved and preserves ed
   } });
   const ui = await mount(React.createElement(WebsiteEditor, { initial, categories: [] }));
   try {
-    assert.equal(button(ui.container, "Preview saved draft").disabled, true);
+    assert.equal(button(ui.container, "2. Preview changes").disabled, true);
     const headline = ui.container.querySelector("#editor-hero-headline");
     await type(headline, "Fresh scents this weekend");
     assert.match(ui.container.textContent, /Unsaved changes/);
-    assert.equal(button(ui.container, "Publish saved draft").disabled, true);
-    await act(async () => button(ui.container, "Save draft").click());
+    assert.equal(button(ui.container, "3. Publish to website").disabled, true);
+    await act(async () => button(ui.container, "1. Save changes").click());
     assert.match(ui.container.querySelector('[role="alert"]').textContent, /Another tab/);
     assert.equal(headline.value, "Fresh scents this weekend");
     reject = false;
-    await act(async () => button(ui.container, "Save draft").click());
-    assert.equal(button(ui.container, "Preview saved draft").disabled, false);
-    assert.equal(button(ui.container, "Publish saved draft").disabled, false);
-    await act(async () => button(ui.container, "Publish saved draft").click());
+    await act(async () => button(ui.container, "1. Save changes").click());
+    assert.equal(button(ui.container, "2. Preview changes").disabled, false);
+    assert.equal(button(ui.container, "3. Publish to website").disabled, false);
+    await act(async () => button(ui.container, "3. Publish to website").click());
     assert.equal(published, 1);
     assert.match(ui.container.textContent, /Published version/);
-    assert.equal(button(ui.container, "Publish saved draft").disabled, true);
+    assert.equal(button(ui.container, "3. Publish to website").disabled, true);
   } finally { await ui.dispose(); }
 });
 
@@ -152,5 +152,25 @@ test("React form action metadata from legacy settings cannot appear as editable 
     assert.equal(ui.container.textContent.includes("$ACTION"), false);
     assert.equal(ui.container.querySelectorAll('[id*="ACTION"]').length, 0);
     assert.match(ui.container.textContent, /Headline/);
+  } finally { await ui.dispose(); }
+});
+
+test("owner starts with plain-language homepage tools and sees extra page options only when requested", async () => {
+  const { WebsiteEditor } = loadSource("src/components/admin/website-editor.tsx", {
+    ...common,
+    "@/lib/actions/website": { async startWebsitePreviewAction() {} },
+  });
+  const ui = await mount(React.createElement(WebsiteEditor, { initial: state(), categories: [] }));
+  try {
+    assert.match(ui.container.textContent, /What would you like to change/);
+    assert.match(ui.container.textContent, /Main homepage photo and words/);
+    assert.ok(button(ui.container, "1. Save changes"));
+    assert.ok(button(ui.container, "3. Publish to website"));
+    assert.equal(ui.container.textContent.includes("Button Href"), false);
+    const tabs = [...ui.container.querySelectorAll('[role="tab"]')];
+    await act(() => tabs.find((tab) => tab.textContent === "Other pages").click());
+    assert.match(ui.container.textContent, /Which page do you want to edit/);
+    assert.ok([...ui.container.querySelectorAll("summary")].some((item) => item.textContent === "More options (optional)"));
+    assert.equal(ui.container.querySelector("#editor-website-pages-about-buttonHref")?.closest("details")?.open, false);
   } finally { await ui.dispose(); }
 });
