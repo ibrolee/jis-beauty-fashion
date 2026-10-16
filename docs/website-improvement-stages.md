@@ -12,6 +12,8 @@ Requested by Ibrahim on 16 October 2026. Work proceeds one stage at a time, with
 
 Validation: typecheck, lint, production build, existing commerce regression tests and new interactive coupon/settings tests. Preview verification must identify any gaps requiring authenticated admin access.
 
+Hobby deployment compatibility: Vercel's duplicate expiry cron runs daily at 04:00 UTC. The existing GitHub expiry schedule remains unchanged (`7,22,37,52 * * * *`); its latest inspected run on 16 October succeeded. GitHub schedules can run late. This removes the unsupported 15-minute Vercel schedule that blocked all new deployments on Hobby.
+
 ## Stage 2 — Complete content control
 
 - Editable homepage sections, text, images, buttons, order and visibility.
