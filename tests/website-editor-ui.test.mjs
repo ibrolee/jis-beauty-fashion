@@ -75,7 +75,7 @@ test("editor keeps publishing disabled until the draft is saved and preserves ed
     assert.equal(button(ui.container, "2. Preview changes").disabled, true);
     const headline = ui.container.querySelector("#editor-hero-headline");
     await type(headline, "Fresh scents this weekend");
-    assert.match(ui.container.textContent, /Unsaved changes/);
+    assert.match(ui.container.textContent, /Changes not saved yet/);
     assert.equal(button(ui.container, "3. Publish to website").disabled, true);
     await act(async () => button(ui.container, "1. Save changes").click());
     assert.match(ui.container.querySelector('[role="alert"]').textContent, /Another tab/);
@@ -86,7 +86,7 @@ test("editor keeps publishing disabled until the draft is saved and preserves ed
     assert.equal(button(ui.container, "3. Publish to website").disabled, false);
     await act(async () => button(ui.container, "3. Publish to website").click());
     assert.equal(published, 1);
-    assert.match(ui.container.textContent, /Published version/);
+    assert.match(ui.container.textContent, /Your website is up to date/);
     assert.equal(button(ui.container, "3. Publish to website").disabled, true);
   } finally { await ui.dispose(); }
 });
