@@ -79,7 +79,7 @@ export function ContentField({ value, path, title, onChange, categories, disable
     "business": ["bankName", "bankAccountName", "bankAccountNumber", "bankTransferInstructions", "whatsappOrderInstructions"],
   };
   const primary = path.startsWith("website.pages.") && path.split(".").length === 3
-    ? ["title", "intro", "image", "sections"]
+    ? ["title", "intro", "image"]
     : primaryByPath[path];
   const shown = entries.filter(([name]) => !primary || primary.includes(name));
   const extra = primary ? entries.filter(([name]) => !primary.includes(name)) : [];
