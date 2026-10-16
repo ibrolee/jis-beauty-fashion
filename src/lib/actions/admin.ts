@@ -181,10 +181,96 @@ export async function saveProductAction(_prev: ActionState, formData: FormData):
   redirect("/admin/products?saved=1");
 }
 
-export async function deleteProductAction(id: number): Promise<void> {
+/** Hide a product from sale without destroying historical orders, images or variants. */
+export async function archiveProductAction(id: number): Promise<void> {
   await requireAdmin();
-  await db.delete(products).where(eq(products.id, id));
+  if (!Number.isSafeInteger(id) || id <= 0) return;
+  await db.update(products).set({ isActive: false, updatedAt: new Date() }).where(eq(products.id, id));
   revalidatePath("/", "layout");
+}
+
+/** Copy product information to an UNPUBLISHED, zero-stock draft: never duplicate sales or create inventory. */
+export async function duplicateProductAction(id: number): Promise<void> {
+  await requireAdmin();
+  if (!Number.isSafeInteger(id) || id <= 0) return;
+  const copiedId = await db.transaction(async (tx) => {
+    const [original] = await tx.select().from(products).where(eq(products.id, id)).limit(1);
+    if (!original) throw new Error("Product no longer exists.");
+    const originalVariants = await tx.select().from(productVariants).where(and(eq(productVariants.productId, id), eq(productVariants.isActive, true)));
+    const stamp = crypto.randomUUID().slice(0, 8);
+    const [copy] = await tx.insert(products).values({
+      name: `${original.name} (Copy)`,
+      slug: `${original.slug}-copy-${stamp}`,
+      sku: `JIS-COPY-${stamp.toUpperCase()}`,
+      categoryId: original.categoryId,
+      brandId: original.brandId,
+      shortDescription: original.shortDescription,
+      description: original.description,
+      price: original.price,
+      salePrice: original.salePrice,
+      stock: 0,
+      images: original.images,
+      gender: original.gender,
+      fragranceType: original.fragranceType,
+      volume: original.volume,
+      topNotes: original.topNotes,
+      heartNotes: original.heartNotes,
+      baseNotes: original.baseNotes,
+      longevity: original.longevity,
+      occasion: original.occasion,
+      isFeatured: false,
+      isBestSeller: false,
+      isNewArrival: false,
+      isActive: false,
+      rating: 0,
+      reviewCount: 0,
+      salesCount: 0,
+      metaTitle: original.metaTitle,
+      metaDescription: original.metaDescription,
+    }).returning({ id: products.id });
+    for (const variant of originalVariants) {
+      await tx.insert(productVariants).values({
+        productId: copy.id,
+        name: variant.name,
+        sku: null,
+        price: variant.price,
+        salePrice: variant.salePrice,
+        stock: 0,
+        images: variant.images,
+        sortOrder: variant.sortOrder,
+        isActive: true,
+      });
+    }
+    return copy.id;
+  });
+  revalidatePath("/admin/products");
+  redirect(`/admin/products/${copiedId}?copied=1`);
+}
+
+/** Inline editing is limited to single-SKU products; variant inventory has its own editor. */
+export async function quickUpdateProductAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireAdmin();
+  const id = Number(formData.get("id"));
+  const price = Number(formData.get("price"));
+  const stock = Number(formData.get("stock"));
+  const saleRaw = String(formData.get("salePrice") ?? "").trim();
+  const salePrice = saleRaw ? Number(saleRaw) : null;
+  const expected = new Date(String(formData.get("expectedUpdatedAt") ?? ""));
+
+  if (!Number.isSafeInteger(id) || id <= 0 || !Number.isSafeInteger(price) || price <= 0 ||
+      !Number.isSafeInteger(stock) || stock < 0 || (salePrice !== null && (!Number.isSafeInteger(salePrice) || salePrice <= 0 || salePrice >= price))) {
+    return { error: "Enter a valid price, optional lower sale price and non-negative stock." };
+  }
+  if (Number.isNaN(expected.getTime())) return { error: "Reload this product before editing." };
+  const [variant] = await db.select({ id: productVariants.id }).from(productVariants)
+    .where(and(eq(productVariants.productId, id), eq(productVariants.isActive, true))).limit(1);
+  if (variant) return { error: "This product has size or scent options. Use Edit to update each variant's price and stock." };
+  const [changed] = await db.update(products).set({ price, salePrice, stock, updatedAt: new Date() })
+    .where(and(eq(products.id, id), eq(products.updatedAt, expected)))
+    .returning({ id: products.id });
+  if (!changed) return { error: "This product has changed. Refresh the page before updating it." };
+  revalidatePath("/", "layout");
+  return { ok: true, message: "Price and stock saved." };
 }
 
 export async function toggleProductActiveAction(id: number, isActive: boolean): Promise<void> {
