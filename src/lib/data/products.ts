@@ -131,7 +131,7 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
 export async function getProductBySlug(slug: string): Promise<ProductDetail | null> {
   await ensureSeeded();
   await expireUnpaidBankTransfers();
-  const [product] = await baseQuery().where(eq(products.slug, slug)).limit(1);
+  const [product] = await baseQuery().where(and(eq(products.slug, slug), eq(products.isActive, true))).limit(1);
   if (!product) return null;
   const variants = await getVariantsForProduct(product.id);
   return { ...product, variants };
