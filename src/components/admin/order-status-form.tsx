@@ -31,6 +31,11 @@ export function OrderStatusForm({ order }: { order: Order }) {
           ))}
         </Select>
       </Field>
+      {order.paymentMethod === "bank_transfer" && order.paymentStatus !== "paid" &&
+        <label className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm leading-5 text-amber-950">
+          <input name="bankVerified" type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-ink" />
+          <span><strong>I checked the bank account.</strong> I will only mark this order Paid if the exact amount has reached the bank. A screenshot or customer report is not proof.</span>
+        </label>}
       <Field label="Internal notes" htmlFor="adminNotes">
         <Textarea id="adminNotes" name="adminNotes" defaultValue={order.adminNotes ?? ""} className="min-h-[80px]" placeholder="Courier, tracking number, follow-ups…" />
       </Field>
