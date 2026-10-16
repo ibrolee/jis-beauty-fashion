@@ -174,3 +174,27 @@ test("owner starts with plain-language homepage tools and sees extra page option
     assert.equal(ui.container.querySelector("#editor-website-pages-about-buttonHref")?.closest("details")?.open, false);
   } finally { await ui.dispose(); }
 });
+
+test("existing single page photo can be replaced directly from the media library", async () => {
+  const { ImageUploader } = loadSource("src/components/image-uploader.tsx", {
+    ...common,
+    "@/components/admin/media-browser": {
+      MediaBrowser: ({ onSelect }) => React.createElement("button", { type: "button", onClick: () => onSelect("https://example.com/new-photo.jpg") }, "Use saved photo"),
+    },
+    "@/lib/actions/media": { async registerWebsiteMediaAction() {} },
+  });
+  let latest;
+  function Harness() {
+    const [images, setImages] = React.useState(["https://example.com/old-photo.jpg"]);
+    latest = images;
+    return React.createElement(ImageUploader, { value: images, onChange: setImages, maxImages: 1, name: null });
+  }
+  const ui = await mount(React.createElement(Harness));
+  try {
+    assert.ok(button(ui.container, "Change photo"));
+    assert.equal(button(ui.container, "Change photo").disabled, false);
+    assert.equal(ui.container.querySelector('input[type="file"]').multiple, false);
+    await act(() => button(ui.container, "Use saved photo").click());
+    assert.deepEqual(latest, ["https://example.com/new-photo.jpg"]);
+  } finally { await ui.dispose(); }
+});
