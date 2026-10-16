@@ -47,7 +47,7 @@ const collection = (id: string, title: string, source: HomeSection["source"], ca
 
 export const DEFAULT_WEBSITE_CONTENT: WebsiteContent = {
   brand: { name: SITE.name, shortName: SITE.shortName, tagline: SITE.tagline, description: SITE.description, logo: "/images/jis-logo.PNG", shareImage: "/catalog/category-women-v2.jpg", email: "", phone: SITE.phone, whatsapp: SITE.whatsapp, instagram: SITE.instagram, tiktok: SITE.tiktok, address: SITE.address, primaryColor: "#28111f", accentColor: "#b72e73" },
-  navigation: { includeCategories: true, hideEmptyCategories: true, links: links([["Shop All", "/shop"], ["Blog", "/blog"], ["About", "/about"]]) },
+  navigation: { includeCategories: true, hideEmptyCategories: false, links: links([["Shop All", "/shop"], ["Blog", "/blog"], ["About", "/about"]]) },
   home: {
     quickLinks: links([["For her", "/shop/women"], ["For him", "/shop/men"], ["Unisex", "/shop/unisex"], ["Perfume oils", "/shop/perfume-oils"], ["Body sprays", "/shop/body-sprays-deodorants"]]),
     brandLine: "JIS Beauty & Fashion · Lagos, Nigeria",
