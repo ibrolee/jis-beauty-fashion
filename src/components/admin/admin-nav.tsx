@@ -21,6 +21,7 @@ import { MAIN_NAV } from "@/lib/constants";
 
 const ADMIN_LINKS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { href: "/admin/payment-review", label: "Check payments", icon: ShoppingCart },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/categories", label: "Product categories", icon: FolderTree },
@@ -89,7 +90,7 @@ export function AdminNav() {
           aria-expanded={adminOpen}
           className="flex h-12 w-full items-center justify-between border-b border-line px-3 text-left text-xs font-medium uppercase tracking-[0.18em] text-ink"
         >
-          <span>Admin navigation</span>
+          <span>Manage the shop</span>
           <ChevronDown
             className={cn(
               "h-4 w-4 transition-transform",
