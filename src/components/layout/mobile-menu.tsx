@@ -7,10 +7,12 @@ import { createPortal } from "react-dom";
 import { InstagramIcon, TikTokIcon, WhatsAppIcon } from "@/components/ui/social-icons";
 import type { SessionUser } from "@/lib/auth/session";
 import { SITE } from "@/lib/constants";
+import { getCategoryLinks } from "@/lib/storefront-settings";
 import type { CategoryWithCount } from "@/types";
 import { Logo } from "./logo";
 
 export function MobileMenu({ categories, user }: { categories: CategoryWithCount[]; user: SessionUser | null }) {
+  const categoryLinks = getCategoryLinks(categories);
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -18,6 +20,7 @@ export function MobileMenu({ categories, user }: { categories: CategoryWithCount
 
   useEffect(() => {
     if (!open) return;
+    const trigger = triggerRef.current;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     closeRef.current?.focus();
@@ -46,7 +49,7 @@ export function MobileMenu({ categories, user }: { categories: CategoryWithCount
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
-      triggerRef.current?.focus();
+      trigger?.focus();
     };
   }, [open]);
 
@@ -70,8 +73,8 @@ export function MobileMenu({ categories, user }: { categories: CategoryWithCount
           <p className="eyebrow mb-3">Shop</p>
           <ul className="divide-y divide-line border-y border-line">
             <li><Link href="/shop" onClick={() => setOpen(false)} className="flex min-h-14 items-center justify-between font-serif text-xl"><span>Shop All</span><ChevronRight className="h-4 w-4 text-stone" strokeWidth={1.5} aria-hidden="true" /></Link></li>
-            {categories.map((category) => (
-              <li key={category.id}><Link href={`/shop/${category.slug}`} onClick={() => setOpen(false)} className="flex min-h-14 items-center justify-between font-serif text-xl"><span>{category.name}</span><ChevronRight className="h-4 w-4 text-stone" strokeWidth={1.5} aria-hidden="true" /></Link></li>
+            {categoryLinks.map((category) => (
+              <li key={category.id}><Link href={category.href} onClick={() => setOpen(false)} className="flex min-h-14 items-center justify-between font-serif text-xl"><span>{category.label}</span><ChevronRight className="h-4 w-4 text-stone" strokeWidth={1.5} aria-hidden="true" /></Link></li>
             ))}
           </ul>
           <ul className="mt-7 space-y-1">

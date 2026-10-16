@@ -1,4 +1,6 @@
 import { requireAdmin } from "@/lib/auth/session";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { CategoryForm } from "@/components/admin/category-form";
 import {
   ActionButton,
@@ -15,10 +17,12 @@ export const metadata = {
   title: "Categories",
 };
 
-export default async function AdminCategoriesPage() {
+export default async function AdminCategoriesPage({ searchParams }: { searchParams: Promise<{ edit?: string }> }) {
   await requireAdmin();
 
-  const categories = await getCategories(true);
+  const [categories, { edit }] = await Promise.all([getCategories(true), searchParams]);
+  const selectedCategory = edit ? categories.find((category) => String(category.id) === edit) : null;
+  if (edit && !selectedCategory) notFound();
 
   return (
     <div className="min-w-0">
@@ -86,16 +90,16 @@ export default async function AdminCategoriesPage() {
                       </td>
 
                       <td className={td}>
-                        <ActionButton
-                          tone="danger"
-                          confirmMessage={`Delete "${c.name}"?`}
-                          action={deleteCategoryAction.bind(
-                            null,
-                            c.id,
-                          )}
-                        >
-                          Delete
-                        </ActionButton>
+                        <div className="flex flex-wrap gap-2">
+                          <Link href={`/admin/categories?edit=${c.id}#category-editor`} className="inline-flex min-h-8 items-center border border-line px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.12em] hover:border-ink">Edit</Link>
+                          <ActionButton
+                            tone="danger"
+                            confirmMessage={`Delete "${c.name}"?`}
+                            action={deleteCategoryAction.bind(null, c.id)}
+                          >
+                            Delete
+                          </ActionButton>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -169,8 +173,8 @@ export default async function AdminCategoriesPage() {
                   </div>
                 </div>
 
-                {/* Delete only */}
-                <div className="px-4 py-4">
+                <div className="flex flex-wrap gap-2 px-4 py-4">
+                  <Link href={`/admin/categories?edit=${c.id}#category-editor`} className="inline-flex min-h-10 items-center border border-line px-4 py-2 text-xs font-medium uppercase tracking-[0.12em] hover:border-ink">Edit category</Link>
                   <ActionButton
                     tone="danger"
                     confirmMessage={`Delete "${c.name}"?`}
@@ -190,8 +194,8 @@ export default async function AdminCategoriesPage() {
         {/* =========================
             NEW CATEGORY FORM
            ========================= */}
-        <div className="min-w-0">
-          <CategoryForm category={null} />
+        <div id="category-editor" className="min-w-0 scroll-mt-6">
+          <CategoryForm key={selectedCategory?.id ?? "new"} category={selectedCategory ?? null} />
         </div>
       </div>
     </div>

@@ -1,12 +1,18 @@
 import Link from "next/link";
 import type { SessionUser } from "@/lib/auth/session";
-import { MAIN_NAV } from "@/lib/constants";
+import { getCategoryLinks } from "@/lib/storefront-settings";
 import type { CategoryWithCount } from "@/types";
 import { HeaderActions } from "./header-actions";
 import { Logo } from "./logo";
 import { MobileMenu } from "./mobile-menu";
 
 export function Header({ user, categories }: { user: SessionUser | null; categories: CategoryWithCount[] }) {
+  const navigation = [
+    { href: "/shop", label: "Shop All" },
+    ...getCategoryLinks(categories),
+    { href: "/blog", label: "Blog" },
+    { href: "/about", label: "About" },
+  ];
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-cream/95 shadow-[0_4px_20px_-18px_rgba(23,21,17,0.4)] backdrop-blur-xl supports-[backdrop-filter]:bg-cream/90">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-2 focus:z-50 focus:bg-ink focus:px-3 focus:py-2 focus:text-white">
@@ -33,8 +39,8 @@ export function Header({ user, categories }: { user: SessionUser | null; categor
       </div>
 
       <nav aria-label="Main" className="hidden border-t border-line/70 lg:block">
-        <ul className="container-x flex min-h-[43px] items-center justify-center gap-6 xl:gap-10">
-          {MAIN_NAV.map((item) => (
+        <ul className="container-x flex min-h-[43px] flex-wrap items-center justify-center gap-x-6 xl:gap-x-8">
+          {navigation.map((item) => (
             <li key={item.href}>
               <Link
                 href={item.href}

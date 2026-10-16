@@ -15,7 +15,7 @@ const collectionImages: Record<string, string> = {
 };
 
 function withSelectedPhoto<T extends Category>(category: T): T {
-  return { ...category, image: collectionImages[category.slug] ?? category.image };
+  return { ...category, image: category.image || collectionImages[category.slug] || null };
 }
 
 export async function getCategories(includeInactive = false): Promise<CategoryWithCount[]> {
@@ -27,7 +27,7 @@ export async function getCategories(includeInactive = false): Promise<CategoryWi
     .where(includeInactive ? undefined : eq(categories.isActive, true))
     .groupBy(categories.id)
     .orderBy(asc(categories.sortOrder), asc(categories.name));
-  return rows.map(withSelectedPhoto);
+  return includeInactive ? rows : rows.map(withSelectedPhoto);
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | undefined> {

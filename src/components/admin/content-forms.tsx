@@ -26,6 +26,8 @@ export function AnnouncementForm({ content }: { content: SiteContent["announceme
         {state.error && <FormMessage type="error">{state.error}</FormMessage>}
         <Field label="Text" htmlFor="ann-text"><Input id="ann-text" name="text" defaultValue={content.text} /></Field>
         <Field label="Link" htmlFor="ann-href"><Input id="ann-href" name="href" defaultValue={content.href} /></Field>
+        <Checkbox name="autoDeliveryText" label="Keep delivery announcement in sync with delivery settings" defaultChecked={content.autoDeliveryText ?? false} />
+        <p className="text-xs leading-5 text-stone">When enabled, the announcement uses your current delivery thresholds and links to Shipping & delivery. Turn it off to show your own text and link.</p>
         <Checkbox name="enabled" label="Show announcement bar" defaultChecked={content.enabled} />
         <Button type="submit" loading={pending} size="sm">Save</Button>
       </form>

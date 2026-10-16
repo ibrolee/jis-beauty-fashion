@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - design/jis-website-2-0
+      - 'improve/jis-stage-*'
     paths:
       - 'src/**'
       - 'tests/**'
@@ -30,3 +31,5 @@ jobs:
         run: npm run lint
       - name: Isolated payment, coupon, reporting, SEO, delivery and bank regression tests
         run: node --test tests/manual-payment.test.mjs tests/coupon-redemption.test.mjs tests/whatsapp-report.test.mjs tests/seo-origin.test.mjs tests/shipping-bank.test.mjs
+      - name: Checkout interactions and storefront settings
+        run: npm run test:stage1

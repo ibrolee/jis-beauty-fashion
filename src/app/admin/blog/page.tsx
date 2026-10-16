@@ -50,7 +50,7 @@ export default async function AdminBlogPage({ searchParams }: { searchParams: Pr
         </section>
 
         <aside className="min-w-0 max-w-full">
-          <BlogPostForm post={editing} categories={blog.categories} />
+          <BlogPostForm key={editing ? `${editing.id}:${editing.updatedAt}` : "new"} post={editing} categories={blog.categories} />
         </aside>
       </div>
     </div>

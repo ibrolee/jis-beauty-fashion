@@ -4,7 +4,7 @@ import type { DeliverySettings } from "@/lib/constants";
  * Admin-editable homepage/site content. Stored in the `site_settings` table
  * as JSON keyed by these names; the defaults below are used as fallbacks.
  */
-export type AnnouncementContent = { text: string; href: string; enabled: boolean };
+export type AnnouncementContent = { text: string; href: string; enabled: boolean; autoDeliveryText?: boolean };
 
 export type HeroContent = {
   eyebrow: string;

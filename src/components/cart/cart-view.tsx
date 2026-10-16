@@ -3,7 +3,7 @@
 import { ArrowRight, Minus, Plus, ShoppingBag, Tag, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getDeliveryFee, type DeliverySettings } from "@/lib/constants";
@@ -17,9 +17,8 @@ export function CouponForm({ compact = false }: { compact?: boolean }) {
   const [status, setStatus] = useState<{ ok: boolean; message: string } | null>(null);
   const [pending, setPending] = useState(false);
 
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    if (!code.trim()) return;
+  async function submit() {
+    if (pending || !code.trim()) return;
     setPending(true);
     try {
       const result = await applyCoupon(code.trim().toUpperCase());
@@ -43,14 +42,19 @@ export function CouponForm({ compact = false }: { compact?: boolean }) {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3">
+    <div role="group" aria-label="Discount code" className="space-y-3">
       <label htmlFor="coupon" className={compact ? "sr-only" : "block text-[10px] font-medium uppercase tracking-[0.2em] text-stone"}>Discount code</label>
       <div className="flex min-w-0 gap-2">
-        <input id="coupon" value={code} onChange={(event) => setCode(event.target.value.toUpperCase())} placeholder="Enter your code" className="h-12 min-w-0 flex-1 border border-line bg-white px-4 text-xs uppercase tracking-wider placeholder:normal-case placeholder:tracking-normal focus:border-ink focus:outline-none" autoComplete="off" />
-        <Button type="submit" variant="secondary" loading={pending} disabled={!code.trim()}>Apply</Button>
+        <input id="coupon" value={code} onChange={(event) => { setCode(event.target.value.toUpperCase()); setStatus(null); }} onKeyDown={(event) => {
+          if (event.key !== "Enter") return;
+          event.preventDefault();
+          event.stopPropagation();
+          void submit();
+        }} placeholder="Enter your code" className="h-12 min-w-0 flex-1 border border-line bg-white px-4 text-xs uppercase tracking-wider placeholder:normal-case placeholder:tracking-normal focus:border-ink focus:outline-none" autoComplete="off" />
+        <Button type="button" onClick={() => void submit()} variant="secondary" loading={pending} disabled={!code.trim()}>Apply</Button>
       </div>
       {status && <p className={status.ok ? "text-xs text-success" : "text-xs text-sale"} role="status">{status.message}</p>}
-    </form>
+    </div>
   );
 }
 

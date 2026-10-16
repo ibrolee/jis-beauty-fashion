@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { ImageUploader } from "@/components/image-uploader";
 import { Button } from "@/components/ui/button";
@@ -33,19 +33,6 @@ export function BlogPostForm({ post, categories }: { post?: BlogPost | null; cat
   const [generating, setGenerating] = useState(false);
   const [generationError, setGenerationError] = useState("");
   const [generationMessage, setGenerationMessage] = useState("");
-
-  useEffect(() => {
-    setTitle(post?.title ?? "");
-    setSlug(post?.slug ?? "");
-    setCategory(post?.category ?? fallbackCategory);
-    setExcerpt(post?.excerpt ?? "");
-    setBody(post?.body ?? "");
-    setImages(post?.image ? [post.image] : []);
-    setTopic("");
-    setAiCategory("");
-    setGenerationError("");
-    setGenerationMessage("");
-  }, [post?.id, fallbackCategory]);
 
   async function generateBlog() {
     if (generating) return;

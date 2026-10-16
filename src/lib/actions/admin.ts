@@ -314,8 +314,10 @@ export async function saveCategoryAction(_prev: ActionState, formData: FormData)
     isActive: d.isActive !== false,
   };
   try {
-    if (id) await db.update(categories).set(values).where(eq(categories.id, id));
-    else await db.insert(categories).values(values);
+    if (id) {
+      const [updated] = await db.update(categories).set(values).where(eq(categories.id, id)).returning({ id: categories.id });
+      if (!updated) return { error: "This category no longer exists. Refresh the list and try again." };
+    } else await db.insert(categories).values(values);
   } catch {
     return { error: "A category with this slug already exists." };
   }
@@ -364,7 +366,10 @@ export async function saveSiteContentAction(_prev: ActionState, formData: FormDa
     if (k === "key" || typeof v !== "string") continue;
     value[k] = v;
   }
-  if (key === "announcement") value.enabled = formData.get("enabled") === "on";
+  if (key === "announcement") {
+    value.enabled = formData.get("enabled") === "on";
+    value.autoDeliveryText = formData.get("autoDeliveryText") === "on";
+  }
   if (key === "delivery") {
     for (const field of ["freeDeliveryThreshold", "interstateFreeDeliveryThreshold", "lagosFee", "regionalFee", "defaultFee"]) {
       value[field] = Math.max(0, Number(formData.get(field)) || 0);
