@@ -107,6 +107,16 @@ test("source contracts retain pending payment, report protection and authenticat
   assert.ok(/lte\(orders\.createdAt, cutoff\)/.test(expiry), "expiry must enforce age");
   assert.ok(/request\.headers\.get\("authorization"\) !== `Bearer \$\{secret\}`/.test(cron), "cron must require secret");
   assert.ok(adminForm.includes("updateVerifiedOrderAction"), "admin form must call guarded action");
+  const adminAction = read("../src/lib/actions/admin.ts");
+  const orderData = read("../src/lib/data/orders.ts");
+  const inventoryData = read("../src/lib/data/products.ts");
+  const inbox = read("../src/app/admin/payment-review/page.tsx");
+  assert.ok(adminAction.includes('formData.get("bankVerified") !== "on"'), "manual Paid status must require explicit bank verification");
+  assert.ok(adminForm.includes('name="bankVerified"'), "admin must see the verification checkbox");
+  assert.ok(orderData.includes('exists(') && orderData.includes('eq(orders.paymentStatus, "pending")') && orderData.includes('eq(orders.paymentMethod, "bank_transfer")'), "payment queue must include reported pending transfers only");
+  assert.ok(inbox.includes('getBankReviewQueueAdmin'), "owner review page must show accurate queue");
+  assert.ok(inventoryData.includes('eq(products.isActive, true))).limit(1)'), "hidden products must not resolve at their old public URLs");
+
   assert.equal(vercel.buildCommand, "npm run build");
   assert.equal(vercel.git.deploymentEnabled["launch-prep-no-deploy"], false);
 });
