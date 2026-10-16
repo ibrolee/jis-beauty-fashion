@@ -256,7 +256,7 @@ export function ImageUploader({
         ref={inputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp"
-        multiple
+        multiple={maxImages !== 1}
         onChange={(event) =>
           void handleFiles(event.target.files)
         }
