@@ -99,11 +99,15 @@ export function ContentField({ value, path, title, onChange, categories, disable
   </div>;
 }
 
-const tabs = ["Homepage", "Pages", "Navigation", "Brand & contact", "Footer", "Delivery & payment", "Version history"] as const;
+const tabs = ["Home page", "Other pages", "Menus", "Business details", "Delivery & payments", "More settings", "Previous versions"] as const;
+const pageNames: Record<string, string> = {
+  about: "About our business", contact: "Contact us", faq: "Frequently asked questions", shipping: "Shipping & delivery", returns: "Returns & refunds",
+  privacy: "Privacy policy", terms: "Terms & conditions", shop: "Shop page", collections: "Collections page", blog: "Blog page",
+};
 export function WebsiteEditor({ initial, categories }: { initial: EditorState; categories: { name: string; slug: string }[] }) {
   const [saved, setSaved] = useState(initial);
   const [content, setContent] = useState<EditableContent>(() => structuredClone(initial.content));
-  const [tab, setTab] = useState<typeof tabs[number]>("Homepage");
+  const [tab, setTab] = useState<typeof tabs[number]>("Home page");
   const [page, setPage] = useState<typeof PAGE_KEYS[number]>("about");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
@@ -133,23 +137,76 @@ export function WebsiteEditor({ initial, categories }: { initial: EditorState; c
     })} /></section>;
   }
   return <div className="min-w-0 space-y-5">
-    <div className="sticky top-0 z-20 rounded-2xl border border-line bg-cream/95 p-4 shadow-sm backdrop-blur">
-      <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-medium">{dirty ? "Unsaved changes" : saved.hasDraft ? "Draft saved" : "Published version"}</p><p className="mt-1 text-xs text-stone">Save → Preview → Publish. Product and order management stay in their own pages.</p></div><Link href="/admin/media" className="text-sm underline underline-offset-4">Manage images</Link></div>
-      <div className="mt-4 flex flex-wrap gap-2"><Button type="button" size="sm" loading={pending} onClick={() => void run(() => saveWebsiteDraftAction({ ...revisions, content }))} disabled={!dirty && saved.hasDraft}>Save draft</Button>
-      <form action={startWebsitePreviewAction}><Button type="submit" variant="secondary" size="sm" disabled={pending || dirty || !saved.hasDraft}>Preview saved draft</Button></form>
-      <Button type="button" variant="secondary" size="sm" disabled={pending || dirty || !saved.hasDraft} onClick={() => { if (window.confirm("Publish the saved draft to your website? The current version will be kept in history.")) void run(() => publishWebsiteAction(revisions)); }}>Publish saved draft</Button>
-      <Button type="button" variant="ghost" size="sm" disabled={pending || !saved.hasDraft} onClick={() => { if (window.confirm("Discard the saved draft and your unsaved edits? Your published website will stay as it is.")) void run(() => discardWebsiteDraftAction(revisions)); }}>Discard draft</Button></div>
+    <div className="rounded-2xl border border-line bg-white p-4 shadow-sm sm:p-5 lg:sticky lg:top-2 lg:z-20">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div><p className="font-semibold text-ink">{dirty ? "Changes not saved yet" : saved.hasDraft ? "Saved — not on the website yet" : "Your website is up to date"}</p>
+          <p className="mt-1 max-w-2xl text-xs leading-5 text-stone">Save, check how it looks, then publish when you are happy.</p>
+        </div>
+        <Link href="/admin/media" className="min-h-10 rounded-lg border border-line px-3 py-2 text-xs font-medium">My photos</Link>
+      </div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+        <Button type="button" size="sm" loading={pending} onClick={() => void run(() => saveWebsiteDraftAction({ ...revisions, content }))} disabled={!dirty}>1. Save changes</Button>
+        <form action={startWebsitePreviewAction} className="min-w-0"><Button type="submit" variant="secondary" size="sm" disabled={pending || dirty || !saved.hasDraft}>2. Preview changes</Button></form>
+        <Button type="button" variant="secondary" size="sm" disabled={pending || dirty || !saved.hasDraft} onClick={() => { if (window.confirm("Make these saved changes visible to everyone visiting your website?")) void run(() => publishWebsiteAction(revisions)); }}>3. Publish to website</Button>
+      </div>
+      {saved.hasDraft && <button type="button" className="mt-3 text-xs text-stone underline underline-offset-4" disabled={pending} onClick={() => { if (window.confirm("Discard your saved and unsaved changes? Your public website will stay as it is.")) void run(() => discardWebsiteDraftAction(revisions)); }}>Discard saved changes</button>}
     </div>
-    {message && <p role={failed ? "alert" : "status"} className={`rounded-xl border p-4 text-sm ${failed ? "border-sale/30 text-sale" : "border-success/30 text-success"}`}>{message}</p>}
-    <div role="tablist" aria-label="Website editor sections" className="flex flex-wrap gap-2">{tabs.map((item) => <button key={item} type="button" role="tab" aria-selected={tab === item} onClick={() => setTab(item)} className={`min-h-11 rounded-xl border px-4 py-2 text-sm ${tab === item ? "border-ink bg-ink text-white" : "border-line bg-white"}`}>{item}</button>)}</div>
+    {message && <p role={failed ? "alert" : "status"} className={failed ? "rounded-xl border border-sale/30 p-4 text-sm text-sale" : "rounded-xl border border-success/30 p-4 text-sm text-success"}>{message}</p>}
+    <section aria-label="Choose what to edit">
+      <h2 className="mb-3 font-serif text-2xl">What would you like to change?</h2>
+      <div role="tablist" aria-label="Website editor sections" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+        {tabs.map((item) => <button key={item} type="button" role="tab" aria-selected={tab === item} onClick={() => setTab(item)} className={tab === item ? "min-h-12 rounded-xl border border-ink bg-ink p-3 text-left text-sm font-medium text-white" : "min-h-12 rounded-xl border border-line bg-white p-3 text-left text-sm font-medium text-ink hover:border-ink"}>{item}</button>)}
+      </div>
+    </section>
     <div role="tabpanel" aria-label={tab} className="min-w-0 space-y-5">
-      {tab === "Homepage" && <>{field("announcement", "Announcement bar")}<p className="text-xs text-stone">Automatic delivery text follows Delivery & payment. Turn it off to write a custom announcement.</p>{field("hero", "Main banner text and image")}{field("website.home", "Homepage layout and sections")}{field("promo", "Promotion text and button")}</>}
-      {tab === "Pages" && <><label className="block space-y-2 text-sm font-medium">Choose a page<select value={page} onChange={(event) => setPage(event.target.value as typeof page)} className={inputClass}>{PAGE_KEYS.map((key) => <option key={key} value={key}>{label(key)}</option>)}</select></label>{field(`website.pages.${page}`, `${label(page)} page`)}{page === "faq" && field("website.faq", "Questions and answers")}<p className="text-xs leading-5 text-stone">Useful text shortcuts: {"{{storeName}}, {{whatsapp}}, {{address}}, {{deliveryFees}}, {{deliveryTimelines}}"}. They use your current settings.</p></>}
-      {tab === "Navigation" && field("website.navigation", "Website navigation")}
-      {tab === "Brand & contact" && <>{field("website.brand", "Brand, contact details and colours")}{field("website.assistance", "Help panel")}</>}
-      {tab === "Footer" && <>{field("website.footer", "Footer layout and links")}{field("business.footerTagline", "Footer description")}{field("business.footerPaymentNote", "Footer payment note")}</>}
-      {tab === "Delivery & payment" && <>{field("delivery", "Delivery fees and timelines")}{field("business", "Payment instructions and store copy")}<p className="text-xs text-stone">Draft previews do not change order pricing, delivery charges or payment instructions. These settings take effect after publishing.</p></>}
-      {tab === "Version history" && <section className="rounded-2xl border border-line bg-white p-5"><h2 className="font-serif text-2xl">Previous published versions</h2><p className="mt-2 text-sm text-stone">Restore loads a version into the draft. It does not publish it. The most recent 15 published versions are kept.</p>{saved.history.map((version) => <div key={version.revision} className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-4"><p className="text-sm">{version.savedAt ? new Date(version.savedAt).toLocaleString() : "Original website"}<span className="block text-xs text-stone">{version.savedBy}</span></p><Button type="button" size="sm" variant="secondary" disabled={pending} onClick={() => { if ((!dirty && !saved.hasDraft) || window.confirm("Replace your current draft with this version?")) void run(() => restoreWebsiteAction({ ...revisions, revision: version.revision })); }}>Restore as draft</Button></div>)}{!saved.history.length && <p className="mt-5 text-sm text-stone">Your current version will be kept here when you first publish.</p>}</section>}
+      {tab === "Home page" && <>
+        <p className="text-sm leading-6 text-stone">Change the main photo, heading and buttons people see when they open your website.</p>
+        {field("hero", "Main homepage photo and words")}
+        <details className="rounded-2xl border border-line bg-white p-4 sm:p-6"><summary className="cursor-pointer font-serif text-xl">Message at the top of the website</summary><div className="mt-5">{field("announcement", "Top message")}</div><p className="mt-3 text-xs text-stone">To write a custom message, untick “Show delivery offer automatically”.</p></details>
+        <details className="rounded-2xl border border-line bg-white p-4 sm:p-6"><summary className="cursor-pointer font-serif text-xl">Choose homepage sections</summary><p className="mt-3 text-sm text-stone">Open a section to change it. Untick “Show on website” to hide it without deleting it. You can change their order too.</p><div className="mt-5">{field("website.home.sections", "Your homepage sections")}</div></details>
+        <details className="rounded-2xl border border-line bg-white p-4 sm:p-6"><summary className="cursor-pointer font-serif text-xl">Shopping links and special offers</summary><div className="mt-5 space-y-4">{field("website.home.quickLinks", "Shopping shortcuts")}{field("website.home.brandLine", "Small caption")}{field("promo", "Special offer")}</div></details>
+      </>}
+      {tab === "Other pages" && <>
+        <p className="text-sm text-stone">Choose a page, edit the words and photos, and save when you finish.</p>
+        <label className="block rounded-xl border border-line bg-white p-4 text-sm font-medium">Which page do you want to edit?
+          <select value={page} onChange={(event) => setPage(event.target.value as typeof page)} className={inputClass + " mt-2"}>
+            {PAGE_KEYS.map((key) => <option key={key} value={key}>{pageNames[key] ?? label(key)}</option>)}
+          </select>
+        </label>
+        {field("website.pages." + page, pageNames[page] ?? label(page))}
+        {page === "faq" && field("website.faq", "Questions and answers")}
+      </>}
+      {tab === "Menus" && <>
+        <p className="text-sm text-stone">Choose the pages and collections customers can find in the menu.</p>
+        {field("website.navigation", "Main website menu")}
+        {field("website.home.quickLinks", "Quick shopping links")}
+      </>}
+      {tab === "Business details" && <>
+        <p className="text-sm text-stone">Update the business logo, phone, WhatsApp, address and social media accounts.</p>
+        {field("website.brand", "Your business information")}
+        <details className="rounded-2xl border border-line bg-white p-4"><summary className="cursor-pointer text-sm font-medium">Customer help message</summary><div className="mt-4">{field("website.assistance", "Help message")}</div></details>
+      </>}
+      {tab === "Delivery & payments" && <>
+        <p className="text-sm text-stone">Set delivery prices, delivery times and the bank account shown to customers.</p>
+        {field("delivery", "Delivery charges and times")}
+        {field("business", "Payment details")}
+        <p className="text-xs leading-5 text-stone">Changes to bank details and delivery charges only affect new orders after publishing. Double-check the bank account before publishing.</p>
+      </>}
+      {tab === "More settings" && <>
+        <p className="text-sm text-stone">Extra settings for the bottom of your website. You can change them whenever you need.</p>
+        {field("website.footer", "Bottom of the website")}
+        {field("business.footerTagline", "Short description at the bottom")}
+        {field("business.footerPaymentNote", "Payment note at the bottom")}
+      </>}
+      {tab === "Previous versions" && <section className="rounded-2xl border border-line bg-white p-5">
+        <h2 className="font-serif text-2xl">Undo an older website change</h2>
+        <p className="mt-2 text-sm text-stone">Bring back an older version to review. It will not be public until you publish.</p>
+        {saved.history.map((version) => <div key={version.revision} className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-4">
+          <p className="text-sm">{version.savedAt ? new Date(version.savedAt).toLocaleString() : "Original website"}<span className="block text-xs text-stone">{version.savedBy}</span></p>
+          <Button type="button" size="sm" variant="secondary" disabled={pending} onClick={() => { if ((!dirty && !saved.hasDraft) || window.confirm("Replace your current saved changes with this older version?")) void run(() => restoreWebsiteAction({ ...revisions, revision: version.revision })); }}>Bring back this version</Button>
+        </div>)}
+        {!saved.history.length && <p className="mt-5 text-sm text-stone">Older versions will appear here after your first update.</p>}
+      </section>}
     </div>
   </div>;
 }
