@@ -149,7 +149,7 @@ test("React form action metadata from legacy settings cannot appear as editable 
     onChange: () => {},
   }));
   try {
-    assert.doesNotMatch(ui.container.textContent, /\\$ACTION/);
+    assert.equal(ui.container.textContent.includes("$ACTION"), false);
     assert.equal(ui.container.querySelectorAll('[id*="ACTION"]').length, 0);
     assert.match(ui.container.textContent, /Headline/);
   } finally { await ui.dispose(); }
