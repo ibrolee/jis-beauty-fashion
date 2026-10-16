@@ -10,7 +10,7 @@ import { AddToCartButton } from "./add-to-cart-button";
 import { WishlistButton } from "./wishlist-button";
 import { VariantChoices, useVariantSelection } from "./variant-selection";
 
-export function PurchasePanel({ product, delivery }: { product: ProductDetail; delivery: DeliverySettings }) {
+export function PurchasePanel({ product, delivery, whatsappUrl = SITE.whatsappUrl, storeName = SITE.shortName }: { product: ProductDetail; delivery: DeliverySettings; whatsappUrl?: string; storeName?: string }) {
   const { variant } = useVariantSelection();
   const [quantity, setQuantity] = useState(1);
   const stock = variant ? variant.stock : product.stock;
@@ -60,7 +60,7 @@ export function PurchasePanel({ product, delivery }: { product: ProductDetail; d
         </div>
 
         {soldOut ? (
-          <a href={`${SITE.whatsappUrl}?text=${encodeURIComponent(`Hello JIS, please notify me when ${product.name} is back in stock.`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-14 w-full items-center justify-center gap-2 border border-ink px-4 text-[11px] font-medium uppercase tracking-[0.16em] transition-colors hover:bg-ink hover:text-white">
+          <a href={`${whatsappUrl}?text=${encodeURIComponent(`Hello ${storeName}, please notify me when ${product.name} is back in stock.`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-14 w-full items-center justify-center gap-2 border border-ink px-4 text-[11px] font-medium uppercase tracking-[0.16em] transition-colors hover:bg-ink hover:text-white">
             Ask about restocking <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
           </a>
         ) : (
@@ -78,7 +78,7 @@ export function PurchasePanel({ product, delivery }: { product: ProductDetail; d
         </div>
       </div>
       <p className="text-xs leading-relaxed text-stone">
-        Need help choosing? <a href={`${SITE.whatsappUrl}?text=${encodeURIComponent(`Hello JIS, I have a question about ${product.name}.`)}`} target="_blank" rel="noopener noreferrer" className="font-medium text-ink underline underline-offset-4">Ask us on WhatsApp</a>.
+        Need help choosing? <a href={`${whatsappUrl}?text=${encodeURIComponent(`Hello ${storeName}, I have a question about ${product.name}.`)}`} target="_blank" rel="noopener noreferrer" className="font-medium text-ink underline underline-offset-4">Ask us on WhatsApp</a>.
       </p>
     </div>
   );

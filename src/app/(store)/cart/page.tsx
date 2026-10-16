@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { CartView } from "@/components/cart/cart-view";
-import { getSiteContent } from "@/lib/data/settings";
+import { getPublishedSiteContent } from "@/lib/data/settings";
 
 export const metadata: Metadata = { title: "Shopping Bag", robots: { index: false } };
 
 export default async function CartPage() {
-  const content = await getSiteContent();
+  const content = await getPublishedSiteContent();
   return (
     <div className="min-h-[70svh] bg-cream pb-20 pt-9 lg:pb-28 lg:pt-16">
       <div className="container-x">

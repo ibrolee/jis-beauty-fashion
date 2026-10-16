@@ -64,6 +64,7 @@ test("category edit page loads saved fields, photo and visibility with working e
   let authorized = 0;
   const { default: Page } = loadSource("src/app/admin/categories/page.tsx", {
     ...common,
+    "@/lib/actions/media": { async listWebsiteMediaAction() { return []; }, async registerWebsiteMediaAction() {} },
     "next/navigation": { notFound() { throw new Error("NOT_FOUND"); } },
     "@/lib/auth/session": { async requireAdmin() { authorized++; } },
     "@/lib/data/categories": { async getCategories() { return categories; } },

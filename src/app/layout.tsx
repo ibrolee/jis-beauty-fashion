@@ -1,31 +1,25 @@
 import type { Metadata, Viewport } from "next";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import { draftMode } from "next/headers";
 import { Providers } from "@/components/providers";
 import { getCurrentUser } from "@/lib/auth/session";
-import { SITE } from "@/lib/constants";
+import { getSiteContent } from "@/lib/data/settings";
 import { publicSiteOrigin } from "@/lib/utils";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  metadataBase: new URL(publicSiteOrigin()),
-  title: {
-    default: `${SITE.name} — ${SITE.tagline}`,
-    template: `%s | ${SITE.name}`,
-  },
-  description: SITE.description,
-  applicationName: SITE.name,
-  keywords: ["perfumes in Nigeria", "perfume oils Lagos", "designer fragrances", "JIS Beauty", "buy perfume online Nigeria"],
-  openGraph: {
-    type: "website",
-    siteName: SITE.name,
-    title: `${SITE.name} — ${SITE.tagline}`,
-    description: SITE.description,
-    locale: "en_NG",
-    images: [{ url: "/images/hero.jpg", width: 1200, height: 1500, alt: "JIS Beauty & Fashion fragrances" }],
-  },
-  twitter: { card: "summary_large_image", title: SITE.name, description: SITE.description, images: ["/images/hero.jpg"] },
-  robots: { index: true, follow: true },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getSiteContent();
+  const brand = content.website.brand;
+  return {
+    metadataBase: new URL(publicSiteOrigin()),
+    title: { default: `${brand.name} — ${brand.tagline}`, template: `%s | ${brand.name}` },
+    description: brand.description,
+    applicationName: brand.name,
+    openGraph: { type: "website", siteName: brand.name, title: brand.name, description: brand.description, locale: "en_NG", images: brand.shareImage ? [{ url: brand.shareImage, alt: brand.name }] : [] },
+    twitter: { card: "summary_large_image", title: brand.name, description: brand.description, images: brand.shareImage ? [brand.shareImage] : [] },
+    robots: { index: !(await draftMode()).isEnabled, follow: !(await draftMode()).isEnabled },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: "#ffffff",
@@ -37,7 +31,7 @@ export const viewport: Viewport = {
 export const dynamic = "force-dynamic";
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const user = await getCurrentUser();
+  const [user, content] = await Promise.all([getCurrentUser(), getSiteContent()]);
 
   return (
     <html lang="en">
@@ -51,7 +45,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-dvh flex flex-col">
+      <body className="min-h-dvh flex flex-col" style={{ "--color-ink": content.website.brand.primaryColor, "--color-rosewood": content.website.brand.accentColor } as CSSProperties}>
         <Providers isAuthenticated={Boolean(user)}>{children}</Providers>
       </body>
     </html>

@@ -1,20 +1,18 @@
 import { ArrowUpRight, Sparkles } from "lucide-react";
-import type { Metadata } from "next";
+import { pageContent, pageMetadata } from "@/lib/data/page-content";
+import { PageExtras } from "@/components/info/page-extras";
 import Image from "next/image";
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/button";
 import { getCategories } from "@/lib/data/categories";
 
-export const metadata: Metadata = {
-  title: "Collections",
-  description: "Explore the JIS Beauty & Fashion fragrance collections available to shop now.",
-  alternates: { canonical: "/categories" },
-};
+export const generateMetadata = () => pageMetadata("collections");
 
 const ACCENTS = ["#ff83b2", "#ffb56b", "#9881ff", "#6fd4c0", "#efd35d", "#f29ac7", "#85b7ff"] as const;
 
 export default async function CategoriesPage() {
-  const categories = (await getCategories()).filter((category) => category.productCount > 0 || category.slug === "men");
+  const [allCategories, {page, content}] = await Promise.all([getCategories(), pageContent("collections")]);
+  const categories = allCategories.filter((category) => category.isActive && (!content.website.navigation.hideEmptyCategories || category.productCount > 0));
 
   return (
     <div className="pb-20 lg:pb-28">
@@ -23,10 +21,10 @@ export default async function CategoriesPage() {
         <div className="jis-orb jis-orb-three" aria-hidden="true" />
         <div className="container-x relative z-10 grid gap-8 lg:grid-cols-12 lg:items-end">
           <div className="lg:col-span-8">
-            <p className="eyebrow mb-5 flex items-center gap-2"><Sparkles className="h-3.5 w-3.5" /> The JIS scent wardrobe</p>
-            <h1 className="max-w-4xl font-serif text-[clamp(4rem,8vw,8.6rem)] leading-[0.86] tracking-[-0.05em]">Pick a mood. <span className="text-rosewood">Meet your scent.</span></h1>
+            <p className="eyebrow mb-5 flex items-center gap-2"><Sparkles className="h-3.5 w-3.5" /> {page.eyebrow}</p>
+            <h1 className="max-w-4xl font-serif text-[clamp(4rem,8vw,8.6rem)] leading-[0.86] tracking-[-0.05em]">{page.title}</h1>
           </div>
-          <p className="max-w-md text-base leading-[1.9] text-ink-soft lg:col-span-4">Every collection is a shortcut to the feeling you want — soft, bold, playful, effortless or unforgettable.</p>
+          <p className="max-w-md text-base leading-[1.9] text-ink-soft lg:col-span-4">{page.intro}</p>
         </div>
       </header>
 
@@ -70,15 +68,7 @@ export default async function CategoriesPage() {
         )}
       </section>
 
-      {categories.length > 0 && (
-        <div className="container-x mt-16">
-          <div className="rounded-[2rem] bg-ink px-6 py-12 text-center text-white sm:px-10 sm:py-16">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#ff9dc2]">Still exploring?</p>
-            <p className="mt-3 font-serif text-4xl sm:text-5xl">Let the full shop surprise you.</p>
-            <ButtonLink href="/shop" variant="secondary" size="lg" className="mt-6 border-white bg-white text-ink hover:bg-[#ffe4ef]">Shop everything <ArrowUpRight className="h-4 w-4" aria-hidden="true" /></ButtonLink>
-          </div>
-        </div>
-      )}
+      <PageExtras page={page} />
     </div>
   );
 }

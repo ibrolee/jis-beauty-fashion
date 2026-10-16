@@ -1,13 +1,14 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
-import { useActionState } from "react";
+import { useActionState, useId } from "react";
 import { subscribeNewsletterAction } from "@/lib/actions/engagement";
 import { cn } from "@/lib/utils";
 import { initialActionState } from "@/types";
 
 export function NewsletterForm({ className, dark = false }: { className?: string; dark?: boolean }) {
   const [state, action, pending] = useActionState(subscribeNewsletterAction, initialActionState);
+  const id = useId();
 
   if (state.ok) {
     return (
@@ -20,9 +21,9 @@ export function NewsletterForm({ className, dark = false }: { className?: string
   return (
     <form action={action} className={cn("space-y-2", className)}>
       <div className={cn("flex items-center border-b", dark ? "border-white/40" : "border-ink")}>
-        <label htmlFor={`newsletter-${dark ? "dark" : "light"}`} className="sr-only">Email address</label>
+        <label htmlFor={id} className="sr-only">Email address</label>
         <input
-          id={`newsletter-${dark ? "dark" : "light"}`}
+          id={id}
           name="email"
           type="email"
           required

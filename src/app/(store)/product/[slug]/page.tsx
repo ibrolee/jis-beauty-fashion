@@ -9,10 +9,11 @@ import { ReviewForm, ReviewList } from "@/components/product/reviews";
 import { RatingStars } from "@/components/ui/rating-stars";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { getCurrentUser } from "@/lib/auth/session";
-import { GENDER_LABELS, SITE } from "@/lib/constants";
+import { GENDER_LABELS } from "@/lib/constants";
 import { getProductBySlug, getRelatedProducts } from "@/lib/data/products";
 import { getProductReviews, hasUserReviewed } from "@/lib/data/reviews";
-import { getSiteContent } from "@/lib/data/settings";
+import { brandLinks } from "@/lib/website-content";
+import { getSiteContent, getPublishedSiteContent } from "@/lib/data/settings";
 import { absoluteUrl, discountPercent, effectivePrice, isOnSale } from "@/lib/utils";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
   if (!product) return { title: "Product not found" };
-  const title = product.metaTitle ?? `${product.name} by ${product.brandName ?? SITE.name}`;
+  const title = product.metaTitle ?? `${product.name} by ${product.brandName ?? (await getSiteContent()).website.brand.name}`;
   const description = product.metaDescription ?? product.shortDescription ?? product.description.slice(0, 160);
   return {
     title,
@@ -38,12 +39,14 @@ export default async function ProductPage({ params }: Props) {
   if (!product || !product.isActive) notFound();
 
   const user = await getCurrentUser();
-  const [reviews, related, alreadyReviewed, content] = await Promise.all([
+  const [reviews, related, alreadyReviewed, content, published] = await Promise.all([
     getProductReviews(product.id),
     getRelatedProducts(product, 4),
     user ? hasUserReviewed(product.id, user.id) : Promise.resolve(false),
     getSiteContent(),
+    getPublishedSiteContent(),
   ]);
+  const SITE = brandLinks(content.website.brand);
   const soldOut = product.stock <= 0 && !product.variants.some((variant) => variant.stock > 0);
   const badges = soldOut
     ? [{ tone: "soldout" as const, label: "Sold out" }]
@@ -109,14 +112,14 @@ export default async function ProductPage({ params }: Props) {
               <div className="lg:sticky lg:top-40">
                 <p className="mb-4 flex items-center gap-3 text-[10px] font-medium uppercase tracking-[0.24em] text-rosewood">
                   <span className="h-px w-7 bg-rosewood" aria-hidden="true" />
-                  {product.brandName ?? "JIS fragrance edit"}
+                  {product.brandName ?? `${SITE.shortName} fragrance edit`}
                 </p>
                 <h1 className="max-w-[15ch] font-serif text-[clamp(2.8rem,5vw,5.5rem)] leading-[0.94] tracking-[-0.035em] text-ink">{product.name}</h1>
                 {(product.volume || product.fragranceType) && (
                   <p className="mt-5 text-xs font-medium uppercase tracking-[0.16em] text-stone">{[product.volume, product.fragranceType].filter(Boolean).join("  /  ")}</p>
                 )}
                 {product.shortDescription && <p className="mt-5 max-w-prose text-sm leading-7 text-ink-soft">{product.shortDescription}</p>}
-                <div className="mt-7"><PurchasePanel product={product} delivery={content.delivery} /></div>
+                <div className="mt-7"><PurchasePanel product={product} delivery={published.delivery} whatsappUrl={SITE.whatsappUrl} storeName={SITE.shortName} /></div>
                 <div className="mt-5">
                   <a href="#reviews" className="inline-flex items-center gap-2 text-xs text-ink-soft underline-offset-4 hover:underline">
                     {product.reviewCount > 0 ? (

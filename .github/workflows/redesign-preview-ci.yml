@@ -33,3 +33,5 @@ jobs:
         run: node --test tests/manual-payment.test.mjs tests/coupon-redemption.test.mjs tests/whatsapp-report.test.mjs tests/seo-origin.test.mjs tests/shipping-bank.test.mjs
       - name: Checkout interactions and storefront settings
         run: npm run test:stage1
+      - name: Website drafts, publishing, privacy and editor interactions
+        run: npm run test:stage2

@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { Logo } from "@/components/layout/logo";
 import { logoutAction } from "@/lib/auth/actions";
+import { getPublishedSiteContent } from "@/lib/data/settings";
 import { requireAdmin } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
@@ -29,13 +30,14 @@ export default async function AdminLayout({
   children: ReactNode;
 }) {
   const admin = await requireAdmin();
+  const content = await getPublishedSiteContent();
 
   return (
     <div className="flex min-h-dvh min-w-0 flex-col overflow-x-hidden bg-cream">
       <header className="border-b border-line bg-white">
         <div className="mx-auto flex h-16 min-w-0 max-w-[1500px] items-center justify-between gap-3 px-3 sm:px-6">
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <Logo />
+            <Logo brand={content.website.brand} />
 
             <span className="hidden border-l border-line pl-4 text-[11px] font-medium uppercase tracking-[0.2em] text-stone sm:inline">
               Store manager

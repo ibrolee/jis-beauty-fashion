@@ -6,13 +6,13 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { InstagramIcon, TikTokIcon, WhatsAppIcon } from "@/components/ui/social-icons";
 import type { SessionUser } from "@/lib/auth/session";
-import { SITE } from "@/lib/constants";
-import { getCategoryLinks } from "@/lib/storefront-settings";
+import { DEFAULT_WEBSITE_CONTENT, brandLinks, navigationLinks, type WebsiteContent } from "@/lib/website-content";
 import type { CategoryWithCount } from "@/types";
 import { Logo } from "./logo";
 
-export function MobileMenu({ categories, user }: { categories: CategoryWithCount[]; user: SessionUser | null }) {
-  const categoryLinks = getCategoryLinks(categories);
+export function MobileMenu({ categories, user, website = DEFAULT_WEBSITE_CONTENT }: { categories: CategoryWithCount[]; user: SessionUser | null; website?: WebsiteContent }) {
+  const links = navigationLinks(website, categories);
+  const SITE = brandLinks(website.brand);
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -53,32 +53,20 @@ export function MobileMenu({ categories, user }: { categories: CategoryWithCount
     };
   }, [open]);
 
-  const secondary = [
-{ label: "Blog", href: "/blog" },
-    { label: "About JIS", href: "/about" },
-    { label: "FAQ", href: "/faq" },
-    { label: "Shipping & Delivery", href: "/shipping" },
-    { label: "Contact", href: "/contact" },
-  ];
-
   const drawer = open ? (
     <div className="fixed inset-0 z-[9999] lg:hidden" role="presentation">
       <button type="button" aria-label="Close mobile navigation" onClick={() => setOpen(false)} className="absolute inset-0 bg-black/55" />
       <aside ref={dialogRef} role="dialog" aria-modal="true" aria-label="Mobile navigation" className="absolute inset-y-0 left-0 flex w-[88vw] max-w-[390px] flex-col overflow-hidden bg-cream shadow-2xl">
         <div className="flex h-[76px] shrink-0 items-center justify-between border-b border-line px-5">
-          <Logo onClick={() => setOpen(false)} />
+          <Logo brand={website.brand} onClick={() => setOpen(false)} />
           <button ref={closeRef} type="button" onClick={() => setOpen(false)} className="flex h-11 w-11 items-center justify-center text-ink" aria-label="Close menu"><X className="h-6 w-6" strokeWidth={1.5} /></button>
         </div>
         <nav className="min-h-0 flex-1 overflow-y-auto px-5 py-6" aria-label="Mobile site navigation">
           <p className="eyebrow mb-3">Shop</p>
           <ul className="divide-y divide-line border-y border-line">
-            <li><Link href="/shop" onClick={() => setOpen(false)} className="flex min-h-14 items-center justify-between font-serif text-xl"><span>Shop All</span><ChevronRight className="h-4 w-4 text-stone" strokeWidth={1.5} aria-hidden="true" /></Link></li>
-            {categoryLinks.map((category) => (
-              <li key={category.id}><Link href={category.href} onClick={() => setOpen(false)} className="flex min-h-14 items-center justify-between font-serif text-xl"><span>{category.label}</span><ChevronRight className="h-4 w-4 text-stone" strokeWidth={1.5} aria-hidden="true" /></Link></li>
+            {links.map((link) => (
+              <li key={link.href}><Link href={link.href} onClick={() => setOpen(false)} className="flex min-h-14 items-center justify-between font-serif text-xl"><span>{link.label}</span><ChevronRight className="h-4 w-4 text-stone" strokeWidth={1.5} aria-hidden="true" /></Link></li>
             ))}
-          </ul>
-          <ul className="mt-7 space-y-1">
-            {secondary.map((item) => <li key={item.href}><Link href={item.href} onClick={() => setOpen(false)} className="block py-3 text-sm text-ink-soft">{item.label}</Link></li>)}
           </ul>
           <div className="mt-7 space-y-1 border-t border-line pt-6">
             <Link href={user ? "/account" : "/login"} onClick={() => setOpen(false)} className="flex min-h-12 items-center gap-3 text-sm"><User className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />{user ? `Hi, ${user.firstName}` : "Log in / Register"}</Link>
@@ -87,9 +75,9 @@ export function MobileMenu({ categories, user }: { categories: CategoryWithCount
           </div>
         </nav>
         <div className="flex shrink-0 items-center gap-5 border-t border-line px-5 py-4">
-          <a href={SITE.instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-ink-soft"><InstagramIcon className="h-5 w-5" /></a>
-          <a href={SITE.tiktokUrl} target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="text-ink-soft"><TikTokIcon className="h-5 w-5" /></a>
-          <a href={SITE.whatsappUrl} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="text-ink-soft"><WhatsAppIcon className="h-5 w-5" /></a>
+          {SITE.instagramUrl && <a href={SITE.instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-ink-soft"><InstagramIcon className="h-5 w-5" /></a>}
+          {SITE.tiktokUrl && <a href={SITE.tiktokUrl} target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="text-ink-soft"><TikTokIcon className="h-5 w-5" /></a>}
+          {SITE.whatsappUrl && <a href={SITE.whatsappUrl} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="text-ink-soft"><WhatsAppIcon className="h-5 w-5" /></a>}
           <span className="ml-auto truncate text-[10px] uppercase tracking-[0.14em] text-stone">@{SITE.instagram}</span>
         </div>
       </aside>

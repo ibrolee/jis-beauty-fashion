@@ -356,38 +356,6 @@ export async function deleteReviewAction(id: number): Promise<void> {
 /*                             Site content / misc                            */
 /* -------------------------------------------------------------------------- */
 
-export async function saveSiteContentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireAdmin();
-  const key = String(formData.get("key"));
-  if (!["announcement", "hero", "promo", "business", "delivery", "blog"].includes(key)) return { error: "Unknown content section." };
-
-  const value: Record<string, unknown> = {};
-  for (const [k, v] of formData.entries()) {
-    if (k === "key" || typeof v !== "string") continue;
-    value[k] = v;
-  }
-  if (key === "announcement") {
-    value.enabled = formData.get("enabled") === "on";
-    value.autoDeliveryText = formData.get("autoDeliveryText") === "on";
-  }
-  if (key === "delivery") {
-    for (const field of ["freeDeliveryThreshold", "interstateFreeDeliveryThreshold", "lagosFee", "regionalFee", "defaultFee"]) {
-      value[field] = Math.max(0, Number(formData.get(field)) || 0);
-    }
-    value.regionalStates = String(formData.get("regionalStates") ?? "")
-      .split(",")
-      .map((state) => state.trim())
-      .filter(Boolean);
-  }
-
-  await db
-    .insert(siteSettings)
-    .values({ key, value, updatedAt: new Date() })
-    .onConflictDoUpdate({ target: siteSettings.key, set: { value, updatedAt: new Date() } });
-  revalidatePath("/", "layout");
-  return { ok: true, message: "Content saved." };
-}
-
 export async function markContactReadAction(id: number): Promise<void> {
   await requireAdmin();
   await db.update(contactMessages).set({ isRead: true }).where(and(eq(contactMessages.id, id), eq(contactMessages.isRead, false)));

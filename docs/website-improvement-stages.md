@@ -37,4 +37,10 @@ Hobby deployment compatibility: Vercel's duplicate expiry cron runs daily at 04:
 
 ## Release status
 
-Stage 1 is being prepared on `improve/jis-stage-1-foundations-2026-10-16`. Stages 2–4 have not started. A preview is a review environment; it does not imply production publication.
+Stage 1 is implemented on `improve/jis-stage-1-foundations-2026-10-16` and has a working preview. Stage 2 is implemented on `improve/jis-stage-2-owner-content-2026-10-16`, stacked on Stage 1. Stages 3–4 have not started. A preview is a review environment; it does not imply production publication.
+
+Stage 2 stores the published snapshot, shared draft, last 15 published versions and media registry in separate keys in the existing `site_settings` table. No schema migration is required. Save, publish, discard and restore operations require an administrator and use a transaction lock plus revision checks to reject stale tabs. Restoring creates a draft; it never publishes immediately. A private preview requires both Next draft mode and a signed-in administrator. Checkout, cart totals and order/payment pages read only published business settings. Blog posts, comments and likes are outside website snapshots and remain independently managed.
+
+Owner entry points: `/admin/content` for website content and publishing; `/admin/media` for reusable images. Removing an image from the media library only hides it from selection, preserving references on pages and in old versions. Product/category/blog photo uploaders use the same picker. Product changes remain in the existing Products screen; easier product management is Stage 3.
+
+Validation: lint, typecheck, production build, 31 existing commerce/Stage 1 checks and 12 Stage 2 publishing/editor tests. Storage tests use an isolated adapter around the real server actions and getters. Authenticated save/upload against the preview database still requires a signed-in owner session; no production content or orders were changed during validation.

@@ -1,18 +1,15 @@
 import { ArrowUpRight } from "lucide-react";
-import type { Metadata } from "next";
+import { pageContent, pageMetadata } from "@/lib/data/page-content";
+import { PageExtras } from "@/components/info/page-extras";
 import Image from "next/image";
 import Link from "next/link";
 import { getBlogContent, sortedBlogPosts } from "@/lib/data/blog";
 import { formatDate } from "@/lib/utils";
 
-export const metadata: Metadata = {
-  title: "Blog",
-  description: "Fragrance tips, beauty notes and JIS Beauty & Fashion updates.",
-  alternates: { canonical: "/blog" },
-};
+export const generateMetadata = () => pageMetadata("blog");
 
 export default async function BlogPage({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
-  const [{ category }, blog] = await Promise.all([searchParams, getBlogContent()]);
+  const [{ category }, blog, {page}] = await Promise.all([searchParams, getBlogContent(), pageContent("blog")]);
   const posts = sortedBlogPosts(blog.posts).filter((post) => !category || post.category === category);
 
   return (
@@ -20,10 +17,10 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
       <header className="border-b border-line bg-ivory py-16 sm:py-20 lg:py-24">
         <div className="container-x grid gap-8 lg:grid-cols-12 lg:items-end">
           <div className="lg:col-span-8">
-            <p className="eyebrow mb-5">JIS / Blog</p>
-            <h1 className="font-serif text-5xl leading-[0.94] tracking-tight sm:text-6xl lg:text-[clamp(5rem,7vw,8rem)]">The fragrance <span className="italic text-rosewood">journal.</span></h1>
+            <p className="eyebrow mb-5">{page.eyebrow}</p>
+            <h1 className="font-serif text-5xl leading-[0.94] tracking-tight sm:text-6xl lg:text-[clamp(5rem,7vw,8rem)]">{page.title}</h1>
           </div>
-          <p className="max-w-md text-base leading-[1.9] text-ink-soft lg:col-span-4">{blog.intro}</p>
+          <p className="max-w-md text-base leading-[1.9] text-ink-soft lg:col-span-4">{page.intro}</p>
         </div>
       </header>
 
@@ -52,6 +49,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
           {!posts.length && <p className="text-sm text-stone">No blog posts published yet.</p>}
         </div>
       </div>
+      <PageExtras page={page} />
     </div>
   );
 }

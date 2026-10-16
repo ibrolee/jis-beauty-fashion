@@ -1,18 +1,13 @@
 import Link from "next/link";
 import type { SessionUser } from "@/lib/auth/session";
-import { getCategoryLinks } from "@/lib/storefront-settings";
+import { DEFAULT_WEBSITE_CONTENT, navigationLinks, type WebsiteContent } from "@/lib/website-content";
 import type { CategoryWithCount } from "@/types";
 import { HeaderActions } from "./header-actions";
 import { Logo } from "./logo";
 import { MobileMenu } from "./mobile-menu";
 
-export function Header({ user, categories }: { user: SessionUser | null; categories: CategoryWithCount[] }) {
-  const navigation = [
-    { href: "/shop", label: "Shop All" },
-    ...getCategoryLinks(categories),
-    { href: "/blog", label: "Blog" },
-    { href: "/about", label: "About" },
-  ];
+export function Header({ user, categories, website = DEFAULT_WEBSITE_CONTENT }: { user: SessionUser | null; categories: CategoryWithCount[]; website?: WebsiteContent }) {
+  const navigation = navigationLinks(website, categories);
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-cream/95 shadow-[0_4px_20px_-18px_rgba(23,21,17,0.4)] backdrop-blur-xl supports-[backdrop-filter]:bg-cream/90">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-2 focus:z-50 focus:bg-ink focus:px-3 focus:py-2 focus:text-white">
@@ -21,16 +16,16 @@ export function Header({ user, categories }: { user: SessionUser | null; categor
 
       <div className="container-x grid h-[70px] grid-cols-[1fr_auto_1fr] items-center gap-2 lg:h-[82px]">
         <div className="flex min-w-0 items-center lg:hidden">
-          <MobileMenu categories={categories} user={user} />
+          <MobileMenu categories={categories} user={user} website={website} />
         </div>
         <div className="hidden min-w-0 items-center lg:flex">
           <span className="border-l border-rosewood/60 pl-3 text-[10px] font-medium uppercase leading-[1.7] tracking-[0.2em] text-stone">
-            The fragrance edit<br />Curated in Lagos
+            {website.brand.tagline}<br />{website.brand.address}
           </span>
         </div>
 
         <div className="flex justify-center">
-          <Logo className="shrink-0" />
+          <Logo className="shrink-0" brand={website.brand} />
         </div>
 
         <div className="flex min-w-0 items-center justify-end">
