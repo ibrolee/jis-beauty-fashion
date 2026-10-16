@@ -101,3 +101,10 @@ test("homepage uses compact two-column mobile category tiles and excludes empty 
   assert.ok(html.includes("hidden max-w-lg text-sm"), "descriptions are hidden on phones");
   assert.ok(html.includes('href="/categories"'), "visitors can still browse all collections");
 });
+
+test("homepage omits empty category section when nothing is in stock", () => {
+  const { FeaturedCategories } = loadSource("src/components/home/featured-categories.tsx", common);
+  const section = { id: "home-categories", title: "Shop our favourites" };
+  const groups = [{ id: 99, name: "Coming soon", slug: "soon", isActive: true, productCount: 0, image: null }];
+  assert.equal(renderToStaticMarkup(React.createElement(FeaturedCategories, { categories: groups, section })), "");
+});
