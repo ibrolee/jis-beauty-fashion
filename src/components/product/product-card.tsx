@@ -11,7 +11,7 @@ import { WishlistButton } from "./wishlist-button";
 
 export function ProductCard({ product, priority = false, className }: { product: ProductListItem; priority?: boolean; className?: string }) {
   const href = "/product/" + product.slug;
-  const soldOut = product.stock <= 0 && !product.hasVariants;
+  const soldOut = product.stock <= 0;
   const [primary, secondary] = product.images;
 
   return (
@@ -77,7 +77,7 @@ export function ProductCard({ product, priority = false, className }: { product:
           </p>
         )}
         <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-2 pt-3">
-          <Price price={product.price} salePrice={product.salePrice} prefix={product.hasVariants ? "From" : undefined} />
+          <Price price={product.minVariantPrice ?? product.price} salePrice={product.minVariantPrice != null ? null : product.salePrice} prefix={product.minVariantPrice != null ? "From" : undefined} />
           {product.reviewCount > 0 && <RatingStars rating={product.rating} count={product.reviewCount} size="xs" />}
         </div>
         <div className="mt-4 lg:hidden">
