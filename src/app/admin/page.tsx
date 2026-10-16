@@ -37,12 +37,13 @@ export default async function AdminDashboardPage() {
         title="Store overview"
         description="Orders, customers and everyday tasks in one place."
       />
-      <nav aria-label="Daily store actions" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+      <nav aria-label="Daily store actions" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
         {[
           { href: "/admin/payment-review", label: "Check payments", detail: stats.bankReviewCount ? `${stats.bankReviewCount} awaiting verification` : "No new reports" },
           { href: "/admin/orders", label: "Review orders", detail: stats.pendingOrders ? `${stats.pendingOrders} pending` : "Payments & dispatch" },
           { href: "/admin/products/new", label: "Add a product", detail: "Photos & variants" },
           { href: "/admin/products?view=active", label: "Manage products", detail: "Price, stock & duplicates" },
+          { href: "/admin/products?view=low-stock", label: "Low stock", detail: "Restock items before they sell out" },
           { href: "/admin/messages", label: "Messages", detail: "Customer enquiries" },
           { href: "/admin/content", label: "Edit website", detail: "Draft & publish" },
           { href: "/admin/media", label: "Media library", detail: "Upload & reuse images" },
