@@ -37,6 +37,10 @@ const listColumns = {
     select min(case when pv.sale_price is not null and pv.sale_price > 0 and pv.sale_price < pv.price then pv.sale_price else pv.price end)::integer
     from product_variants pv where pv.product_id = ${products.id} and pv.is_active = true and pv.stock > 0
   )`,
+  minVariantStock: sql<number | null>`(
+    select min(pv.stock)::integer
+    from product_variants pv where pv.product_id = ${products.id} and pv.is_active = true
+  )`,
 };
 
 function baseQuery() {
