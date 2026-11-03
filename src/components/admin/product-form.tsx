@@ -100,37 +100,16 @@ export function ProductForm({
                 />
               </Field>
 
-              <Field
-                label="Category"
-                htmlFor="categoryId"
-                error={fe.categoryId}
-                required
-                className="min-w-0"
-              >
-                <Select
-                  id="categoryId"
-                  name="categoryId"
-                  defaultValue={
-                    product?.categoryId ?? ""
-                  }
-                  required
-                >
-                  <option
-                    value=""
-                    disabled
-                  >
-                    Select category
-                  </option>
-
+              <Field label="Categories" htmlFor="categoryIds" error={fe.categoryIds ?? fe.categoryId} required className="min-w-0">
+                <div className="space-y-2 rounded border border-line p-3">
                   {categories.map((category) => (
-                    <option
-                      key={category.id}
-                      value={category.id}
-                    >
-                      {category.name}
-                    </option>
+                    <label key={category.id} className="flex items-center gap-3 text-sm">
+                      <input type="checkbox" name="categoryIds" value={category.id} defaultChecked={(product?.categoryIds?.length ? product.categoryIds : product ? [product.categoryId] : []).includes(category.id)} className="h-4 w-4 accent-black" />
+                      <span>{category.name}</span>
+                    </label>
                   ))}
-                </Select>
+                </div>
+                <p className="mt-1 text-xs text-stone">Select every category where this product should appear. The first selected category is the primary category.</p>
               </Field>
 
               <Field
