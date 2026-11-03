@@ -8,7 +8,7 @@ function regionalLabel(delivery: DeliverySettings) {
 }
 
 export function deliveryFeeSentence(delivery: DeliverySettings) {
-  return `Below the free-delivery threshold, delivery costs ${formatNaira(delivery.lagosFee)} within Lagos, ${formatNaira(delivery.regionalFee)} to ${regionalLabel(delivery)}, and ${formatNaira(delivery.defaultFee)} to other states. Interstate delivery outside Lagos is free from ${formatNaira(delivery.interstateFreeDeliveryThreshold)}. Lagos delivery is free from ${formatNaira(delivery.freeDeliveryThreshold)}.`;
+  return `Delivery costs ${formatNaira(delivery.lagosFee)} within Lagos, ${formatNaira(delivery.regionalFee)} to ${regionalLabel(delivery)}, and ${formatNaira(delivery.defaultFee)} to other states.`;
 }
 
 export function deliveryTimelineSentence(delivery: DeliverySettings) {
