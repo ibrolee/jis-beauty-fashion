@@ -95,10 +95,13 @@ async function resolveBrandId(name: string | undefined): Promise<number | null> 
 export async function saveProductAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   await requireAdmin();
   const id = Number(formData.get("id")) || null;
-  const rawProduct = formToObject(formData, ["isFeatured", "isBestSeller", "isNewArrival", "isActive"]);\n  rawProduct.categoryIds = formData.getAll("categoryIds").map(Number).filter((value) => Number.isSafeInteger(value) && value > 0);\n  const parsed = productSchema.safeParse(rawProduct);
+  const rawProduct = formToObject(formData, ["isFeatured", "isBestSeller", "isNewArrival", "isActive"]);
+  rawProduct.categoryIds = formData.getAll("categoryIds").map(Number).filter((value) => Number.isSafeInteger(value) && value > 0);\n  const parsed = productSchema.safeParse(rawProduct);
   if (!parsed.success) return { error: "Please fix the highlighted fields.", fieldErrors: fieldErrorsFrom(parsed.error) };
 
   const d = parsed.data;
+  const categoryIds = [...new Set(d.categoryIds ?? [])];
+  if (!categoryIds.length) return { error: "Select at least one category.", fieldErrors: { categoryIds: "Select at least one category." } };
   const slug = slugify(d.slug || d.name);
   const brandId = await resolveBrandId(d.brandName);
   const existingSku = id ? await db.select({ sku: products.sku }).from(products).where(eq(products.id, id)).limit(1) : [];
@@ -116,7 +119,8 @@ export async function saveProductAction(_prev: ActionState, formData: FormData):
     name: d.name,
     slug,
     sku,
-    categoryId: categoryIds[0],\n    categoryIds,
+    categoryId: categoryIds[0],
+    categoryIds,
     brandId,
     shortDescription: d.shortDescription || null,
     description: d.description,
