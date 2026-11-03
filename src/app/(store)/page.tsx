@@ -21,9 +21,9 @@ export default async function HomePage() {
   const brand = brandLinks(content.website.brand);
   const home = content.website.home;
   const tasks = new Map<string, Promise<ProductListItem[]>>();
-  const sections = await Promise.all(home.sections.filter((section) => section.enabled).map(async (raw) => {
+  const sections = await Promise.all(home.sections.filter((section) => section.enabled && section.type !== "editorial").map(async (raw) => {
     const section = { ...raw, title: websiteText(raw.title, content), body: websiteText(raw.body, content) };
-    if (section.type === "hero") return <Hero key={section.id} content={content.hero} quickLinks={home.quickLinks} brandLine={websiteText(home.brandLine, content)} scrollTarget={home.sections.find((item) => item.enabled && item.type !== "hero")?.id ?? "main"} />;
+    if (section.type === "hero") return <Hero key={section.id} content={content.hero} quickLinks={home.quickLinks} brandLine={websiteText(home.brandLine, content)} scrollTarget={home.sections.find((item) => item.enabled && item.type !== "hero" && item.type !== "editorial")?.id ?? "main"} />;
     if (section.type === "categories") return <FeaturedCategories key={section.id} categories={categories} section={section} />;
     if (section.type === "newsletter") return <div key={section.id} id={section.id}><NewsletterBand section={section} /></div>;
     if (section.type === "promo") return <div key={section.id} id={section.id}><PromoCta content={content.promo} brand={content.website.brand} /></div>;
