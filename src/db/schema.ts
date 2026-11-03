@@ -174,6 +174,7 @@ export const products = pgTable(
     categoryId: integer("category_id")
       .notNull()
       .references(() => categories.id, { onDelete: "restrict" }),
+    categoryIds: jsonb("category_ids").$type<number[]>().notNull().default([]),
     brandId: integer("brand_id").references(() => brands.id, { onDelete: "set null" }),
     shortDescription: varchar("short_description", { length: 300 }),
     description: text("description").notNull(),
