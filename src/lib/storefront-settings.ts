@@ -11,7 +11,7 @@ export function getCategoryLinks(categories: Pick<Category, "id" | "name" | "slu
 }
 
 export function deliveryAnnouncement(_delivery: DeliverySettings) {
-  return "100% authentic and original fragrances";
+  return "100% authentic and original fragrances you can trust";
 }
 
 /** Upgrade known old shipping messages without overwriting custom promotions. */
