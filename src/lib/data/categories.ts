@@ -1,4 +1,4 @@
-import { and, asc, count, eq, getTableColumns } from "drizzle-orm";
+import { and, asc, count, eq, getTableColumns, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { ensureSeeded } from "@/db/ensure-seed";
 import { categories, products, type Category } from "@/db/schema";
@@ -23,7 +23,7 @@ export async function getCategories(includeInactive = false): Promise<CategoryWi
   const rows = await db
     .select({ ...getTableColumns(categories), productCount: count(products.id) })
     .from(categories)
-    .leftJoin(products, and(eq(products.categoryId, categories.id), eq(products.isActive, true)))
+    .leftJoin(products, and(eq(products.isActive, true), sql`(${products.categoryId} = ${categories.id} or ${products.categoryIds} @> jsonb_build_array(${categories.id}))`))
     .where(includeInactive ? undefined : eq(categories.isActive, true))
     .groupBy(categories.id)
     .orderBy(asc(categories.sortOrder), asc(categories.name));
