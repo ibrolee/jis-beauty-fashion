@@ -4,7 +4,7 @@ import { ArrowUpRight, Minus, Plus, Truck } from "lucide-react";
 import { useState } from "react";
 import { Price } from "@/components/ui/price";
 import { SITE, type DeliverySettings } from "@/lib/constants";
-import { cn, formatNaira } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { ProductDetail } from "@/types";
 import { AddToCartButton } from "./add-to-cart-button";
 import { WishlistButton } from "./wishlist-button";
@@ -73,7 +73,7 @@ export function PurchasePanel({ product, delivery, whatsappUrl = SITE.whatsappUr
           <Truck className="mt-0.5 h-4 w-4 shrink-0 text-rosewood" strokeWidth={1.5} aria-hidden="true" />
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.13em] text-ink">Delivery across Nigeria</p>
-            <p className="mt-1 text-xs leading-relaxed text-stone">Delivery fees and estimated times are displayed at checkout after you select your state. Free Lagos delivery from {formatNaira(delivery.freeDeliveryThreshold)}; free interstate delivery from {formatNaira(delivery.interstateFreeDeliveryThreshold)}.</p>
+            <p className="mt-1 text-xs leading-relaxed text-stone">Delivery fees and estimated times are displayed at checkout after you select your state.</p>
           </div>
         </div>
       </div>
