@@ -39,8 +39,6 @@ export const NIGERIAN_STATES = [
 ] as const;
 
 /** Delivery pricing: shared by cart, checkout and the trusted server-side order action.
- * Interstate deliveries are free from ₦50,000; Lagos retains its existing
- * ₦150,000 free-delivery threshold. Thresholds use the order subtotal.
  */
 export type DeliverySettings = {
   freeDeliveryThreshold: number;
@@ -72,10 +70,8 @@ export function getDeliveryZone(state: string, delivery: DeliverySettings = DELI
   return { fee: delivery.defaultFee, eta: delivery.defaultEta };
 }
 
-export function getDeliveryFee(state: string | null | undefined, subtotal: number, delivery: DeliverySettings = DELIVERY): number {
+export function getDeliveryFee(state: string | null | undefined, _subtotal: number, delivery: DeliverySettings = DELIVERY): number {
   if (!state) return 0;
-  if (state !== "Lagos" && subtotal >= delivery.interstateFreeDeliveryThreshold) return 0;
-  if (subtotal >= delivery.freeDeliveryThreshold) return 0;
   return getDeliveryZone(state, delivery).fee;
 }
 
