@@ -70,7 +70,7 @@ function buildConditions(filters: ProductFilters): SQL[] {
       ) as SQL,
     );
   }
-  if (filters.category) conds.push(eq(categories.slug, filters.category));
+  if (filters.category) conds.push(sql`exists (select 1 from categories c where c.slug = ${filters.category} and (c.id = ${products.categoryId} or ${products.categoryIds} @> jsonb_build_array(c.id)))`);
   if (filters.gender?.length) {
     conds.push(inArray(products.gender, filters.gender as ("women" | "men" | "unisex" | "kids")[]));
   }
@@ -178,7 +178,7 @@ export async function getCollection(kind: Collection, limit = 8): Promise<Produc
 export async function getProductsForCategory(slug: string, limit = 4): Promise<ProductListItem[]> {
   await ensureSeeded();
   return baseQuery()
-    .where(and(eq(products.isActive, true), eq(categories.slug, slug)))
+    .where(and(eq(products.isActive, true), sql`exists (select 1 from categories c where c.slug = ${slug} and (c.id = ${products.categoryId} or ${products.categoryIds} @> jsonb_build_array(c.id)))`))
     .orderBy(desc(products.isBestSeller), desc(products.isFeatured), desc(products.salesCount))
     .limit(limit);
 }
