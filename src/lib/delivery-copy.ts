@@ -27,7 +27,7 @@ export function getShippingSections(delivery: DeliverySettings): InfoSection[] {
     {
       title: "Delivery fees",
       body: [
-        `${deliveryFeeSentence(delivery)} Free-delivery eligibility uses the product subtotal before coupon discounts.`,
+        deliveryFeeSentence(delivery),
       ],
     },
     {
@@ -40,7 +40,7 @@ export function getShippingSections(delivery: DeliverySettings): InfoSection[] {
 export function getFaqItems(delivery: DeliverySettings) {
   return FAQ_ITEMS.map((item) => {
     if (item.q === "How long does delivery take?") return { ...item, a: `${deliveryTimelineSentence(delivery)} Contact us on WhatsApp if you need an update.` };
-    if (item.q === "How much is delivery?") return { ...item, a: `${deliveryFeeSentence(delivery)} Free-delivery eligibility is based on your product subtotal before discounts.` };
+    if (item.q === "How much is delivery?") return { ...item, a: deliveryFeeSentence(delivery) };
     return item;
   });
 }
