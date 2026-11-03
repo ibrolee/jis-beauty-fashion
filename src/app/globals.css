@@ -309,3 +309,22 @@
     scroll-behavior: auto !important;
   }
 }
+
+
+/* Announcement text slides horizontally into view, pauses, then exits. */
+.jis-announcement-slide {
+  display: inline-block;
+  animation: jis-announcement-slide 7s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes jis-announcement-slide {
+  0% { opacity: 0; transform: translateX(105%); }
+  12% { opacity: 1; transform: translateX(0); }
+  78% { opacity: 1; transform: translateX(0); }
+  92%, 100% { opacity: 0; transform: translateX(-105%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jis-announcement-slide { animation: none; }
+}
