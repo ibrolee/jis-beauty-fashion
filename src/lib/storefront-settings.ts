@@ -12,10 +12,7 @@ export function getCategoryLinks(categories: Pick<Category, "id" | "name" | "slu
 
 export function deliveryAnnouncement(delivery: DeliverySettings) {
   const naira = (amount: number) => `₦${amount.toLocaleString("en-NG")}`;
-  if (delivery.freeDeliveryThreshold === delivery.interstateFreeDeliveryThreshold) {
-    return `Free nationwide delivery from ${naira(delivery.freeDeliveryThreshold)}`;
-  }
-  return `Free Lagos delivery from ${naira(delivery.freeDeliveryThreshold)} · Free interstate delivery from ${naira(delivery.interstateFreeDeliveryThreshold)}`;
+  return `Delivery fees: Lagos ${naira(delivery.lagosFee)} · ${delivery.regionalStates.join(", ")} ${naira(delivery.regionalFee)} · other states ${naira(delivery.defaultFee)}`;
 }
 
 /** Upgrade known old shipping messages without overwriting custom promotions. */
