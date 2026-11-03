@@ -96,7 +96,8 @@ export async function saveProductAction(_prev: ActionState, formData: FormData):
   await requireAdmin();
   const id = Number(formData.get("id")) || null;
   const rawProduct = formToObject(formData, ["isFeatured", "isBestSeller", "isNewArrival", "isActive"]);
-  rawProduct.categoryIds = formData.getAll("categoryIds").map(Number).filter((value) => Number.isSafeInteger(value) && value > 0);\n  const parsed = productSchema.safeParse(rawProduct);
+  rawProduct.categoryIds = formData.getAll("categoryIds").map(Number).filter((value) => Number.isSafeInteger(value) && value > 0);
+  const parsed = productSchema.safeParse(rawProduct);
   if (!parsed.success) return { error: "Please fix the highlighted fields.", fieldErrors: fieldErrorsFrom(parsed.error) };
 
   const d = parsed.data;
