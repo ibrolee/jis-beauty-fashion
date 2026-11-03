@@ -417,7 +417,7 @@ export async function saveCategoryAction(_prev: ActionState, formData: FormData)
 
 export async function deleteCategoryAction(id: number): Promise<ActionState> {
   await requireAdmin();
-  const inUse = await db.query.products.findFirst({ where: eq(products.categoryId, id) });
+  const inUse = await db.query.products.findFirst({ where: sql`${products.categoryId} = ${id} or ${products.categoryIds} @> jsonb_build_array(${id})` });
   if (inUse) return { error: "Move or delete the products in this category first." };
   await db.delete(categories).where(eq(categories.id, id));
   revalidatePath("/", "layout");
