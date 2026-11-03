@@ -25,7 +25,7 @@ export function resolveAnnouncement(content: AnnouncementContent, delivery: Deli
     "Free interstate delivery from ₦50,000 · Use code JISWELCOME for 5% off",
     "Free interstate delivery from ₦50,000 · Free Lagos delivery from ₦150,000",
   ];
-  const legacyDeliveryMessage = oldMessages.some((text) => text.toLowerCase() === content.text.trim().toLowerCase());
+  const legacyDeliveryMessage = oldMessages.some((text) => text.toLowerCase() === content.text.trim().toLowerCase()) || /(?:free|complimentary)\s+(?:\w+\s+){0,2}delivery/i.test(content.text);
   const autoDeliveryText = content.autoDeliveryText ?? legacyDeliveryMessage;
   return autoDeliveryText
     ? { ...content, autoDeliveryText, text: deliveryAnnouncement(delivery), href: "/shipping" }
