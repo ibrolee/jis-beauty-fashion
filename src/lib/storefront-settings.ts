@@ -10,9 +10,8 @@ export function getCategoryLinks(categories: Pick<Category, "id" | "name" | "slu
     .map((category) => ({ id: category.id, label: category.name, href: `/shop/${category.slug}` }));
 }
 
-export function deliveryAnnouncement(delivery: DeliverySettings) {
-  const naira = (amount: number) => `₦${amount.toLocaleString("en-NG")}`;
-  return `Delivery fees: Lagos ${naira(delivery.lagosFee)} · ${delivery.regionalStates.join(", ")} ${naira(delivery.regionalFee)} · other states ${naira(delivery.defaultFee)}`;
+export function deliveryAnnouncement(_delivery: DeliverySettings) {
+  return "100% authentic and original fragrances";
 }
 
 /** Upgrade known old shipping messages without overwriting custom promotions. */
@@ -28,6 +27,6 @@ export function resolveAnnouncement(content: AnnouncementContent, delivery: Deli
   const legacyDeliveryMessage = oldMessages.some((text) => text.toLowerCase() === content.text.trim().toLowerCase()) || /(?:free|complimentary)\s+(?:\w+\s+){0,2}delivery/i.test(content.text);
   const autoDeliveryText = content.autoDeliveryText ?? legacyDeliveryMessage;
   return autoDeliveryText
-    ? { ...content, autoDeliveryText, text: deliveryAnnouncement(delivery), href: "/shipping" }
+    ? { ...content, autoDeliveryText, text: deliveryAnnouncement(delivery), href: "/shop" }
     : { ...content, autoDeliveryText };
 }
