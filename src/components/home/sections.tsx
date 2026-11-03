@@ -47,7 +47,6 @@ export function BrandStory() {
 
 /* --------------------------------- Why JIS -------------------------------- */
 const REASONS = [
-  { icon: BadgeCheck, title: "100% authentic", body: "Every bottle is sourced from trusted distributors and sealed. No knock-offs, ever." },
   { icon: Truck, title: "Fast nationwide delivery", body: "1–2 days in Lagos, 3–5 days elsewhere. Delivery fees are shown at checkout." },
   { icon: RotateCcw, title: "Easy returns", body: "Wrong or damaged item? We'll sort it within 48 hours of delivery." },
   { icon: Headset, title: "Scent advice on WhatsApp", body: "Not sure what to pick? Chat with us — we'll recommend based on what you love." },
