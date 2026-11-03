@@ -15,7 +15,6 @@ export function PurchasePanel({ product, delivery, whatsappUrl = SITE.whatsappUr
   const [quantity, setQuantity] = useState(1);
   const stock = variant ? variant.stock : product.stock;
   const soldOut = stock <= 0;
-  const lowStock = !soldOut && stock <= 5;
   const priceSource = variant ?? product;
   const safeQuantity = Math.min(quantity, Math.max(1, stock));
 
@@ -29,10 +28,7 @@ export function PurchasePanel({ product, delivery, whatsappUrl = SITE.whatsappUr
 
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-5">
         <Price price={priceSource.price} salePrice={priceSource.salePrice} size="lg" />
-        <p className={cn("flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em]", soldOut ? "text-sale" : lowStock ? "text-amber-700" : "text-success")} role="status">
-          <span className={cn("h-1.5 w-1.5 rounded-full", soldOut ? "bg-sale" : lowStock ? "bg-amber-500" : "bg-success")} aria-hidden="true" />
-          {soldOut ? "Out of stock" : lowStock ? `Only ${stock} available` : "Available to order"}
-        </p>
+        {soldOut && <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-sale" role="status"><span className="h-1.5 w-1.5 rounded-full bg-sale" aria-hidden="true" />Out of stock</p>}
       </div>
 
       <div className="space-y-3">
