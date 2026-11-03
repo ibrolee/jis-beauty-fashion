@@ -95,7 +95,7 @@ async function resolveBrandId(name: string | undefined): Promise<number | null> 
 export async function saveProductAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   await requireAdmin();
   const id = Number(formData.get("id")) || null;
-  const parsed = productSchema.safeParse(formToObject(formData, ["isFeatured", "isBestSeller", "isNewArrival", "isActive"]));
+  const rawProduct = formToObject(formData, ["isFeatured", "isBestSeller", "isNewArrival", "isActive"]);\n  rawProduct.categoryIds = formData.getAll("categoryIds").map(Number).filter((value) => Number.isSafeInteger(value) && value > 0);\n  const parsed = productSchema.safeParse(rawProduct);
   if (!parsed.success) return { error: "Please fix the highlighted fields.", fieldErrors: fieldErrorsFrom(parsed.error) };
 
   const d = parsed.data;
@@ -116,7 +116,7 @@ export async function saveProductAction(_prev: ActionState, formData: FormData):
     name: d.name,
     slug,
     sku,
-    categoryId: d.categoryId,
+    categoryId: categoryIds[0],\n    categoryIds,
     brandId,
     shortDescription: d.shortDescription || null,
     description: d.description,
