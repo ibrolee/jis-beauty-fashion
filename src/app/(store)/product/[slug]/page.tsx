@@ -61,7 +61,6 @@ export default async function ProductPage({ params }: Props) {
     ["Gender", GENDER_LABELS[product.gender]],
     ["Longevity", product.longevity],
     ["Occasion", product.occasion],
-    ["Category", product.categoryName],
   ];
   const jsonLd = {
     "@context": "https://schema.org",
