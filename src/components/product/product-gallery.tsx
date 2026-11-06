@@ -33,7 +33,7 @@ export function ProductGallery({ images, name, badges }: { images: string[]; nam
         </div>
       )}
 
-      <div className="relative order-1 aspect-[4/5] w-full min-w-0 overflow-hidden bg-[#f1ece4] sm:aspect-[5/5] lg:order-2 lg:aspect-[4/5]">
+      <div className="relative order-1 aspect-square w-full min-w-0 overflow-hidden bg-[#f1ece4] sm:aspect-[5/4] lg:order-2 lg:aspect-[4/5]">
         <div className="pointer-events-none absolute inset-[12px] z-10 border border-white/50 sm:inset-[18px]" aria-hidden="true" />
         {selected ? (
           <Image
@@ -43,7 +43,7 @@ export function ProductGallery({ images, name, badges }: { images: string[]; nam
             fill
             priority
             sizes="(min-width: 1280px) 600px, (min-width: 1024px) 55vw, 100vw"
-            className="animate-fade-in object-contain p-5 sm:p-9 lg:p-10"
+            className="animate-fade-in object-contain p-3 sm:p-6 lg:p-10"
           />
         ) : (
           <div className="flex h-full items-center justify-center text-xs uppercase tracking-[0.2em] text-stone">Photography coming soon</div>
