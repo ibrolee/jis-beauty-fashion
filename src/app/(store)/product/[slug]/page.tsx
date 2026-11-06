@@ -86,8 +86,8 @@ export default async function ProductPage({ params }: Props) {
   return (
     <div className="bg-cream">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
-      <div className="container-x pb-16 pt-5 lg:pb-24 lg:pt-8">
-        <nav aria-label="Breadcrumb" className="mb-7 flex min-w-0 items-center gap-2 overflow-hidden text-[10px] font-medium uppercase tracking-[0.12em] text-stone lg:mb-10">
+      <div className="container-x pb-8 pt-3 sm:pb-12 sm:pt-4 lg:pb-24 lg:pt-8">
+        <nav aria-label="Breadcrumb" className="mb-3 flex min-w-0 items-center gap-1.5 overflow-hidden text-[9px] font-medium uppercase tracking-[0.1em] text-stone sm:mb-5 sm:gap-2 lg:mb-10 lg:text-[10px]">
           <Link href="/" className="shrink-0 hover:text-ink">Home</Link>
           <ChevronRight className="h-3 w-3 shrink-0" aria-hidden="true" />
           <Link href="/shop" className="shrink-0 hover:text-ink">Shop</Link>
@@ -99,27 +99,27 @@ export default async function ProductPage({ params }: Props) {
 
         <VariantSelectionProvider product={product}>
           {product.variants.length > 0 && (
-            <div className="mb-5 border-y border-line py-4 lg:hidden">
+            <div className="mb-3 border-y border-line py-2.5 lg:hidden">
               <VariantChoices product={product} />
             </div>
           )}
-          <div className="grid items-start gap-9 lg:grid-cols-12 lg:gap-12 xl:gap-16">
+          <div className="grid items-start gap-5 sm:gap-7 lg:grid-cols-12 lg:gap-12 xl:gap-16">
             <div className="min-w-0 lg:col-span-7">
               <VariantProductGallery product={product} badges={badges} />
             </div>
             <div className="min-w-0 lg:col-span-5">
               <div className="lg:sticky lg:top-40">
-                <p className="mb-4 flex items-center gap-3 text-[10px] font-medium uppercase tracking-[0.24em] text-rosewood">
+                <p className="mb-2.5 flex items-center gap-2 text-[9px] font-medium uppercase tracking-[0.2em] text-rosewood sm:mb-4 sm:text-[10px]">
                   <span className="h-px w-7 bg-rosewood" aria-hidden="true" />
                   {product.brandName ?? `${SITE.shortName} fragrance edit`}
                 </p>
-                <h1 className="max-w-[15ch] font-serif text-[clamp(2.8rem,5vw,5.5rem)] leading-[0.94] tracking-[-0.035em] text-ink">{product.name}</h1>
+                <h1 className="max-w-[22ch] font-serif text-[clamp(1.9rem,7vw,5.5rem)] leading-[1.02] tracking-[-0.035em] text-ink sm:max-w-[15ch] sm:leading-[0.94]">{product.name}</h1>
                 {(product.volume || product.fragranceType) && (
-                  <p className="mt-5 text-xs font-medium uppercase tracking-[0.16em] text-stone">{[product.volume, product.fragranceType].filter(Boolean).join("  /  ")}</p>
+                  <p className="mt-2.5 text-[10px] font-medium uppercase tracking-[0.12em] text-stone sm:mt-5 sm:text-xs sm:tracking-[0.16em]">{[product.volume, product.fragranceType].filter(Boolean).join("  /  ")}</p>
                 )}
-                {product.shortDescription && <p className="mt-5 max-w-prose text-sm leading-7 text-ink-soft">{product.shortDescription}</p>}
-                <div className="mt-7"><PurchasePanel product={product} delivery={published.delivery} whatsappUrl={SITE.whatsappUrl} storeName={SITE.shortName} /></div>
-                <div className="mt-5">
+                {product.shortDescription && <p className="mt-3 max-w-prose text-xs leading-5 text-ink-soft sm:mt-5 sm:text-sm sm:leading-7">{product.shortDescription}</p>}
+                <div className="mt-4 sm:mt-7"><PurchasePanel product={product} delivery={published.delivery} whatsappUrl={SITE.whatsappUrl} storeName={SITE.shortName} /></div>
+                <div className="mt-3 sm:mt-5">
                   <a href="#reviews" className="inline-flex items-center gap-2 text-xs text-ink-soft underline-offset-4 hover:underline">
                     {product.reviewCount > 0 ? (
                       <><RatingStars rating={product.rating} showValue /><span>{product.reviewCount} review{product.reviewCount === 1 ? "" : "s"}</span></>
@@ -131,15 +131,15 @@ export default async function ProductPage({ params }: Props) {
           </div>
         </VariantSelectionProvider>
 
-        <div className="mt-20 grid gap-12 border-t border-line pt-12 lg:mt-28 lg:grid-cols-12 lg:gap-16 lg:pt-20">
+        <div className="mt-9 grid gap-7 border-t border-line pt-7 sm:mt-14 sm:gap-9 sm:pt-9 lg:mt-28 lg:grid-cols-12 lg:gap-16 lg:pt-20">
           <section className="lg:col-span-7" aria-labelledby="description-heading">
-            <p className="eyebrow mb-3">Explore the fragrance</p>
-            <h2 id="description-heading" className="font-serif text-4xl leading-tight sm:text-5xl">The scent, in detail.</h2>
-            <p className="mt-6 max-w-[65ch] whitespace-pre-line text-[15px] leading-8 text-ink-soft">{product.description}</p>
+            <p className="eyebrow mb-2">Explore the fragrance</p>
+            <h2 id="description-heading" className="font-serif text-3xl leading-tight sm:text-4xl lg:text-5xl">The scent, in detail.</h2>
+            <p className="mt-3 max-w-[65ch] whitespace-pre-line text-[13px] leading-6 text-ink-soft sm:mt-5 sm:text-[15px] sm:leading-8">{product.description}</p>
             {(product.topNotes || product.heartNotes || product.baseNotes) && (
-              <div className="mt-12 border-t border-line pt-9">
-                <h3 className="eyebrow mb-6">Fragrance notes</h3>
-                <div className="grid gap-8 sm:grid-cols-3">
+              <div className="mt-6 border-t border-line pt-5 sm:mt-10 sm:pt-8">
+                <h3 className="eyebrow mb-4">Fragrance notes</h3>
+                <div className="grid gap-4 sm:grid-cols-3 sm:gap-6">
                   {[
                     ["01 / Top", product.topNotes],
                     ["02 / Heart", product.heartNotes],
@@ -147,7 +147,7 @@ export default async function ProductPage({ params }: Props) {
                   ].map(([label, value]) => value ? (
                     <div key={label} className="border-l border-rosewood/40 pl-4">
                       <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-stone">{label}</p>
-                      <p className="mt-3 font-serif text-2xl leading-snug text-ink">{value}</p>
+                      <p className="mt-2 font-serif text-xl leading-snug text-ink sm:mt-3 sm:text-2xl">{value}</p>
                     </div>
                   ) : null)}
                 </div>
@@ -156,33 +156,33 @@ export default async function ProductPage({ params }: Props) {
           </section>
           <aside className="lg:col-span-4 lg:col-start-9" aria-labelledby="details-heading">
             <p className="eyebrow mb-3">The essentials</p>
-            <h2 id="details-heading" className="font-serif text-4xl">Product details</h2>
-            <dl className="mt-6 divide-y divide-line border-y border-line text-sm">
+            <h2 id="details-heading" className="font-serif text-3xl sm:text-4xl">Product details</h2>
+            <dl className="mt-3 divide-y divide-line border-y border-line text-xs sm:mt-5 sm:text-sm">
               {details.map(([label, value]) => value ? (
-                <div key={label} className="flex justify-between gap-6 py-4">
+                <div key={label} className="flex justify-between gap-4 py-2.5 sm:gap-6 sm:py-4">
                   <dt className="text-stone">{label}</dt>
                   <dd className="max-w-[60%] text-right text-ink">{value}</dd>
                 </div>
               ) : null)}
             </dl>
-            <p className="mt-6 text-xs leading-6 text-stone">Questions about this item? <a href={`${SITE.whatsappUrl}?text=${encodeURIComponent(`Hello JIS, I have a question about ${product.name}.`)}`} target="_blank" rel="noopener noreferrer" className="text-ink underline underline-offset-4">Speak with us on WhatsApp</a>.</p>
+            <p className="mt-3 text-xs leading-5 text-stone sm:mt-5 sm:leading-6">Questions about this item? <a href={`${SITE.whatsappUrl}?text=${encodeURIComponent(`Hello JIS, I have a question about ${product.name}.`)}`} target="_blank" rel="noopener noreferrer" className="text-ink underline underline-offset-4">Speak with us on WhatsApp</a>.</p>
           </aside>
         </div>
       </div>
 
-      <section id="reviews" className="border-t border-line bg-white py-16 lg:py-24" aria-labelledby="reviews-heading">
-        <div className="container-x grid gap-12 lg:grid-cols-12 lg:gap-16">
+      <section id="reviews" className="border-t border-line bg-white py-8 sm:py-12 lg:py-24" aria-labelledby="reviews-heading">
+        <div className="container-x grid gap-7 sm:gap-9 lg:grid-cols-12 lg:gap-16">
           <div className="lg:col-span-4">
             <p className="eyebrow mb-3">Your experience</p>
             <h2 id="reviews-heading" className="font-serif text-4xl leading-tight sm:text-5xl">Customer reviews</h2>
             {product.reviewCount > 0 && (
-              <div className="mt-6 flex items-end gap-3">
+              <div className="mt-4 flex items-end gap-3 sm:mt-6">
                 <span className="font-serif text-6xl leading-none">{product.rating.toFixed(1)}</span>
                 <div className="pb-1"><RatingStars rating={product.rating} size="md" /><p className="mt-1 text-xs text-stone">Based on {product.reviewCount} review{product.reviewCount === 1 ? "" : "s"}</p></div>
               </div>
             )}
-            <div className="mt-8 border-t border-line pt-6">
-              <h3 className="mb-4 text-xs font-medium uppercase tracking-[0.16em]">Write a review</h3>
+            <div className="mt-5 border-t border-line pt-4 sm:mt-8 sm:pt-6">
+              <h3 className="mb-3 text-xs font-medium uppercase tracking-[0.16em]">Write a review</h3>
               <ReviewForm productId={product.id} productSlug={product.slug} canReview={Boolean(user)} alreadyReviewed={alreadyReviewed} />
             </div>
           </div>
@@ -191,7 +191,7 @@ export default async function ProductPage({ params }: Props) {
       </section>
 
       {related.length > 0 && (
-        <section className="border-t border-line bg-ivory py-16 lg:py-24" aria-label="You may also like">
+        <section className="border-t border-line bg-ivory py-8 sm:py-12 lg:py-24" aria-label="You may also like">
           <div className="container-x">
             <SectionHeading eyebrow="Continue the discovery" title="You may also like" href={`/shop/${product.categorySlug}`} linkLabel={`More ${product.categoryName.toLowerCase()}`} />
             <ProductRail products={related} />
