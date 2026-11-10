@@ -20,11 +20,12 @@ import {
   type PaymentStatus,
 } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
+import { pickupReadyEmail, sendEmail } from "@/lib/email";
 import { ORDER_STATUSES } from "@/lib/constants";
 import { getBlogContent, saveBlogContent } from "@/lib/data/blog";
 import { refreshProductRating } from "@/lib/data/reviews";
 import { cancelOrderAndRelease } from "@/lib/orders/reservations";
-import { slugify } from "@/lib/utils";
+import { absoluteUrl, slugify } from "@/lib/utils";
 import { categorySchema, couponSchema, fieldErrorsFrom, formToObject, productSchema } from "@/lib/validation";
 import type { ActionState } from "@/types";
 
@@ -338,6 +339,9 @@ if (status === "cancelled" && order.status !== "cancelled") {
   if (!updated) return { error: "This order changed while saving. Refresh and review its payment status." };
 }
 
+  if (order.fulfillmentMethod === "pickup" && status === "ready_for_pickup" && order.status !== "ready_for_pickup") {
+    void sendEmail({ to: order.email, ...pickupReadyEmail({ firstName: order.firstName, orderNumber: order.orderNumber, pickupAddress: "No. 105 Apata Street, Shomolu, Lagos, Nigeria", orderUrl: absoluteUrl(`/order/${order.orderNumber}`) }) }).catch(() => undefined);
+  }
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath(`/order/${order.orderNumber}`);
