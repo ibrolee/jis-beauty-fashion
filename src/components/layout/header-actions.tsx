@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, LayoutDashboard, Search, ShoppingBag, User, X } from "lucide-react";
+import { Heart, LayoutDashboard, Search, ShoppingCart, User, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
@@ -72,8 +72,8 @@ export function HeaderActions({ isAuthenticated, isAdmin }: { isAuthenticated: b
           <Heart className="h-5 w-5" strokeWidth={1.5} />
           {wishlist.hydrated && <CountBubble count={wishlist.ids.length} />}
         </Link>
-        <Link href="/cart" className={iconBtn} aria-label={`Shopping bag, ${itemCount} items`}>
-          <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
+        <Link href="/cart" className={iconBtn} aria-label={`Shopping cart, ${itemCount} items`}>
+          <ShoppingCart className="h-5 w-5" strokeWidth={1.5} />
           {hydrated && <CountBubble count={itemCount} />}
         </Link>
       </div>
