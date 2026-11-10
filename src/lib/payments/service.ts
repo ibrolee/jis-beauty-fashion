@@ -38,7 +38,7 @@ export async function reconcilePayment(providerId: string, reference: string) {
       // Paid funds for a cancelled order need manual review/refund. Do NOT
       // reactivate it: its stock may already have been sold to someone else.
       const [confirmed] = await tx.update(orders)
-        .set({ paymentStatus: "paid", status: "payment_confirmed", updatedAt: new Date() })
+        .set({ paymentStatus: "paid", status: "processing", updatedAt: new Date() })
         .where(and(eq(orders.id, payment.orderId), ne(orders.status, "cancelled"), ne(orders.paymentStatus, "paid")))
         .returning({ id: orders.id });
       if (!confirmed) {
