@@ -41,6 +41,7 @@ export const orderStatusEnum = pgEnum("order_status", [
   "pending",
   "payment_confirmed",
   "processing",
+  "ready_for_pickup",
   "shipped",
   "delivered",
   "cancelled",
@@ -249,6 +250,8 @@ export const orders = pgTable(
     lastName: varchar("last_name", { length: 100 }).notNull(),
     phone: varchar("phone", { length: 30 }).notNull(),
     whatsapp: varchar("whatsapp", { length: 30 }),
+    /* Fulfillment */
+    fulfillmentMethod: varchar("fulfillment_method", { length: 20 }).notNull().default("delivery"),
     /* Delivery */
     state: varchar("state", { length: 60 }).notNull(),
     city: varchar("city", { length: 100 }).notNull(),
