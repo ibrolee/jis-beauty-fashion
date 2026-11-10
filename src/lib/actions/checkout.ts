@@ -66,7 +66,9 @@ export async function placeOrder(rawInput: CheckoutInput): Promise<PlaceOrderRes
     couponCode = validation.coupon.code;
   }
   const content = await getPublishedSiteContent();
-  const deliveryFee = getDeliveryFee(input.state, subtotal, content.delivery);
+  const pickup = input.fulfillmentMethod === "pickup";
+  const pickupAddress = "No. 105 Apata Street, Shomolu, Lagos, Nigeria";
+  const deliveryFee = pickup ? 0 : getDeliveryFee(input.state, subtotal, content.delivery);
   const total = subtotal - discount + deliveryFee;
   const orderNumber = generateOrderNumber();
   const reference = generateReference();
@@ -74,8 +76,8 @@ export async function placeOrder(rawInput: CheckoutInput): Promise<PlaceOrderRes
     await db.transaction(async (tx) => {
       const [order] = await tx.insert(orders).values({
         orderNumber, userId: user?.id ?? null, email: input.email, firstName: input.firstName, lastName: input.lastName,
-        phone: input.phone, whatsapp: input.whatsapp || null, state: input.state, city: input.city,
-        address: input.address, instructions: input.instructions || null, subtotal, discount, deliveryFee, total,
+        phone: input.phone, whatsapp: input.whatsapp || null, fulfillmentMethod: input.fulfillmentMethod, state: pickup ? "Lagos" : input.state, city: pickup ? "Shomolu" : input.city,
+        address: pickup ? pickupAddress : input.address, instructions: input.instructions || null, subtotal, discount, deliveryFee, total,
         couponCode, paymentMethod: "bank_transfer", paymentStatus: "pending", status: "pending",
       }).returning({ id: orders.id });
       await tx.insert(orderItems).values(lines.map(({ productSlug: _productSlug, ...line }) => ({ ...line, orderId: order.id })));
@@ -103,7 +105,7 @@ export async function placeOrder(rawInput: CheckoutInput): Promise<PlaceOrderRes
         if (!reservedCoupon) throw new Error("COUPON_UNAVAILABLE");
       }
       await tx.insert(payments).values({ orderId: order.id, provider: "manual", reference, amount: total, status: "pending", channel: input.paymentMethod === "whatsapp" ? "whatsapp" : "bank_transfer" });
-      if (user && input.saveAddress) await tx.insert(addresses).values({ userId: user.id, label: "Checkout address", firstName: input.firstName, lastName: input.lastName, phone: input.phone, state: input.state, city: input.city, addressLine: input.address, instructions: input.instructions || null });
+      if (user && input.saveAddress && !pickup) await tx.insert(addresses).values({ userId: user.id, label: "Checkout address", firstName: input.firstName, lastName: input.lastName, phone: input.phone, state: input.state, city: input.city, addressLine: input.address, instructions: input.instructions || null });
     });
   } catch (error) {
     if (error instanceof Error && error.message === "OUT_OF_STOCK") return { ok: false, error: "An item just sold out or its available stock changed. Please review your bag and try again." };
@@ -111,7 +113,7 @@ export async function placeOrder(rawInput: CheckoutInput): Promise<PlaceOrderRes
     console.error("Order creation failed:", error);
     return { ok: false, error: "We couldn't place your order. Please try again." };
   }
-  void sendEmail({ to: input.email, ...orderConfirmationEmail({ firstName: input.firstName, orderNumber, total: formatNaira(total), orderUrl: absoluteUrl(`/order/${orderNumber}`) }) }).catch(() => undefined);
+  void sendEmail({ to: input.email, ...orderConfirmationEmail({ firstName: input.firstName, orderNumber, total: formatNaira(total), orderUrl: absoluteUrl(`/order/${orderNumber}`), fulfillmentMethod: input.fulfillmentMethod, pickupAddress }) }).catch(() => undefined);
   if (input.paymentMethod === "whatsapp") {
     const message = whatsappCheckoutMessage({ orderNumber, total, items: lines.map((line) => ({ name: line.name, quantity: line.quantity, unitPrice: line.unitPrice, variantName: line.variantName, productSlug: line.productSlug })) });
     return { ok: true, orderNumber, redirectUrl: `${brandLinks(content.website.brand).whatsappUrl}?text=${encodeURIComponent(message)}` };
