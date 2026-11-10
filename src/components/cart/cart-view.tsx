@@ -95,7 +95,7 @@ export function CartView({ delivery }: { delivery: DeliverySettings }) {
   );
 
   if (!items.length) return (
-    <EmptyState icon={ShoppingBag} title="Your bag is empty" description="Your next fragrance is waiting. Explore the collection and find something that feels like you." action={<><ButtonLink href="/shop">Explore fragrances</ButtonLink><ButtonLink href="/shop?bestSellers=1" variant="secondary">View best sellers</ButtonLink></>} />
+    <EmptyState icon={ShoppingBag} title="Your cart is empty" description="Your next fragrance is waiting. Explore the collection and find something that feels like you." action={<><ButtonLink href="/shop">Explore fragrances</ButtonLink><ButtonLink href="/shop?bestSellers=1" variant="secondary">View best sellers</ButtonLink></>} />
   );
 
   return (
