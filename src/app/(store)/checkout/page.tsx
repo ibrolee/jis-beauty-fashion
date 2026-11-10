@@ -2,12 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getDefaultAddress } from "@/lib/data/users";
+import { getPublishedSiteContent } from "@/lib/data/settings";
 import { isOnlinePaymentEnabled } from "@/lib/payments";
 
 export const metadata: Metadata = { title: "Checkout", robots: { index: false } };
 
 export default async function CheckoutPage() {
   const user = await getCurrentUser();
+  const [savedAddress, content] = await Promise.all([user ? getDefaultAddress(user.id) : Promise.resolve(undefined), getPublishedSiteContent()]);
 
   return (
     <div className="jis-checkout min-h-[70svh] bg-cream pb-20 pt-8 lg:pb-28 lg:pt-14">
@@ -27,7 +30,7 @@ export default async function CheckoutPage() {
             <li className="text-stone"><span className="mr-2">03</span> Confirmation</li>
           </ol>
         </header>
-        <CheckoutForm user={user} savedAddress={null} paystackEnabled={isOnlinePaymentEnabled()} />
+        <CheckoutForm user={user} savedAddress={savedAddress ?? null} paystackEnabled={isOnlinePaymentEnabled()} delivery={content.delivery} />
       </div>
     </div>
   );
