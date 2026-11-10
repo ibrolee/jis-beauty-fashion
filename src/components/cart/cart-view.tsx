@@ -62,8 +62,6 @@ export function CartSummary({ state, showCheckout = true, delivery }: { state?: 
   const { subtotal, discount, itemCount } = useCart();
   const estimatedDelivery = state ? getDeliveryFee(state, subtotal, delivery) : null;
   const total = subtotal - discount + (estimatedDelivery ?? 0);
-  const freeEverywhere = subtotal >= delivery.freeDeliveryThreshold;
-  const freeInterstate = subtotal >= delivery.interstateFreeDeliveryThreshold;
 
   return (
     <div className="border border-line bg-[#f5f0e8] p-6 sm:p-8">
@@ -72,11 +70,9 @@ export function CartSummary({ state, showCheckout = true, delivery }: { state?: 
       <dl className="mt-8 space-y-4 text-sm">
         <div className="flex justify-between gap-4"><dt className="text-stone">Subtotal ({itemCount} item{itemCount === 1 ? "" : "s"})</dt><dd className="tabular-nums text-ink">{formatNaira(subtotal)}</dd></div>
         {discount > 0 && <div className="flex justify-between gap-4 text-success"><dt>Discount</dt><dd className="tabular-nums">−{formatNaira(discount)}</dd></div>}
-        <div className="flex justify-between gap-4"><dt className="text-stone">Delivery</dt><dd className="text-right text-xs text-stone">{state ? (estimatedDelivery === 0 ? <span className="text-success">Free</span> : formatNaira(estimatedDelivery ?? 0)) : freeEverywhere ? <span className="text-success">Free nationwide</span> : freeInterstate ? <span className="text-success">Free interstate · Lagos at checkout</span> : "Calculated at checkout"}</dd></div>
+        <div className="flex justify-between gap-4"><dt className="text-stone">Delivery</dt><dd className="text-right text-xs text-stone">{state ? formatNaira(estimatedDelivery ?? 0) : "Calculated at checkout"}</dd></div>
         <div className="flex items-end justify-between gap-4 border-t border-line pt-6"><dt className="text-[10px] font-medium uppercase tracking-[0.18em] text-stone">{state ? "Total" : "Total before delivery"}</dt><dd className="font-serif text-3xl tabular-nums text-ink">{formatNaira(total)}</dd></div>
       </dl>
-      {!freeInterstate && <p className="mt-5 border-l border-rosewood/50 pl-3 text-xs leading-5 text-stone">Add {formatNaira(delivery.interstateFreeDeliveryThreshold - subtotal)} more for free interstate delivery. Lagos delivery is free from {formatNaira(delivery.freeDeliveryThreshold)}.</p>}
-      {freeInterstate && !freeEverywhere && <p className="mt-5 border-l border-rosewood/50 pl-3 text-xs leading-5 text-stone">Your order qualifies for free interstate delivery. Delivery within Lagos is free from {formatNaira(delivery.freeDeliveryThreshold)}.</p>}
       {showCheckout && (
         <div className="mt-8 space-y-3">
           <ButtonLink href="/checkout" size="lg" className="w-full">Proceed to checkout <ArrowRight className="h-4 w-4" aria-hidden="true" /></ButtonLink>
