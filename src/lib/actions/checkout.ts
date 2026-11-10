@@ -76,8 +76,8 @@ export async function placeOrder(rawInput: CheckoutInput): Promise<PlaceOrderRes
     await db.transaction(async (tx) => {
       const [order] = await tx.insert(orders).values({
         orderNumber, userId: user?.id ?? null, email: input.email, firstName: input.firstName, lastName: input.lastName,
-        phone: input.phone, whatsapp: input.whatsapp || null, fulfillmentMethod: input.fulfillmentMethod, state: pickup ? "Lagos" : input.state, city: pickup ? "Shomolu" : input.city,
-        address: pickup ? pickupAddress : input.address, instructions: input.instructions || null, subtotal, discount, deliveryFee, total,
+        phone: input.phone, whatsapp: input.whatsapp || null, fulfillmentMethod: input.fulfillmentMethod, state: pickup ? "Lagos" : (input.state || ""), city: pickup ? "Shomolu" : (input.city || ""),
+        address: pickup ? pickupAddress : (input.address || ""), instructions: input.instructions || null, subtotal, discount, deliveryFee, total,
         couponCode, paymentMethod: "bank_transfer", paymentStatus: "pending", status: "pending",
       }).returning({ id: orders.id });
       await tx.insert(orderItems).values(lines.map(({ productSlug: _productSlug, ...line }) => ({ ...line, orderId: order.id })));
