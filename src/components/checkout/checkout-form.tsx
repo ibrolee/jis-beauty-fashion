@@ -13,14 +13,15 @@ import { Field, FormMessage, Input } from "@/components/ui/form-fields";
 import type { Address } from "@/db/schema";
 import { placeOrder } from "@/lib/actions/checkout";
 import type { SessionUser } from "@/lib/auth/session";
+import type { SiteContent } from "@/lib/site-content";
 
 
 import { cn, formatNaira } from "@/lib/utils";
 
-type Props = { user: SessionUser | null; savedAddress: Address | null; paystackEnabled: boolean };
+type Props = { user: SessionUser | null; savedAddress: Address | null; paystackEnabled: boolean; delivery: SiteContent["delivery"] };
 const PICKUP_ADDRESS = "No. 105 Apata Street, Shomolu, Lagos, Nigeria";
 
-export function CheckoutForm({ user, savedAddress, paystackEnabled }: Props) {
+export function CheckoutForm({ user, savedAddress, paystackEnabled, delivery }: Props) {
   const { items, hydrated, subtotal, discount, coupon, clearCart } = useCart();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
