@@ -44,7 +44,7 @@ export function CheckoutForm({ user, savedAddress, paystackEnabled, delivery }: 
       email: String(fd.get("email") ?? ""),
       phone: String(fd.get("phone") ?? ""),
       whatsapp: String(fd.get("whatsapp") ?? ""),
-      state: "Lagos",
+      state: "Lagos" as const,
       city: "Shomolu",
       address: PICKUP_ADDRESS,
       instructions: String(fd.get("instructions") ?? ""),
