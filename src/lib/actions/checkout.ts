@@ -25,9 +25,10 @@ export async function placeOrder(rawInput: CheckoutInput): Promise<PlaceOrderRes
   if (!parsed.success) return { ok: false, error: "Please check the highlighted fields.", fieldErrors: fieldErrorsFrom(parsed.error) };
   const input = parsed.data;
   // Existing Paystack and pay-on-delivery orders remain readable, but new orders use only the two approved channels.
-  if (input.paymentMethod !== "whatsapp" && input.paymentMethod !== "bank_transfer") {
-    return { ok: false, error: "Please choose WhatsApp instant payment or bank transfer.", fieldErrors: { paymentMethod: "Choose a payment option" } };
+  if (input.paymentMethod !== "paystack") {
+    return { ok: false, error: "Please choose online payment with Paystack.", fieldErrors: { paymentMethod: "Choose Paystack online payment" } };
   }
+  if (!isOnlinePaymentEnabled()) return { ok: false, error: "Online payment is temporarily unavailable. Please try again later." };
   await expireUnpaidBankTransfers();
   const user = await getCurrentUser();
   const productIds = [...new Set(input.items.map((i) => i.productId))];
@@ -78,7 +79,7 @@ export async function placeOrder(rawInput: CheckoutInput): Promise<PlaceOrderRes
         orderNumber, userId: user?.id ?? null, email: input.email, firstName: input.firstName, lastName: input.lastName,
         phone: input.phone, whatsapp: input.whatsapp || null, fulfillmentMethod: input.fulfillmentMethod, state: pickup ? "Lagos" : (input.state || ""), city: pickup ? "Shomolu" : (input.city || ""),
         address: pickup ? pickupAddress : (input.address || ""), instructions: input.instructions || null, subtotal, discount, deliveryFee, total,
-        couponCode, paymentMethod: "bank_transfer", paymentStatus: "pending", status: "pending",
+        couponCode, paymentMethod: "paystack", paymentStatus: "pending", status: "pending",
       }).returning({ id: orders.id });
       await tx.insert(orderItems).values(lines.map(({ productSlug: _productSlug, ...line }) => ({ ...line, orderId: order.id })));
       for (const line of lines) {
@@ -104,7 +105,7 @@ export async function placeOrder(rawInput: CheckoutInput): Promise<PlaceOrderRes
           .returning({ id: coupons.id });
         if (!reservedCoupon) throw new Error("COUPON_UNAVAILABLE");
       }
-      await tx.insert(payments).values({ orderId: order.id, provider: "manual", reference, amount: total, status: "pending", channel: input.paymentMethod === "whatsapp" ? "whatsapp" : "bank_transfer" });
+      await tx.insert(payments).values({ orderId: order.id, provider: "paystack", reference, amount: total, status: "pending", channel: "paystack" });
       if (user && input.saveAddress && !pickup) await tx.insert(addresses).values({ userId: user.id, label: "Checkout address", firstName: input.firstName, lastName: input.lastName, phone: input.phone, state: input.state, city: input.city, addressLine: input.address, instructions: input.instructions || null } as typeof addresses.$inferInsert);
     });
   } catch (error) {
@@ -114,11 +115,18 @@ export async function placeOrder(rawInput: CheckoutInput): Promise<PlaceOrderRes
     return { ok: false, error: "We couldn't place your order. Please try again." };
   }
   void sendEmail({ to: input.email, ...orderConfirmationEmail({ firstName: input.firstName, orderNumber, total: formatNaira(total), orderUrl: absoluteUrl(`/order/${orderNumber}`), fulfillmentMethod: input.fulfillmentMethod, pickupAddress }) }).catch(() => undefined);
-  if (input.paymentMethod === "whatsapp") {
-    const message = whatsappCheckoutMessage({ orderNumber, total, items: lines.map((line) => ({ name: line.name, quantity: line.quantity, unitPrice: line.unitPrice, variantName: line.variantName, productSlug: line.productSlug })) });
-    return { ok: true, orderNumber, redirectUrl: `${brandLinks(content.website.brand).whatsappUrl}?text=${encodeURIComponent(message)}` };
+  try {
+    const init = await getPaymentProvider("paystack").initialize({
+      reference, orderNumber, amount: total, email: input.email,
+      callbackUrl: absoluteUrl("/api/payments/paystack/callback"),
+      metadata: { fulfillment_method: input.fulfillmentMethod },
+    });
+    return { ok: true, orderNumber, redirectUrl: init.authorizationUrl };
+  } catch (error) {
+    console.error("Paystack checkout initialization failed:", error);
+    await db.update(payments).set({ status: "failed", updatedAt: new Date() }).where(eq(payments.reference, reference));
+    return { ok: false, orderNumber, error: "We couldn't start Paystack checkout. Please try placing your order again." };
   }
-  return { ok: true, orderNumber };
 }
 
 /** Legacy retry support for previously created Paystack orders only. */
