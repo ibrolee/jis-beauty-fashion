@@ -69,3 +69,13 @@ export function orderConfirmationEmail(params: {
     html: `<p>Hi ${escapeHtml(firstName)},</p><p>Thank you for shopping with JIS Beauty &amp; Fashion. We have received your order <strong>${escapeHtml(orderNumber)}</strong> (${escapeHtml(total)}).</p><p>${escapeHtml(fulfillmentText)}</p><p><a href="${escapeHtml(orderUrl)}">View your order</a></p><p><em>Where beauty meets style.</em></p>`,
   };
 }
+
+/** Notify a pickup customer once staff marks the order ready to collect. */
+export function pickupReadyEmail(params: { firstName: string; orderNumber: string; pickupAddress: string; orderUrl: string }): Omit<EmailMessage, "to"> {
+  const { firstName, orderNumber, pickupAddress, orderUrl } = params;
+  return {
+    subject: `Order ${orderNumber} is ready for pickup — JIS Beauty & Fashion`,
+    text: `Hi ${firstName},\n\nYour JIS Beauty & Fashion order ${orderNumber} is packed and ready for pickup.\nPickup location: ${pickupAddress}\nPlease bring your order number when collecting.\nOrder details: ${orderUrl}\n\n— JIS Beauty & Fashion`,
+    html: `<p>Hi ${escapeHtml(firstName)},</p><p>Your JIS Beauty &amp; Fashion order <strong>${escapeHtml(orderNumber)}</strong> is packed and ready for pickup.</p><p><strong>Pickup location:</strong> ${escapeHtml(pickupAddress)}</p><p>Please bring your order number when collecting.</p><p><a href="${escapeHtml(orderUrl)}">View order details</a></p><p>— JIS Beauty &amp; Fashion</p>`,
+  };
+}
