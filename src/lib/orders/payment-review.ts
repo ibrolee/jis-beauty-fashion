@@ -22,7 +22,7 @@ export function manualCheckoutChannel(
 
 /** Never begin preparing or delivering an order while its payment is unverified. */
 export function isFulfillmentTransitionAllowed(orderStatus: string, paymentStatus: string): boolean {
-  if (["payment_confirmed", "processing", "shipped", "delivered"].includes(orderStatus)) {
+  if (["payment_confirmed", "processing", "ready_for_pickup", "shipped", "delivered"].includes(orderStatus)) {
     return paymentStatus === "paid";
   }
   return true;

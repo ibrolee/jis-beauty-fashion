@@ -19,6 +19,8 @@ import { cn, formatNaira } from "@/lib/utils";
 
 type Props = { user: SessionUser | null; savedAddress: Address | null; paystackEnabled: boolean; content: BusinessContent; delivery: DeliverySettings };
 type CheckoutPayment = "whatsapp" | "bank_transfer";
+type Fulfillment = "delivery" | "pickup";
+const PICKUP_ADDRESS = "No. 105 Apata Street, Shomolu, Lagos, Nigeria";
 
 export function CheckoutForm({ user, savedAddress, content, delivery }: Props) {
   const { items, hydrated, subtotal, discount, coupon, clearCart } = useCart();
@@ -28,7 +30,8 @@ export function CheckoutForm({ user, savedAddress, content, delivery }: Props) {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [state, setState] = useState<string>(savedAddress?.state ?? "");
   const [paymentMethod, setPaymentMethod] = useState<CheckoutPayment>("whatsapp");
-  const deliveryFee = useMemo(() => getDeliveryFee(state, subtotal, delivery), [state, subtotal, delivery]);
+  const [fulfillmentMethod, setFulfillmentMethod] = useState<Fulfillment>("delivery");
+  const deliveryFee = useMemo(() => fulfillmentMethod === "pickup" ? 0 : getDeliveryFee(state, subtotal, delivery), [fulfillmentMethod, state, subtotal, delivery]);
   const total = subtotal - discount + deliveryFee;
   const eta = state ? getDeliveryZone(state, delivery).eta : null;
 
@@ -38,14 +41,15 @@ export function CheckoutForm({ user, savedAddress, content, delivery }: Props) {
     setFieldErrors({});
     const fd = new FormData(e.currentTarget);
     const payload = {
+      fulfillmentMethod,
       firstName: String(fd.get("firstName") ?? ""),
       lastName: String(fd.get("lastName") ?? ""),
       email: String(fd.get("email") ?? ""),
       phone: String(fd.get("phone") ?? ""),
       whatsapp: String(fd.get("whatsapp") ?? ""),
-      state: String(fd.get("state") ?? "") as (typeof NIGERIAN_STATES)[number],
-      city: String(fd.get("city") ?? ""),
-      address: String(fd.get("address") ?? ""),
+      state: (fulfillmentMethod === "pickup" ? "Lagos" : String(fd.get("state") ?? "")) as (typeof NIGERIAN_STATES)[number],
+      city: fulfillmentMethod === "pickup" ? "Shomolu" : String(fd.get("city") ?? ""),
+      address: fulfillmentMethod === "pickup" ? PICKUP_ADDRESS : String(fd.get("address") ?? ""),
       instructions: String(fd.get("instructions") ?? ""),
       paymentMethod,
       couponCode: coupon?.code ?? "",
@@ -100,15 +104,17 @@ export function CheckoutForm({ user, savedAddress, content, delivery }: Props) {
           </div>
         </section>
         <section aria-labelledby="delivery-heading" className="space-y-5">
-          <h2 id="delivery-heading" className="font-serif text-2xl">Delivery</h2>
-          <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="State" htmlFor="state" error={fieldErrors.state} required><Select id="state" name="state" required value={state} onChange={(e) => setState(e.target.value)} invalid={Boolean(fieldErrors.state)}><option value="" disabled>Select state</option>{NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}</Select></Field>
-            <Field label="City / Area" htmlFor="city" error={fieldErrors.city} required><Input id="city" name="city" autoComplete="address-level2" placeholder="e.g. Lekki Phase 1" required defaultValue={savedAddress?.city ?? ""} invalid={Boolean(fieldErrors.city)} /></Field>
-            <Field label="Delivery address" htmlFor="address" error={fieldErrors.address} required className="sm:col-span-2"><Textarea id="address" name="address" autoComplete="street-address" placeholder="House number, street, estate, landmark…" required defaultValue={savedAddress?.addressLine ?? ""} invalid={Boolean(fieldErrors.address)} className="min-h-[88px]" /></Field>
+          <h2 id="delivery-heading" className="font-serif text-2xl">Fulfillment</h2>
+          <div className="grid gap-3 sm:grid-cols-2"><label className={cn("flex cursor-pointer gap-3 border p-4", fulfillmentMethod === "delivery" ? "border-ink bg-cream" : "border-line")}><input type="radio" name="fulfillmentMethod" value="delivery" checked={fulfillmentMethod === "delivery"} onChange={() => setFulfillmentMethod("delivery")} /><span><strong className="block text-sm">Home delivery</strong><span className="text-xs text-stone">Deliver to your address</span></span></label><label className={cn("flex cursor-pointer gap-3 border p-4", fulfillmentMethod === "pickup" ? "border-ink bg-cream" : "border-line")}><input type="radio" name="fulfillmentMethod" value="pickup" checked={fulfillmentMethod === "pickup"} onChange={() => setFulfillmentMethod("pickup")} /><span><strong className="block text-sm">Pickup</strong><span className="text-xs text-stone">Collect from Shomolu · Free</span></span></label></div>
+          {fulfillmentMethod === "pickup" ? <div className="border border-line bg-cream p-4 text-sm"><p className="font-medium">Pickup location</p><address className="mt-1 not-italic text-ink-soft">{PICKUP_ADDRESS}</address><p className="mt-2 text-xs text-stone">We’ll notify you by email when your order is packed and ready to collect.</p></div> : null}
+          <div className={cn("grid gap-5 sm:grid-cols-2", fulfillmentMethod === "pickup" && "hidden")}>
+            <Field label="State" htmlFor="state" error={fieldErrors.state} required={fulfillmentMethod === "delivery"}><Select id="state" name="state" required={fulfillmentMethod === "delivery"} value={state} onChange={(e) => setState(e.target.value)} invalid={Boolean(fieldErrors.state)}><option value="" disabled>Select state</option>{NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}</Select></Field>
+            <Field label="City / Area" htmlFor="city" error={fieldErrors.city} required={fulfillmentMethod === "delivery"}><Input id="city" name="city" autoComplete="address-level2" placeholder="e.g. Lekki Phase 1" required={fulfillmentMethod === "delivery"} defaultValue={savedAddress?.city ?? ""} invalid={Boolean(fieldErrors.city)} /></Field>
+            <Field label="Delivery address" htmlFor="address" error={fieldErrors.address} required={fulfillmentMethod === "delivery"} className="sm:col-span-2"><Textarea id="address" name="address" autoComplete="street-address" placeholder="House number, street, estate, landmark…" required={fulfillmentMethod === "delivery"} defaultValue={savedAddress?.addressLine ?? ""} invalid={Boolean(fieldErrors.address)} className="min-h-[88px]" /></Field>
             <Field label="Additional delivery instructions" htmlFor="instructions" error={fieldErrors.instructions} className="sm:col-span-2"><Textarea id="instructions" name="instructions" placeholder="Gate code, best time to deliver, who to call…" defaultValue={savedAddress?.instructions ?? ""} className="min-h-[72px]" /></Field>
           </div>
-          {eta && <p className="text-sm text-stone">Estimated delivery to {state}: <span className="text-ink">{eta}</span>{deliveryFee === 0 ? <span className="text-success"> · Free delivery</span> : ` · ${formatNaira(deliveryFee)}`}</p>}
-          {user && <Checkbox name="saveAddress" label="Save this address to my account for next time" defaultChecked={!savedAddress} />}
+          {fulfillmentMethod === "delivery" && eta && <p className="text-sm text-stone">Estimated delivery to {state}: <span className="text-ink">{eta}</span>{deliveryFee === 0 ? <span className="text-success"> · Free delivery</span> : ` · ${formatNaira(deliveryFee)}`}</p>}
+          {user && fulfillmentMethod === "delivery" && <Checkbox name="saveAddress" label="Save this address to my account for next time" defaultChecked={!savedAddress} />}
         </section>
         <section aria-labelledby="payment-heading" className="space-y-5">
           <h2 id="payment-heading" className="font-serif text-2xl">Payment</h2>
@@ -123,9 +129,9 @@ export function CheckoutForm({ user, savedAddress, content, delivery }: Props) {
         <h2 className="font-serif text-2xl">Your order</h2>
         <ul className="mt-5 max-h-80 divide-y divide-line overflow-y-auto">{items.map((item) => <li key={item.key} className="flex gap-4 py-3"><div className="relative h-16 w-14 shrink-0 overflow-hidden bg-ivory">{item.image && <Image src={item.image} alt="" fill sizes="56px" className="object-cover" />}<span className="absolute -right-0 -top-0 flex h-5 min-w-5 items-center justify-center bg-ink px-1 text-[10px] text-white">{item.quantity}</span></div><div className="flex-1 text-sm"><p className="font-medium leading-tight">{item.name}</p><p className="text-xs text-stone">{item.variantName ?? item.brandName}</p></div><p className="text-sm tabular-nums">{formatNaira(item.price * item.quantity)}</p></li>)}</ul>
         <div className="mt-4 border-t border-line pt-4"><CouponForm compact /></div>
-        <dl className="mt-5 space-y-2.5 text-sm"><div className="flex justify-between"><dt className="text-stone">Subtotal</dt><dd className="tabular-nums">{formatNaira(subtotal)}</dd></div>{discount > 0 && <div className="flex justify-between text-success"><dt>Discount ({coupon?.code})</dt><dd className="tabular-nums">−{formatNaira(discount)}</dd></div>}<div className="flex justify-between"><dt className="text-stone">Delivery</dt><dd className="tabular-nums">{!state ? <span className="text-xs text-stone">Select state</span> : deliveryFee === 0 ? <span className="text-success">Free</span> : formatNaira(deliveryFee)}</dd></div><div className="flex justify-between border-t border-line pt-3 text-lg font-medium"><dt>Total</dt><dd className="tabular-nums">{formatNaira(total)}</dd></div></dl>
-        {state && deliveryFee > 0 && <p className="mt-2 text-xs text-stone">{state === "Lagos" ? `Free Lagos delivery from ${formatNaira(delivery.freeDeliveryThreshold)}.` : `Free interstate delivery from ${formatNaira(delivery.interstateFreeDeliveryThreshold)}.`}</p>}
-        {!state && <p className="mt-2 text-xs text-stone">Free interstate delivery from {formatNaira(delivery.interstateFreeDeliveryThreshold)}; free Lagos delivery from {formatNaira(delivery.freeDeliveryThreshold)}. Select a state for your final total.</p>}
+        <dl className="mt-5 space-y-2.5 text-sm"><div className="flex justify-between"><dt className="text-stone">Subtotal</dt><dd className="tabular-nums">{formatNaira(subtotal)}</dd></div>{discount > 0 && <div className="flex justify-between text-success"><dt>Discount ({coupon?.code})</dt><dd className="tabular-nums">−{formatNaira(discount)}</dd></div>}<div className="flex justify-between"><dt className="text-stone">{fulfillmentMethod === "pickup" ? "Pickup" : "Delivery"}</dt><dd className="tabular-nums">{fulfillmentMethod === "pickup" ? <span className="text-success">Free</span> : !state ? <span className="text-xs text-stone">Select state</span> : deliveryFee === 0 ? <span className="text-success">Free</span> : formatNaira(deliveryFee)}</dd></div><div className="flex justify-between border-t border-line pt-3 text-lg font-medium"><dt>Total</dt><dd className="tabular-nums">{formatNaira(total)}</dd></div></dl>
+        {fulfillmentMethod === "delivery" && state && deliveryFee > 0 && <p className="mt-2 text-xs text-stone">{state === "Lagos" ? `Free Lagos delivery from ${formatNaira(delivery.freeDeliveryThreshold)}.` : `Free interstate delivery from ${formatNaira(delivery.interstateFreeDeliveryThreshold)}.`}</p>}
+        {fulfillmentMethod === "delivery" && !state && <p className="mt-2 text-xs text-stone">Free interstate delivery from {formatNaira(delivery.interstateFreeDeliveryThreshold)}; free Lagos delivery from {formatNaira(delivery.freeDeliveryThreshold)}. Select a state for your final total.</p>}
         <Button type="submit" size="lg" loading={pending} className="mt-6 w-full">{paymentMethod === "whatsapp" ? "Place order & open WhatsApp" : "Place order & view bank details"}</Button>
         <p className="mt-3 text-center text-xs text-stone">By placing your order you agree to our <Link href="/terms" className="underline">terms</Link> and <Link href="/returns" className="underline">returns policy</Link>.</p>
       </div></aside>
