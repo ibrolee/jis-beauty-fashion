@@ -4,36 +4,32 @@ import { ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition, type FormEvent } from "react";
+import { useState, useTransition, type FormEvent } from "react";
 import { useCart } from "@/components/cart/cart-provider";
 import { CouponForm } from "@/components/cart/cart-view";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Checkbox, Field, FormMessage, Input, Select, Textarea } from "@/components/ui/form-fields";
+import { Field, FormMessage, Input } from "@/components/ui/form-fields";
 import type { Address } from "@/db/schema";
 import { placeOrder } from "@/lib/actions/checkout";
 import type { SessionUser } from "@/lib/auth/session";
-import { NIGERIAN_STATES, getDeliveryFee, getDeliveryZone, type DeliverySettings } from "@/lib/constants";
-import type { BusinessContent } from "@/lib/site-content";
+
+
 import { cn, formatNaira } from "@/lib/utils";
 
-type Props = { user: SessionUser | null; savedAddress: Address | null; paystackEnabled: boolean; content: BusinessContent; delivery: DeliverySettings };
-type CheckoutPayment = "whatsapp" | "bank_transfer";
-type Fulfillment = "delivery" | "pickup";
+type Props = { user: SessionUser | null; savedAddress: Address | null; paystackEnabled: boolean };
 const PICKUP_ADDRESS = "No. 105 Apata Street, Shomolu, Lagos, Nigeria";
 
-export function CheckoutForm({ user, savedAddress, content, delivery }: Props) {
+export function CheckoutForm({ user, savedAddress, paystackEnabled }: Props) {
   const { items, hydrated, subtotal, discount, coupon, clearCart } = useCart();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [state, setState] = useState<string>(savedAddress?.state ?? "");
-  const [paymentMethod, setPaymentMethod] = useState<CheckoutPayment>("whatsapp");
-  const [fulfillmentMethod, setFulfillmentMethod] = useState<Fulfillment>("delivery");
-  const deliveryFee = useMemo(() => fulfillmentMethod === "pickup" ? 0 : getDeliveryFee(state, subtotal, delivery), [fulfillmentMethod, state, subtotal, delivery]);
-  const total = subtotal - discount + deliveryFee;
-  const eta = state ? getDeliveryZone(state, delivery).eta : null;
+  const fulfillmentMethod = "pickup" as const;
+  const paymentMethod = "paystack" as const;
+  const deliveryFee = 0;
+  const total = subtotal - discount;
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -47,13 +43,13 @@ export function CheckoutForm({ user, savedAddress, content, delivery }: Props) {
       email: String(fd.get("email") ?? ""),
       phone: String(fd.get("phone") ?? ""),
       whatsapp: String(fd.get("whatsapp") ?? ""),
-      state: (fulfillmentMethod === "pickup" ? "Lagos" : String(fd.get("state") ?? "")) as (typeof NIGERIAN_STATES)[number],
-      city: fulfillmentMethod === "pickup" ? "Shomolu" : String(fd.get("city") ?? ""),
-      address: fulfillmentMethod === "pickup" ? PICKUP_ADDRESS : String(fd.get("address") ?? ""),
+      state: "Lagos",
+      city: "Shomolu",
+      address: PICKUP_ADDRESS,
       instructions: String(fd.get("instructions") ?? ""),
       paymentMethod,
       couponCode: coupon?.code ?? "",
-      saveAddress: fd.get("saveAddress") === "on",
+      saveAddress: false,
       items: items.map((i) => ({ productId: i.productId, variantId: i.variantId, quantity: i.quantity })),
     };
     startTransition(async () => {
@@ -83,10 +79,6 @@ export function CheckoutForm({ user, savedAddress, content, delivery }: Props) {
   if (!hydrated) return <div className="h-96 animate-pulse bg-ivory" aria-busy />;
   if (!items.length) return <EmptyState icon={ShoppingBag} title="Nothing to check out yet" description="Your bag is empty. Add a fragrance or two and come back." action={<ButtonLink href="/shop">Browse the collection</ButtonLink>} />;
 
-  const paymentOptions: { value: CheckoutPayment; title: string; body: string }[] = [
-    { value: "whatsapp", title: content.whatsappPaymentTitle, body: content.whatsappPaymentBody },
-    { value: "bank_transfer", title: content.bankTransferTitle, body: content.bankTransferBody },
-  ];
 
   return (
     <form onSubmit={onSubmit} className="grid gap-10 lg:grid-cols-12" noValidate>
@@ -105,32 +97,20 @@ export function CheckoutForm({ user, savedAddress, content, delivery }: Props) {
         </section>
         <section aria-labelledby="delivery-heading" className="space-y-5">
           <h2 id="delivery-heading" className="font-serif text-2xl">Fulfillment</h2>
-          <div className="grid gap-3 sm:grid-cols-2"><label className={cn("flex cursor-pointer gap-3 border p-4", fulfillmentMethod === "delivery" ? "border-ink bg-cream" : "border-line")}><input type="radio" name="fulfillmentMethod" value="delivery" checked={fulfillmentMethod === "delivery"} onChange={() => setFulfillmentMethod("delivery")} /><span><strong className="block text-sm">Home delivery</strong><span className="text-xs text-stone">Deliver to your address</span></span></label><label className={cn("flex cursor-pointer gap-3 border p-4", fulfillmentMethod === "pickup" ? "border-ink bg-cream" : "border-line")}><input type="radio" name="fulfillmentMethod" value="pickup" checked={fulfillmentMethod === "pickup"} onChange={() => setFulfillmentMethod("pickup")} /><span><strong className="block text-sm">Pickup</strong><span className="text-xs text-stone">Collect from Shomolu · Free</span></span></label></div>
-          {fulfillmentMethod === "pickup" ? <div className="border border-line bg-cream p-4 text-sm"><p className="font-medium">Pickup location</p><address className="mt-1 not-italic text-ink-soft">{PICKUP_ADDRESS}</address><p className="mt-2 text-xs text-stone">We’ll notify you by email when your order is packed and ready to collect.</p></div> : null}
-          <div className={cn("grid gap-5 sm:grid-cols-2", fulfillmentMethod === "pickup" && "hidden")}>
-            <Field label="State" htmlFor="state" error={fieldErrors.state} required={fulfillmentMethod === "delivery"}><Select id="state" name="state" required={fulfillmentMethod === "delivery"} value={state} onChange={(e) => setState(e.target.value)} invalid={Boolean(fieldErrors.state)}><option value="" disabled>Select state</option>{NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}</Select></Field>
-            <Field label="City / Area" htmlFor="city" error={fieldErrors.city} required={fulfillmentMethod === "delivery"}><Input id="city" name="city" autoComplete="address-level2" placeholder="e.g. Lekki Phase 1" required={fulfillmentMethod === "delivery"} defaultValue={savedAddress?.city ?? ""} invalid={Boolean(fieldErrors.city)} /></Field>
-            <Field label="Delivery address" htmlFor="address" error={fieldErrors.address} required={fulfillmentMethod === "delivery"} className="sm:col-span-2"><Textarea id="address" name="address" autoComplete="street-address" placeholder="House number, street, estate, landmark…" required={fulfillmentMethod === "delivery"} defaultValue={savedAddress?.addressLine ?? ""} invalid={Boolean(fieldErrors.address)} className="min-h-[88px]" /></Field>
-            <Field label="Additional delivery instructions" htmlFor="instructions" error={fieldErrors.instructions} className="sm:col-span-2"><Textarea id="instructions" name="instructions" placeholder="Gate code, best time to deliver, who to call…" defaultValue={savedAddress?.instructions ?? ""} className="min-h-[72px]" /></Field>
-          </div>
-          {fulfillmentMethod === "delivery" && eta && <p className="text-sm text-stone">Estimated delivery to {state}: <span className="text-ink">{eta}</span>{` · ${formatNaira(deliveryFee)}`}</p>}
-          {user && fulfillmentMethod === "delivery" && <Checkbox name="saveAddress" label="Save this address to my account for next time" defaultChecked={!savedAddress} />}
+          <div className="border border-ink bg-cream p-4 text-sm"><p className="font-medium">Pickup only · Free</p><address className="mt-1 not-italic text-ink-soft">{PICKUP_ADDRESS}</address><p className="mt-2 text-xs text-stone">We’ll notify you by email when your order is packed and ready to collect.</p></div>
         </section>
         <section aria-labelledby="payment-heading" className="space-y-5">
           <h2 id="payment-heading" className="font-serif text-2xl">Payment</h2>
-          {fieldErrors.paymentMethod && <p className="text-xs text-sale">{fieldErrors.paymentMethod}</p>}
-          <div className="space-y-3" role="radiogroup" aria-label="Payment method">
-            {paymentOptions.map((opt) => <label key={opt.value} className={cn("flex cursor-pointer gap-4 border p-4 transition-colors", paymentMethod === opt.value ? "border-ink bg-cream" : "border-line hover:border-stone")}><input type="radio" name="paymentMethod" value={opt.value} checked={paymentMethod === opt.value} onChange={() => setPaymentMethod(opt.value)} className="mt-1 h-4 w-4 accent-ink" /><span className="flex-1"><span className="block text-sm font-medium">{opt.title}</span><span className="mt-1 block text-xs leading-relaxed text-stone">{opt.body}</span></span></label>)}
-          </div>
-          <p className="text-xs text-stone">{content.paymentVerificationNote}</p>
+          <label className="flex cursor-pointer gap-4 border border-ink bg-cream p-4"><input type="radio" checked readOnly className="mt-1 h-4 w-4 accent-ink" /><span className="flex-1"><span className="block text-sm font-medium">Pay online with Paystack</span><span className="mt-1 block text-xs leading-relaxed text-stone">Secure payment by card, bank transfer and supported methods.</span></span></label>
+          {!paystackEnabled && <FormMessage type="error">Online payment is temporarily unavailable.</FormMessage>}
         </section>
       </div>
       <aside className="lg:col-span-5"><div className="border border-line bg-cream p-6 lg:sticky lg:top-28">
         <h2 className="font-serif text-2xl">Your order</h2>
         <ul className="mt-5 max-h-80 divide-y divide-line overflow-y-auto">{items.map((item) => <li key={item.key} className="flex gap-4 py-3"><div className="relative h-16 w-14 shrink-0 overflow-hidden bg-ivory">{item.image && <Image src={item.image} alt="" fill sizes="56px" className="object-cover" />}<span className="absolute -right-0 -top-0 flex h-5 min-w-5 items-center justify-center bg-ink px-1 text-[10px] text-white">{item.quantity}</span></div><div className="flex-1 text-sm"><p className="font-medium leading-tight">{item.name}</p><p className="text-xs text-stone">{item.variantName ?? item.brandName}</p></div><p className="text-sm tabular-nums">{formatNaira(item.price * item.quantity)}</p></li>)}</ul>
         <div className="mt-4 border-t border-line pt-4"><CouponForm compact /></div>
-        <dl className="mt-5 space-y-2.5 text-sm"><div className="flex justify-between"><dt className="text-stone">Subtotal</dt><dd className="tabular-nums">{formatNaira(subtotal)}</dd></div>{discount > 0 && <div className="flex justify-between text-success"><dt>Discount ({coupon?.code})</dt><dd className="tabular-nums">−{formatNaira(discount)}</dd></div>}<div className="flex justify-between"><dt className="text-stone">{fulfillmentMethod === "pickup" ? "Pickup" : "Delivery"}</dt><dd className="tabular-nums">{fulfillmentMethod === "pickup" ? <span className="text-success">Free</span> : !state ? <span className="text-xs text-stone">Select state</span> : formatNaira(deliveryFee)}</dd></div><div className="flex justify-between border-t border-line pt-3 text-lg font-medium"><dt>Total</dt><dd className="tabular-nums">{formatNaira(total)}</dd></div></dl>
-        <Button type="submit" size="lg" loading={pending} className="mt-6 w-full">{paymentMethod === "whatsapp" ? "Place order & open WhatsApp" : "Place order & view bank details"}</Button>
+        <dl className="mt-5 space-y-2.5 text-sm"><div className="flex justify-between"><dt className="text-stone">Subtotal</dt><dd className="tabular-nums">{formatNaira(subtotal)}</dd></div>{discount > 0 && <div className="flex justify-between text-success"><dt>Discount ({coupon?.code})</dt><dd className="tabular-nums">−{formatNaira(discount)}</dd></div>}<div className="flex justify-between"><dt className="text-stone">Pickup</dt><dd className="tabular-nums"><span className="text-success">Free</span></dd></div><div className="flex justify-between border-t border-line pt-3 text-lg font-medium"><dt>Total</dt><dd className="tabular-nums">{formatNaira(total)}</dd></div></dl>
+        <Button type="submit" size="lg" loading={pending} disabled={!paystackEnabled} className="mt-6 w-full">Pay securely with Paystack</Button>
         <p className="mt-3 text-center text-xs text-stone">By placing your order you agree to our <Link href="/terms" className="underline">terms</Link> and <Link href="/returns" className="underline">returns policy</Link>.</p>
       </div></aside>
     </form>
