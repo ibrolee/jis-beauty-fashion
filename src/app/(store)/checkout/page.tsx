@@ -18,7 +18,7 @@ export default async function CheckoutPage() {
             <Link href="/cart" className="text-[10px] font-medium uppercase tracking-[0.17em] text-ink underline underline-offset-4 hover:text-rosewood">← Edit your bag</Link>
           </div>
           <h1 className="font-serif text-[clamp(3.5rem,8vw,7rem)] leading-[0.92] tracking-[-0.035em] text-ink">Almost yours.</h1>
-          <p className="mt-6 max-w-xl text-sm leading-7 text-stone">{content.business.checkoutIntro}</p>
+          <p className="mt-6 max-w-xl text-sm leading-7 text-stone">Choose pickup and pay securely online.</p>
           <ol className="mt-9 flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] font-medium uppercase tracking-[0.16em] sm:gap-x-7" aria-label="Checkout steps">
             <li className="text-stone"><span className="mr-2 text-rosewood">01</span> Bag</li>
             <li className="text-stone" aria-hidden="true">/</li>
