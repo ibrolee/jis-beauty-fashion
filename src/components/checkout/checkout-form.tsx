@@ -60,13 +60,11 @@ export function CheckoutForm({ user, savedAddress, paystackEnabled, delivery }: 
       try {
         const result = await placeOrder(payload);
         if (result.ok) {
-          clearCart();
           if (result.redirectUrl) window.location.assign(result.redirectUrl);
           else router.push(`/order/${result.orderNumber}`);
           return;
         }
         if (result.orderNumber) {
-          clearCart();
           router.push(`/order/${result.orderNumber}?payment=failed`);
           return;
         }
