@@ -55,13 +55,13 @@ export function AddToCartButton({ product, variant = null, quantity = 1, size = 
       router.push("/checkout");
       return;
     }
-    toast(`${product.name}${variant ? ` (${variant.name})` : ""} added to your bag`, { action: { label: "View bag", href: "/cart" } });
+    toast(`${product.name}${variant ? ` (${variant.name})` : ""} added to your cart`, { action: { label: "View cart", href: "/cart" } });
   }
 
   return (
     <Button type="button" onClick={handleClick} disabled={soldOut} size={size} variant={appearance} className={className} aria-label={soldOut ? `${product.name} is sold out` : undefined}>
       {!buyNow && <ShoppingBag className="h-4 w-4" aria-hidden />}
-      {soldOut ? "Sold out" : (label ?? (needsSelection ? "Choose option" : buyNow ? "Buy now" : "Add to bag"))}
+      {soldOut ? "Sold out" : (label ?? (needsSelection ? "Choose option" : buyNow ? "Buy now" : "Add to cart"))}
     </Button>
   );
 }
