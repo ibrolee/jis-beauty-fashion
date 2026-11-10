@@ -17,7 +17,7 @@ export function OrderStatusForm({ order }: { order: Order }) {
       <input type="hidden" name="originalPaymentStatus" value={order.paymentStatus} />
       {state.error && <FormMessage type="error">{state.error}</FormMessage>}
       {state.ok && <FormMessage type="success">{state.message}</FormMessage>}
-      <Field label="Order status" htmlFor="status" hint="Processing and delivery require a verified, Paid payment status.">
+      <Field label="Order status" htmlFor="status" hint="Fulfillment, pickup readiness and delivery require a verified, Paid payment status.">
         <Select id="status" name="status" defaultValue={order.status}>
           {ORDER_STATUSES.map((s) => (
             <option key={s} value={s}>{ORDER_STATUS_LABELS[s]}</option>
