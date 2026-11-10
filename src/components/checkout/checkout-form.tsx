@@ -14,9 +14,8 @@ import type { Address } from "@/db/schema";
 import { placeOrder } from "@/lib/actions/checkout";
 import type { SessionUser } from "@/lib/auth/session";
 import type { SiteContent } from "@/lib/site-content";
-
-
-import { cn, formatNaira } from "@/lib/utils";
+import { NIGERIAN_STATES, getDeliveryFee, getDeliveryZone } from "@/lib/constants";
+import { formatNaira } from "@/lib/utils";
 
 type Props = { user: SessionUser | null; savedAddress: Address | null; paystackEnabled: boolean; delivery: SiteContent["delivery"] };
 const PICKUP_ADDRESS = "No. 105 Apata Street, Shomolu, Lagos, Nigeria";
@@ -27,10 +26,14 @@ export function CheckoutForm({ user, savedAddress, paystackEnabled, delivery }: 
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const fulfillmentMethod = "pickup" as const;
-  const paymentMethod = "paystack" as const;
-  const deliveryFee = 0;
-  const total = subtotal - discount;
+  const [fulfillmentMethod, setFulfillmentMethod] = useState<"delivery" | "pickup">("delivery");
+  const [state, setState] = useState(savedAddress?.state ?? "Lagos");
+  const [city, setCity] = useState(savedAddress?.city ?? "Shomolu");
+  const [address, setAddress] = useState(savedAddress?.addressLine ?? "");
+  const [instructions, setInstructions] = useState(savedAddress?.instructions ?? "");
+  const deliveryFee = fulfillmentMethod === "pickup" ? 0 : getDeliveryFee(state, subtotal, delivery);
+  const total = subtotal - discount + deliveryFee;
+  const zone = getDeliveryZone(state, delivery);
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -44,13 +47,13 @@ export function CheckoutForm({ user, savedAddress, paystackEnabled, delivery }: 
       email: String(fd.get("email") ?? ""),
       phone: String(fd.get("phone") ?? ""),
       whatsapp: String(fd.get("whatsapp") ?? ""),
-      state: "Lagos" as const,
-      city: "Shomolu",
-      address: PICKUP_ADDRESS,
-      instructions: String(fd.get("instructions") ?? ""),
-      paymentMethod,
+      state: fulfillmentMethod === "pickup" ? "Lagos" as const : state,
+      city: fulfillmentMethod === "pickup" ? "Shomolu" : city,
+      address: fulfillmentMethod === "pickup" ? PICKUP_ADDRESS : address,
+      instructions: fulfillmentMethod === "pickup" ? "" : instructions,
+      paymentMethod: "paystack" as const,
       couponCode: coupon?.code ?? "",
-      saveAddress: false,
+      saveAddress: Boolean(user) && fulfillmentMethod === "delivery" && fd.get("saveAddress") === "on",
       items: items.map((i) => ({ productId: i.productId, variantId: i.variantId, quantity: i.quantity })),
     };
     startTransition(async () => {
@@ -80,7 +83,6 @@ export function CheckoutForm({ user, savedAddress, paystackEnabled, delivery }: 
   if (!hydrated) return <div className="h-96 animate-pulse bg-ivory" aria-busy />;
   if (!items.length) return <EmptyState icon={ShoppingBag} title="Nothing to check out yet" description="Your bag is empty. Add a fragrance or two and come back." action={<ButtonLink href="/shop">Browse the collection</ButtonLink>} />;
 
-
   return (
     <form onSubmit={onSubmit} className="grid gap-10 lg:grid-cols-12" noValidate>
       <div className="space-y-10 lg:col-span-7">
@@ -98,7 +100,32 @@ export function CheckoutForm({ user, savedAddress, paystackEnabled, delivery }: 
         </section>
         <section aria-labelledby="delivery-heading" className="space-y-5">
           <h2 id="delivery-heading" className="font-serif text-2xl">Fulfillment</h2>
-          <div className="border border-ink bg-cream p-4 text-sm"><p className="font-medium">Pickup only · Free</p><address className="mt-1 not-italic text-ink-soft">{PICKUP_ADDRESS}</address><p className="mt-2 text-xs text-stone">We’ll notify you by email when your order is packed and ready to collect.</p></div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className={`flex cursor-pointer gap-3 border p-4 ${fulfillmentMethod === "delivery" ? "border-ink bg-cream" : "border-line"}`}>
+              <input type="radio" name="fulfillmentMethod" value="delivery" checked={fulfillmentMethod === "delivery"} onChange={() => setFulfillmentMethod("delivery")} className="mt-1 accent-ink" />
+              <span><span className="block text-sm font-medium">Home delivery</span><span className="mt-1 block text-xs text-stone">Delivered to your address</span></span>
+            </label>
+            <label className={`flex cursor-pointer gap-3 border p-4 ${fulfillmentMethod === "pickup" ? "border-ink bg-cream" : "border-line"}`}>
+              <input type="radio" name="fulfillmentMethod" value="pickup" checked={fulfillmentMethod === "pickup"} onChange={() => setFulfillmentMethod("pickup")} className="mt-1 accent-ink" />
+              <span><span className="block text-sm font-medium">Pickup</span><span className="mt-1 block text-xs text-stone">Free collection in Shomolu</span></span>
+            </label>
+          </div>
+          {fulfillmentMethod === "pickup" ? (
+            <div className="border border-line bg-cream p-4 text-sm"><p className="font-medium">Pickup · Free</p><address className="mt-1 not-italic text-ink-soft">{PICKUP_ADDRESS}</address><p className="mt-2 text-xs text-stone">We’ll notify you by email when your order is packed and ready to collect.</p></div>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="State" htmlFor="state" error={fieldErrors.state} required>
+                <select id="state" name="state" value={state} onChange={(e) => setState(e.target.value)} required className="w-full border border-line bg-white px-4 py-3 text-sm text-ink focus:border-ink focus:outline-none">
+                  <option value="">Select state</option>{NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </Field>
+              <Field label="City / town" htmlFor="city" error={fieldErrors.city} required><Input id="city" name="city" value={city} onChange={(e) => setCity(e.target.value)} required invalid={Boolean(fieldErrors.city)} placeholder="Your city or town" /></Field>
+              <Field label="Full delivery address" htmlFor="address" error={fieldErrors.address} required className="sm:col-span-2"><Input id="address" name="address" value={address} onChange={(e) => setAddress(e.target.value)} required invalid={Boolean(fieldErrors.address)} placeholder="Street, house number, area" /></Field>
+              <Field label="Delivery instructions" htmlFor="instructions" hint="Optional" className="sm:col-span-2"><Input id="instructions" name="instructions" value={instructions} onChange={(e) => setInstructions(e.target.value)} placeholder="Landmark or instructions for the rider" /></Field>
+              {user && <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" name="saveAddress" defaultChecked={false} className="accent-ink" /> Save this address to my account</label>}
+              <p className="text-xs text-stone sm:col-span-2">Estimated delivery: {zone.eta}. Delivery fee is calculated for {state || "your state"} and shown in your order summary.</p>
+            </div>
+          )}
         </section>
         <section aria-labelledby="payment-heading" className="space-y-5">
           <h2 id="payment-heading" className="font-serif text-2xl">Payment</h2>
@@ -110,7 +137,12 @@ export function CheckoutForm({ user, savedAddress, paystackEnabled, delivery }: 
         <h2 className="font-serif text-2xl">Your order</h2>
         <ul className="mt-5 max-h-80 divide-y divide-line overflow-y-auto">{items.map((item) => <li key={item.key} className="flex gap-4 py-3"><div className="relative h-16 w-14 shrink-0 overflow-hidden bg-ivory">{item.image && <Image src={item.image} alt="" fill sizes="56px" className="object-cover" />}<span className="absolute -right-0 -top-0 flex h-5 min-w-5 items-center justify-center bg-ink px-1 text-[10px] text-white">{item.quantity}</span></div><div className="flex-1 text-sm"><p className="font-medium leading-tight">{item.name}</p><p className="text-xs text-stone">{item.variantName ?? item.brandName}</p></div><p className="text-sm tabular-nums">{formatNaira(item.price * item.quantity)}</p></li>)}</ul>
         <div className="mt-4 border-t border-line pt-4"><CouponForm compact /></div>
-        <dl className="mt-5 space-y-2.5 text-sm"><div className="flex justify-between"><dt className="text-stone">Subtotal</dt><dd className="tabular-nums">{formatNaira(subtotal)}</dd></div>{discount > 0 && <div className="flex justify-between text-success"><dt>Discount ({coupon?.code})</dt><dd className="tabular-nums">−{formatNaira(discount)}</dd></div>}<div className="flex justify-between"><dt className="text-stone">Pickup</dt><dd className="tabular-nums"><span className="text-success">Free</span></dd></div><div className="flex justify-between border-t border-line pt-3 text-lg font-medium"><dt>Total</dt><dd className="tabular-nums">{formatNaira(total)}</dd></div></dl>
+        <dl className="mt-5 space-y-2.5 text-sm">
+          <div className="flex justify-between"><dt className="text-stone">Subtotal</dt><dd className="tabular-nums">{formatNaira(subtotal)}</dd></div>
+          {discount > 0 && <div className="flex justify-between text-success"><dt>Discount ({coupon?.code})</dt><dd className="tabular-nums">−{formatNaira(discount)}</dd></div>}
+          <div className="flex justify-between"><dt className="text-stone">{fulfillmentMethod === "pickup" ? "Pickup" : "Home delivery"}</dt><dd className="tabular-nums">{deliveryFee === 0 ? <span className="text-success">Free</span> : formatNaira(deliveryFee)}</dd></div>
+          <div className="flex justify-between border-t border-line pt-3 text-lg font-medium"><dt>Total</dt><dd className="tabular-nums">{formatNaira(total)}</dd></div>
+        </dl>
         <Button type="submit" size="lg" loading={pending} disabled={!paystackEnabled} className="mt-6 w-full">Pay securely with Paystack</Button>
         <p className="mt-3 text-center text-xs text-stone">By placing your order you agree to our <Link href="/terms" className="underline">terms</Link> and <Link href="/returns" className="underline">returns policy</Link>.</p>
       </div></aside>
