@@ -10,6 +10,7 @@ const STATUS_TONES: Record<OrderStatus, "neutral" | "info" | "warning" | "succes
   pending: "warning",
   payment_confirmed: "info",
   processing: "info",
+  ready_for_pickup: "success",
   shipped: "info",
   delivered: "success",
   cancelled: "danger",
