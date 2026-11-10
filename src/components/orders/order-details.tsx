@@ -103,7 +103,7 @@ export function OrderMeta({ order }: { order: Order & { payments?: Payment[] } }
   return (
     <div className="grid gap-6 sm:grid-cols-2">
       <div>
-        <h3 className="eyebrow mb-2 font-sans">Delivery address</h3>
+        <h3 className="eyebrow mb-2 font-sans">{order.fulfillmentMethod === "pickup" ? "Pickup location" : "Delivery address"}</h3>
         <address className="text-sm not-italic leading-relaxed text-ink-soft">
           {order.firstName} {order.lastName}
           <br />
