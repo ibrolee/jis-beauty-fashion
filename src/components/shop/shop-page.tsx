@@ -28,8 +28,6 @@ export async function ShopPage({ eyebrow, title, description, basePath, searchPa
   const filters = parseProductFilters(searchParams, overrides);
   const [result, categories, brands, priceBounds] = await Promise.all([getProducts(filters), getCategories(), getBrandsWithCounts(), getPriceBounds()]);
   const activeCount = countActiveFilters(filters, lockCategory);
-  const from = (result.page - 1) * result.perPage + 1;
-  const to = Math.min(result.total, result.page * result.perPage);
 
   return (
     <>
@@ -75,9 +73,6 @@ export async function ShopPage({ eyebrow, title, description, basePath, searchPa
                 <Suspense>
                   <MobileFilters categories={categories} brands={brands} priceBounds={priceBounds} filters={filters} lockCategory={lockCategory} activeCount={activeCount} />
                 </Suspense>
-                <p className="text-xs tracking-wide text-stone" aria-live="polite">
-                  {result.total === 0 ? "No products" : `Showing ${from}–${to} of ${result.total} products`}
-                </p>
               </div>
               <Suspense><SortSelect value={filters.sort} /></Suspense>
             </div>
