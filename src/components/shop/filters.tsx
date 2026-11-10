@@ -68,12 +68,11 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function Check({ checked, onChange, label, count }: { checked: boolean; onChange: () => void; label: string; count?: number }) {
+function Check({ checked, onChange, label }: { checked: boolean; onChange: () => void; label: string }) {
   return (
     <label className="flex cursor-pointer items-center gap-3 text-sm text-ink-soft hover:text-ink">
       <input type="checkbox" checked={checked} onChange={onChange} className="h-4 w-4 accent-ink" />
       <span className="flex-1">{label}</span>
-      {count !== undefined && <span className="text-xs text-mist">{count}</span>}
     </label>
   );
 }
@@ -114,7 +113,6 @@ export function FilterPanel({ categories, brands, priceBounds, filters, lockCate
             <label key={c.id} className="flex cursor-pointer items-center gap-3 text-sm text-ink-soft hover:text-ink">
               <input type="radio" name="category" checked={filters.category === c.slug} onChange={() => update((p) => p.set("category", c.slug))} className="h-4 w-4 accent-ink" />
               <span className="flex-1">{c.name}</span>
-              <span className="text-xs text-mist">{c.productCount}</span>
             </label>
           ))}
         </Group>
@@ -149,7 +147,7 @@ export function FilterPanel({ categories, brands, priceBounds, filters, lockCate
       {brands.length > 0 && (
         <Group title="Brand">
           {brands.map((b) => (
-            <Check key={b.id} label={b.name} count={b.productCount} checked={filters.brand?.includes(b.slug) ?? false} onChange={() => toggleInList("brand", b.slug)} />
+            <Check key={b.id} label={b.name} checked={filters.brand?.includes(b.slug) ?? false} onChange={() => toggleInList("brand", b.slug)} />
           ))}
         </Group>
       )}
