@@ -58,11 +58,14 @@ export function orderConfirmationEmail(params: {
   orderNumber: string;
   total: string;
   orderUrl: string;
+  fulfillmentMethod?: "delivery" | "pickup";
+  pickupAddress?: string;
 }): Omit<EmailMessage, "to"> {
-  const { firstName, orderNumber, total, orderUrl } = params;
+  const { firstName, orderNumber, total, orderUrl, fulfillmentMethod = "delivery", pickupAddress = "" } = params;
+  const fulfillmentText = fulfillmentMethod === "pickup" ? `Pickup location: ${pickupAddress}. We will email you when your order is packed and ready to collect.` : "We will deliver your order to the address provided.";
   return {
     subject: `Order ${orderNumber} received — JIS Beauty & Fashion`,
-    text: `Hi ${firstName},\n\nThank you for shopping with JIS Beauty & Fashion. We have received your order ${orderNumber} (${total}).\nTrack it here: ${orderUrl}\n\nWhere beauty meets style.`,
-    html: `<p>Hi ${escapeHtml(firstName)},</p><p>Thank you for shopping with JIS Beauty &amp; Fashion. We have received your order <strong>${escapeHtml(orderNumber)}</strong> (${escapeHtml(total)}).</p><p><a href="${escapeHtml(orderUrl)}">View your order</a></p><p><em>Where beauty meets style.</em></p>`,
+    text: `Hi ${firstName},\n\nThank you for shopping with JIS Beauty & Fashion. We have received your order ${orderNumber} (${total}).\n${fulfillmentText}\nTrack it here: ${orderUrl}\n\nWhere beauty meets style.`,
+    html: `<p>Hi ${escapeHtml(firstName)},</p><p>Thank you for shopping with JIS Beauty &amp; Fashion. We have received your order <strong>${escapeHtml(orderNumber)}</strong> (${escapeHtml(total)}).</p><p>${escapeHtml(fulfillmentText)}</p><p><a href="${escapeHtml(orderUrl)}">View your order</a></p><p><em>Where beauty meets style.</em></p>`,
   };
 }
