@@ -105,7 +105,7 @@ export async function placeOrder(rawInput: CheckoutInput): Promise<PlaceOrderRes
         if (!reservedCoupon) throw new Error("COUPON_UNAVAILABLE");
       }
       await tx.insert(payments).values({ orderId: order.id, provider: "manual", reference, amount: total, status: "pending", channel: input.paymentMethod === "whatsapp" ? "whatsapp" : "bank_transfer" });
-      if (user && input.saveAddress && !pickup) await tx.insert(addresses).values({ userId: user.id, label: "Checkout address", firstName: input.firstName, lastName: input.lastName, phone: input.phone, state: input.state, city: input.city, addressLine: input.address, instructions: input.instructions || null });
+      if (user && input.saveAddress && !pickup) await tx.insert(addresses).values({ userId: user.id, label: "Checkout address", firstName: input.firstName, lastName: input.lastName, phone: input.phone, state: input.state, city: input.city, addressLine: input.address, instructions: input.instructions || null } as typeof addresses.$inferInsert);
     });
   } catch (error) {
     if (error instanceof Error && error.message === "OUT_OF_STOCK") return { ok: false, error: "An item just sold out or its available stock changed. Please review your bag and try again." };
