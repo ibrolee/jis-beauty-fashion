@@ -9,7 +9,7 @@ import { MobileMenu } from "./mobile-menu";
 export function Header({ user, categories, website = DEFAULT_WEBSITE_CONTENT }: { user: SessionUser | null; categories: CategoryWithCount[]; website?: WebsiteContent }) {
   const navigation = navigationLinks(website, categories);
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-cream/95 shadow-[0_4px_20px_-18px_rgba(23,21,17,0.4)] backdrop-blur-xl supports-[backdrop-filter]:bg-cream/90">
+    <header className="relative z-40 border-b border-line bg-cream/95 shadow-[0_4px_20px_-18px_rgba(23,21,17,0.4)] backdrop-blur-xl supports-[backdrop-filter]:bg-cream/90">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-2 focus:z-50 focus:bg-ink focus:px-3 focus:py-2 focus:text-white">
         Skip to content
       </a>
